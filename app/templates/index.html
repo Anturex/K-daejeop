@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>K-daejeop | Korea Map</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand__mark">K</span>
+          <span class="brand__name">K-daejeop</span>
+        </div>
+        <div class="search">
+          <input
+            id="search-input"
+            type="search"
+            placeholder="지역명/장소 검색 (예: 서울역, 부산, 제주)"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button id="search-button" type="button">검색</button>
+        </div>
+      </header>
+
+      <main class="map-shell">
+        <div id="map" aria-label="Korea map"></div>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+      </main>
+    </div>
+
+    <script src="{{ kakao_sdk_url }}?appkey={{ kakao_js_key }}&autoload=false&libraries=services"></script>
+    <script type="module" src="/static/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,172 @@
+:root {
+  color-scheme: light;
+  --ink: #121212;
+  --fog: #f4f2ef;
+  --sand: #ebe6dc;
+  --pine: #0c5132;
+  --sun: #f4b13d;
+  --ocean: #1c6ba0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Nanum Myeongjo", "Iropke Batang", "Source Serif 4", serif;
+  color: var(--ink);
+  background: radial-gradient(circle at 20% 20%, #fff 0, var(--fog) 55%, #e7efe9 100%);
+  min-height: 100vh;
+}
+
+#app {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.25rem 2.5rem;
+  background: linear-gradient(90deg, #f9f5ee 0%, #f3efe6 55%, #f6f1e7 100%);
+  border-bottom: 1px solid #e0d7c8;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.brand__mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--pine);
+  color: #f6f2e7;
+  font-size: 1.2rem;
+}
+
+.brand__name {
+  font-size: 1.05rem;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.search input {
+  width: min(360px, 55vw);
+  padding: 0.7rem 1rem;
+  border: 1px solid #d5cbb9;
+  border-radius: 999px;
+  background: #fffaf2;
+  font-size: 0.95rem;
+}
+
+.search button {
+  padding: 0.7rem 1.2rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--sun);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.search button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(244, 177, 61, 0.28);
+}
+
+.map-shell {
+  position: relative;
+  padding: 1.5rem 2.5rem 2rem;
+}
+
+#map {
+  width: 100%;
+  height: calc(100vh - 140px);
+  min-height: 520px;
+  border-radius: 24px;
+  border: 1px solid #ded4c2;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(12, 81, 50, 0.15);
+}
+
+.info-window {
+  padding: 0.35rem 0.6rem;
+  font-family: "Nanum Myeongjo", "Iropke Batang", "Source Serif 4", serif;
+  font-size: 0.85rem;
+}
+
+.status {
+  position: absolute;
+  left: 3rem;
+  bottom: 2.5rem;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e4dac9;
+  font-size: 0.9rem;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.status.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 840px) {
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem 1.25rem 1.25rem;
+  }
+
+  .search {
+    width: 100%;
+  }
+
+  .search input {
+    flex: 1;
+  }
+
+  .map-shell {
+    padding: 1rem;
+  }
+
+  #map {
+    height: calc(100vh - 220px);
+    min-height: 420px;
+  }
+
+  .status {
+    left: 1.5rem;
+    right: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand__name {
+    font-size: 0.95rem;
+  }
+
+  #map {
+    height: calc(100vh - 240px);
+    min-height: 360px;
+  }
+}
