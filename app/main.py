@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import get_settings
-from app.routers import health, pages, places
+from app.routers import auth, health, pages, places
 
 
 def create_app() -> FastAPI:
@@ -13,6 +13,7 @@ def create_app() -> FastAPI:
     app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
     app.include_router(health.router)
+    app.include_router(auth.router)
     app.include_router(pages.router)
     app.include_router(places.router)
 
