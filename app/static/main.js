@@ -1,25 +1,63 @@
+/* ===== DOM ===== */
 const statusEl = document.getElementById("status");
+const statusTextEl = document.getElementById("status-text");
+const noResultsEl = document.getElementById("no-results");
+const noResultsTextEl = document.getElementById("no-results-text");
 const inputEl = document.getElementById("search-input");
 const buttonEl = document.getElementById("search-button");
+const suggestionsEl = document.getElementById("suggestions");
 
+/* ===== State ===== */
 let map = null;
 let infoWindow = null;
 const markers = [];
 let highlightCircle = null;
+let debounceTimer = null;
+let activeIndex = -1;
+let currentSuggestions = [];
+let statusTimer = null;
+let noResultsTimer = null;
+let searchSeq = 0; // 검색 순서 ID (stale 응답 무시용)
+
 const MAX_LOCAL_RESULTS = 12;
 const FAR_SPREAD_KM = 20;
+const DEBOUNCE_MS = 200;
+const SUGGESTIONS_LIMIT = 8;
 
-function setStatus(message, isError = false) {
-  statusEl.textContent = message;
-  statusEl.classList.toggle("is-visible", Boolean(message));
-  statusEl.style.borderColor = isError ? "#d9785f" : "#e4dac9";
+/* ===== Toast (단일 상태 관리) ===== */
+function showStatus(message, duration = 0) {
+  clearTimeout(statusTimer);
+  statusTextEl.textContent = message;
+  statusEl.classList.add("is-visible");
+  if (duration > 0) {
+    statusTimer = setTimeout(() => {
+      statusEl.classList.remove("is-visible");
+    }, duration);
+  }
 }
 
+function hideStatus() {
+  clearTimeout(statusTimer);
+  statusEl.classList.remove("is-visible");
+}
+
+function showNoResults(query) {
+  clearTimeout(noResultsTimer);
+  noResultsTextEl.textContent = `"${query}" 검색 결과가 없습니다`;
+  noResultsEl.classList.add("is-visible");
+  noResultsTimer = setTimeout(() => {
+    noResultsEl.classList.remove("is-visible");
+  }, 4000);
+}
+
+function hideNoResults() {
+  clearTimeout(noResultsTimer);
+  noResultsEl.classList.remove("is-visible");
+}
+
+/* ===== Markers & Highlight ===== */
 function clearMarkers() {
-  while (markers.length) {
-    const marker = markers.pop();
-    marker.setMap(null);
-  }
+  while (markers.length) markers.pop().setMap(null);
 }
 
 function clearHighlight() {
@@ -29,18 +67,41 @@ function clearHighlight() {
   }
 }
 
+/* ===== Info Window ===== */
+function escapeHtml(str) {
+  const d = document.createElement("div");
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function buildInfoContent(place) {
+  const name = place.place_name || "";
+  const category = place.category_group_name || "";
+  const address = place.road_address_name || place.address_name || "";
+  const phone = place.phone || "";
+  const url = place.place_url || "";
+
+  let h = '<div class="iw-card">';
+  h += `<div class="iw-card__name">${escapeHtml(name)}</div>`;
+  if (category) h += `<span class="iw-card__category">${escapeHtml(category)}</span>`;
+  if (address) h += `<div class="iw-card__address">${escapeHtml(address)}</div>`;
+  if (phone) h += `<div class="iw-card__phone">📞 ${escapeHtml(phone)}</div>`;
+  if (url) h += `<a class="iw-card__link" href="${escapeHtml(url)}" target="_blank" rel="noopener">상세보기 →</a>`;
+  h += "</div>";
+  return h;
+}
+
 function renderPlace(place) {
-  const position = new kakao.maps.LatLng(place.y, place.x);
-  const marker = new kakao.maps.Marker({ position });
+  const pos = new kakao.maps.LatLng(place.y, place.x);
+  const marker = new kakao.maps.Marker({ position: pos });
   marker.setMap(map);
   markers.push(marker);
-
+  const content = buildInfoContent(place);
   kakao.maps.event.addListener(marker, "click", () => {
-    infoWindow.setContent(`<div class="info-window">${place.place_name}</div>`);
+    infoWindow.setContent(content);
     infoWindow.open(map, marker);
   });
-
-  infoWindow.setContent(`<div class="info-window">${place.place_name}</div>`);
+  infoWindow.setContent(content);
   infoWindow.open(map, marker);
 }
 
@@ -49,25 +110,23 @@ function highlightArea(position, radius = 900) {
   highlightCircle = new kakao.maps.Circle({
     center: position,
     radius,
-    strokeWeight: 3,
-    strokeColor: "#1c6ba0",
-    strokeOpacity: 0.9,
+    strokeWeight: 2,
+    strokeColor: "#228be6",
+    strokeOpacity: 0.6,
     strokeStyle: "solid",
-    fillColor: "#1c6ba0",
-    fillOpacity: 0.22,
+    fillColor: "#228be6",
+    fillOpacity: 0.1,
   });
   highlightCircle.setMap(map);
 }
 
-function toLatLng(place) {
-  if (!place?.x || !place?.y) {
-    return null;
-  }
-  return new kakao.maps.LatLng(place.y, place.x);
+/* ===== Geo helpers ===== */
+function toLatLng(p) {
+  return p?.x && p?.y ? new kakao.maps.LatLng(p.y, p.x) : null;
 }
 
-function toRadians(value) {
-  return (value * Math.PI) / 180;
+function toRadians(v) {
+  return (v * Math.PI) / 180;
 }
 
 function distanceKm(a, b) {
@@ -83,119 +142,332 @@ function distanceKm(a, b) {
 }
 
 function getFirstValidPosition(results) {
-  const target = results.find((place) => place?.x && place?.y);
-  return target ? toLatLng(target) : null;
+  const t = results.find((p) => p?.x && p?.y);
+  return t ? toLatLng(t) : null;
 }
 
 function getNearbyResults(results, anchor) {
   const valid = results
     .map((place) => ({ place, position: toLatLng(place) }))
     .filter((item) => item.position);
-
-  if (!valid.length || !anchor) {
-    return [];
-  }
-
+  if (!valid.length || !anchor) return [];
   const distances = valid.map((item) => ({
     ...item,
     distance: distanceKm(anchor, item.position),
   }));
-  const maxDistance = Math.max(...distances.map((item) => item.distance));
-
-  if (maxDistance > FAR_SPREAD_KM) {
-    return distances
-      .filter((item) => item.distance <= FAR_SPREAD_KM)
-      .slice(0, MAX_LOCAL_RESULTS);
+  const maxD = Math.max(...distances.map((d) => d.distance));
+  if (maxD > FAR_SPREAD_KM) {
+    return distances.filter((d) => d.distance <= FAR_SPREAD_KM).slice(0, MAX_LOCAL_RESULTS);
   }
-
   return distances.slice(0, MAX_LOCAL_RESULTS);
 }
 
-async function searchPlace(query) {
-  const response = await fetch(`/api/places?query=${encodeURIComponent(query)}`);
-  if (!response.ok) {
-    throw new Error("검색 요청 실패");
-  }
-  return response.json();
+/* ===== API ===== */
+async function fetchPlaces(query) {
+  const res = await fetch(`/api/places?query=${encodeURIComponent(query)}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
 }
 
-async function handleSearch() {
-  const query = inputEl.value.trim();
-  if (!query) {
-    setStatus("검색어를 입력해주세요.", true);
+/* ===== Suggestions ===== */
+function openSuggestions(docs, query) {
+  currentSuggestions = docs.slice(0, SUGGESTIONS_LIMIT);
+  activeIndex = -1;
+
+  if (!currentSuggestions.length) {
+    suggestionsEl.innerHTML = `
+      <li class="suggestions__empty">
+        <span class="suggestions__empty-title">"${escapeHtml(query)}" 결과 없음</span>
+        <span class="suggestions__empty-sub">다른 키워드를 입력해보세요</span>
+      </li>`;
+    suggestionsEl.classList.add("is-open");
     return;
   }
 
-  setStatus("검색 중...");
+  let html = `
+    <li class="suggestions__header">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      추천 장소 ${currentSuggestions.length}건
+    </li>`;
 
+  currentSuggestions.forEach((place, i) => {
+    const name = escapeHtml(place.place_name || "");
+    const cat = escapeHtml(place.category_group_name || "");
+    const addr = escapeHtml(place.road_address_name || place.address_name || "");
+    html += `
+      <li class="suggestions__item" role="option" data-index="${i}">
+        <span class="suggestions__icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+        </span>
+        <div class="suggestions__info">
+          <div>
+            <span class="suggestions__name">${name}</span>
+            ${cat ? `<span class="suggestions__category">${cat}</span>` : ""}
+          </div>
+          ${addr ? `<div class="suggestions__address">${addr}</div>` : ""}
+        </div>
+      </li>`;
+  });
+
+  suggestionsEl.innerHTML = html;
+  suggestionsEl.classList.add("is-open");
+}
+
+function closeSuggestions() {
+  suggestionsEl.classList.remove("is-open");
+  currentSuggestions = [];
+  activeIndex = -1;
+}
+
+function highlightSuggestion(idx) {
+  const items = suggestionsEl.querySelectorAll(".suggestions__item");
+  items.forEach((el) => el.classList.remove("is-active"));
+  if (idx >= 0 && idx < items.length) {
+    items[idx].classList.add("is-active");
+    items[idx].scrollIntoView({ block: "nearest" });
+  }
+  activeIndex = idx;
+}
+
+function selectSuggestion(idx) {
+  const place = currentSuggestions[idx];
+  if (!place) return;
+  inputEl.value = place.place_name;
+  closeSuggestions();
+  doSearch(place.place_name);
+}
+
+/* ===== Search (지도 이동) ===== */
+async function doSearch(query) {
+  if (!query) return;
+
+  // 진행 중인 자동완성 타이머 취소 (race condition 방지)
+  clearTimeout(debounceTimer);
+  closeSuggestions();
+  hideNoResults();
+  hideStatus();
+
+  const mySeq = ++searchSeq;
+
+  // ── 1) API 호출 (네트워크 오류만 catch) ──
+  let data;
   try {
-    const data = await searchPlace(query);
-    const results = data?.documents ?? [];
+    data = await fetchPlaces(query);
+  } catch (err) {
+    // 더 새로운 검색이 시작됐으면 무시
+    if (mySeq !== searchSeq) return;
+    console.error("[K-daejeop] API error:", err);
+    showStatus("검색 중 오류가 발생했습니다", 3000);
+    return;
+  }
 
-    if (!results.length) {
-      setStatus("검색 결과가 없습니다. 다른 키워드를 입력해보세요.", true);
+  // 응답 도착 시점에 더 새로운 검색이 진행 중이면 무시
+  if (mySeq !== searchSeq) return;
+
+  const results = data?.documents ?? [];
+
+  if (!results.length) {
+    showNoResults(query);
+    return;
+  }
+
+  // ── 2) 지도 렌더링 (SDK 오류는 별도 처리) ──
+  clearMarkers();
+  clearHighlight();
+
+  const focusPos = getFirstValidPosition(results);
+  if (!focusPos) {
+    showNoResults(query);
+    return;
+  }
+
+  const local = getNearbyResults(results, focusPos);
+  if (!local.length) {
+    showNoResults(query);
+    return;
+  }
+
+  // 마커 렌더링
+  local.forEach(({ place }) => {
+    try {
+      renderPlace(place);
+    } catch (e) {
+      console.warn("[K-daejeop] marker render skip:", e);
+    }
+  });
+
+  // ── 3) 항상 첫 번째 결과를 지도 중심에 고정 ──
+  try {
+    map.setCenter(focusPos);
+
+    if (local.length > 1) {
+      const bounds = new kakao.maps.LatLngBounds();
+      local.forEach(({ position }) => bounds.extend(position));
+      map.setBounds(bounds);
+      // setBounds가 계산한 줌 레벨을 가져온 뒤 다시 중심 고정
+      const fitLevel = map.getLevel();
+      map.setCenter(focusPos);
+      map.setLevel(Math.min(fitLevel, 6));
+    } else {
+      map.setLevel(3);
+    }
+
+    kakao.maps.event.addListenerOnce(map, "idle", () =>
+      highlightArea(focusPos),
+    );
+  } catch (e) {
+    console.warn("[K-daejeop] map adjust:", e);
+    // 지도 조작 실패해도 에러 토스트 표시 안 함 (결과는 이미 보임)
+  }
+
+  const placeName = results[0]?.place_name || query;
+  showStatus(`"${placeName}" 근처 ${local.length}개 결과`, 3000);
+}
+
+/* ===== Autocomplete (debounce) ===== */
+function scheduleAutocomplete() {
+  clearTimeout(debounceTimer);
+  const query = inputEl.value.trim();
+
+  if (!query) {
+    closeSuggestions();
+    return;
+  }
+
+  debounceTimer = setTimeout(async () => {
+    try {
+      const data = await fetchPlaces(query);
+      const docs = data?.documents ?? [];
+      // 입력값이 바뀌었으면 무시
+      if (inputEl.value.trim() !== query) return;
+      openSuggestions(docs, query);
+    } catch (_err) {
+      // API 실패 시 조용히 닫기 (토스트 표시 안 함)
+      closeSuggestions();
+    }
+  }, DEBOUNCE_MS);
+}
+
+/* ===== Events ===== */
+function bindEvents() {
+  // 검색 버튼
+  buttonEl.addEventListener("click", () => {
+    const q = inputEl.value.trim();
+    clearTimeout(debounceTimer);
+    closeSuggestions();
+    if (q) doSearch(q);
+  });
+
+  // 타이핑 → 자동완성 (한글 IME 포함 모든 input)
+  inputEl.addEventListener("input", scheduleAutocomplete);
+
+  // 키보드 네비게이션
+  inputEl.addEventListener("keydown", (e) => {
+    // IME 조합 중 keyCode 229는 무시 (Enter 오작동 방지)
+    if (e.keyCode === 229) return;
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      clearTimeout(debounceTimer);
+      if (activeIndex >= 0 && currentSuggestions.length) {
+        selectSuggestion(activeIndex);
+      } else {
+        const q = inputEl.value.trim();
+        closeSuggestions();
+        if (q) doSearch(q);
+      }
       return;
     }
 
-    clearMarkers();
-    clearHighlight();
-
-    const focusPosition = getFirstValidPosition(results);
-    const localResults = getNearbyResults(results, focusPosition);
-    const bounds = new kakao.maps.LatLngBounds();
-
-    localResults.forEach(({ place, position }) => {
-      bounds.extend(position);
-      renderPlace(place);
-    });
-
-    if (localResults.length > 1) {
-      map.setBounds(bounds);
-    } else if (focusPosition) {
-      map.setCenter(focusPosition);
-      map.setLevel(4);
+    if (e.key === "Escape") {
+      closeSuggestions();
+      return;
     }
 
-    const highlightTarget = focusPosition || bounds.getCenter();
-    kakao.maps.event.addListenerOnce(map, "idle", () => {
-      highlightArea(highlightTarget);
-    });
+    const open = suggestionsEl.classList.contains("is-open");
+    const len = currentSuggestions.length;
+    if (!open || !len) return;
 
-    setStatus(`"${results[0].place_name}" 위치로 이동했습니다.`);
-  } catch (error) {
-    setStatus("검색 중 오류가 발생했습니다.", true);
-  }
-}
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      highlightSuggestion(activeIndex < len - 1 ? activeIndex + 1 : 0);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      highlightSuggestion(activeIndex > 0 ? activeIndex - 1 : len - 1);
+    }
+  });
 
-function bindEvents() {
-  buttonEl.addEventListener("click", handleSearch);
-  inputEl.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      handleSearch();
+  // 포커스 복귀 시
+  inputEl.addEventListener("focus", () => {
+    if (inputEl.value.trim() && !suggestionsEl.classList.contains("is-open")) {
+      scheduleAutocomplete();
+    }
+  });
+
+  // 추천 항목 클릭
+  suggestionsEl.addEventListener("mousedown", (e) => {
+    // mousedown을 사용해야 blur보다 먼저 처리됨
+    const item = e.target.closest(".suggestions__item");
+    if (!item) return;
+    e.preventDefault();
+    selectSuggestion(parseInt(item.dataset.index, 10));
+  });
+
+  // 바깥 클릭
+  document.addEventListener("mousedown", (e) => {
+    if (!e.target.closest(".search-wrapper")) {
+      closeSuggestions();
     }
   });
 }
+
+/* ===== Init ===== */
+const KOREA_CENTER = { lat: 36.5, lng: 127.0 };
+const DEFAULT_LEVEL = 12;
+let mapInitialized = false;
 
 function initMap() {
-  const DEFAULT_CENTER = new kakao.maps.LatLng(36.5, 127.8);
-  const DEFAULT_LEVEL = 12;
-
-  map = new kakao.maps.Map(document.getElementById("map"), {
-    center: DEFAULT_CENTER,
+  const container = document.getElementById("map");
+  map = new kakao.maps.Map(container, {
+    center: new kakao.maps.LatLng(KOREA_CENTER.lat, KOREA_CENTER.lng),
     level: DEFAULT_LEVEL,
   });
-
   infoWindow = new kakao.maps.InfoWindow({ zIndex: 2 });
+  mapInitialized = true;
   bindEvents();
-  setStatus("지도를 확대하거나 지역명을 검색해보세요.");
+}
+
+function relayoutMap() {
+  if (!map) return;
+  map.relayout();
+  map.setCenter(new kakao.maps.LatLng(KOREA_CENTER.lat, KOREA_CENTER.lng));
+  map.setLevel(DEFAULT_LEVEL);
 }
 
 function boot() {
   if (!window.kakao || !window.kakao.maps) {
-    setStatus("지도 SDK 로딩에 실패했습니다.", true);
+    showStatus("지도 SDK 로딩에 실패했습니다", 0);
     return;
   }
-  window.kakao.maps.load(initMap);
+  window.kakao.maps.load(() => {
+    if (mapInitialized) {
+      relayoutMap();
+    } else {
+      initMap();
+    }
+  });
 }
 
-document.addEventListener("DOMContentLoaded", boot);
+// 앱 화면이 보인 후 지도 초기화/재배치
+window.addEventListener("app:visible", () => {
+  if (mapInitialized) {
+    // 이미 초기화됐으면 relayout만 (로그인 상태 유지 후 복귀)
+    setTimeout(relayoutMap, 50);
+  } else {
+    boot();
+  }
+});

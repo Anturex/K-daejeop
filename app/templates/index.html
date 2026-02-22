@@ -3,35 +3,171 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>K-daejeop | Korea Map</title>
-    <link rel="stylesheet" href="/static/styles.css" />
+    <title>K-daejeop | 한국 지도 검색</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css?v={{ v }}" />
+
+    <!-- Supabase 설정 (auth.js에서 읽음) -->
+    <meta name="supabase-url" content="{{ supabase_url }}" />
+    <meta name="supabase-anon-key" content="{{ supabase_anon_key }}" />
   </head>
   <body>
-    <div id="app">
-      <header class="topbar">
-        <div class="brand">
-          <span class="brand__mark">K</span>
-          <span class="brand__name">K-daejeop</span>
+
+    <!-- ==================== 로그인 화면 ==================== -->
+    <div id="login-screen" class="login-screen">
+      <div class="login-screen__bg">
+        <div class="login-screen__gradient"></div>
+      </div>
+
+      <div class="login-card">
+        <div class="login-card__header">
+          <div class="login-card__logo">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+          <h1 class="login-card__title">K-daejeop</h1>
+          <p class="login-card__subtitle">한국의 모든 장소를 탐색하세요</p>
         </div>
-        <div class="search">
-          <input
-            id="search-input"
-            type="search"
-            placeholder="지역명/장소 검색 (예: 서울역, 부산, 제주)"
-            autocomplete="off"
-            spellcheck="false"
-          />
-          <button id="search-button" type="button">검색</button>
+
+        <div class="login-card__features">
+          <div class="login-card__feature">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <span>실시간 장소 검색 및 추천</span>
+          </div>
+          <div class="login-card__feature">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            <span>지도 위에서 상세 정보 확인</span>
+          </div>
+          <div class="login-card__feature">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span>즐겨찾기 및 개인 데이터 저장</span>
+          </div>
+        </div>
+
+        <div class="login-card__actions">
+          <button id="google-login-btn" class="login-card__google-btn" type="button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 0 0 1 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            <span>Google 계정으로 시작하기</span>
+          </button>
+        </div>
+
+        <p class="login-card__footer">
+          로그인하면 <a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a>에 동의하게 됩니다.
+        </p>
+      </div>
+
+      <!-- 로딩 스피너 (세션 확인 중) -->
+      <div id="login-loading" class="login-loading">
+        <div class="login-loading__spinner"></div>
+      </div>
+    </div>
+
+    <!-- ==================== 앱 (로그인 후) ==================== -->
+    <div id="app" class="app" hidden>
+      <header class="topbar">
+        <a class="brand" href="/">
+          <span class="brand__icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+          </span>
+          <span class="brand__name">K-daejeop</span>
+        </a>
+
+        <div class="search-wrapper">
+          <div class="search">
+            <svg class="search__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              id="search-input"
+              type="text"
+              placeholder="장소, 주소, 키워드로 검색"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button id="search-button" type="button" aria-label="검색">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- 자동완성 드롭다운 -->
+          <ul id="suggestions" class="suggestions" role="listbox" aria-label="추천 검색어"></ul>
+        </div>
+
+        <!-- 인증 영역 -->
+        <div class="auth" id="auth-area">
+          <div id="user-menu" class="user-menu">
+            <button id="user-menu-toggle" class="user-menu__toggle" type="button" aria-label="유저 메뉴">
+              <img id="user-avatar" class="user-menu__avatar" src="" alt="" />
+              <span id="user-name" class="user-menu__name"></span>
+              <svg class="user-menu__caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div id="user-dropdown" class="user-menu__dropdown" hidden>
+              <div class="user-menu__info">
+                <span id="user-email" class="user-menu__email"></span>
+              </div>
+              <button id="logout-btn" class="user-menu__logout" type="button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                로그아웃
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
       <main class="map-shell">
         <div id="map" aria-label="Korea map"></div>
-        <div class="status" id="status" role="status" aria-live="polite"></div>
+
+        <!-- 검색 결과 없음 토스트 -->
+        <div id="no-results" class="toast toast--error" role="alert" aria-live="assertive">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          <span id="no-results-text"></span>
+        </div>
+
+        <!-- 상태 토스트 -->
+        <div id="status" class="toast toast--info" role="status" aria-live="polite">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <span id="status-text"></span>
+        </div>
       </main>
     </div>
 
+    <!-- Supabase JS SDK (v2) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="{{ kakao_sdk_url }}?appkey={{ kakao_js_key }}&autoload=false&libraries=services"></script>
-    <script type="module" src="/static/main.js"></script>
+    <script type="module" src="/static/auth.js?v={{ v }}"></script>
+    <script type="module" src="/static/main.js?v={{ v }}"></script>
   </body>
 </html>
