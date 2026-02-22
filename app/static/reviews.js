@@ -25,8 +25,7 @@ const photoInput = document.getElementById("photo-input");
 const photoPreview = document.getElementById("photo-preview");
 const photoPrompt = document.getElementById("photo-prompt");
 
-const tasteTx = document.getElementById("review-taste");
-const otherTx = document.getElementById("review-other");
+const reviewTx = document.getElementById("review-text");
 
 const yearWheel = document.getElementById("wheel-year");
 const monthWheel = document.getElementById("wheel-month");
@@ -82,8 +81,7 @@ function resetForm() {
   photoPrompt.hidden = false;
   photoInput.value = "";
 
-  tasteTx.value = "";
-  otherTx.value = "";
+  reviewTx.value = "";
 
   errorEl.textContent = "";
   errorEl.hidden = true;
@@ -269,8 +267,8 @@ function validate() {
     showError("사진을 한 장 첨부해 주세요.");
     return false;
   }
-  if (!tasteTx.value.trim()) {
-    showError("맛 리뷰를 간략히 작성해 주세요.");
+  if (!reviewTx.value.trim()) {
+    showError("리뷰를 간략히 작성해 주세요.");
     return false;
   }
   return true;
@@ -324,8 +322,7 @@ async function handleSubmit() {
       place_x: currentPlace.x || "",
       place_y: currentPlace.y || "",
       rating: selectedRating,
-      review_taste: tasteTx.value.trim(),
-      review_other: otherTx.value.trim(),
+      review_text: reviewTx.value.trim(),
       photo_url: publicUrl,
       visited_at: visitedAt,
     });

@@ -84,7 +84,7 @@ supabase/
 - 커스텀 이벤트: `app:visible`, `tutorial:show`, `review:saved`
 
 ### Supabase 테이블 (RLS 적용)
-- `reviews`: 별점(1~3), 사진URL, 맛리뷰, 기타리뷰, 방문일자
+- `reviews`: 별점(1~3), 사진URL, 리뷰텍스트, 방문일자
 - `user_profiles`: tutorial_seen 플래그, 자동 생성 트리거
 - Storage `review-photos`: 유저별 폴더, 공개 읽기
 

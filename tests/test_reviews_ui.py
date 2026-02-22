@@ -43,14 +43,12 @@ class TestReviewModalPresent:
         assert 'accept="image/*"' in body
 
     @pytest.mark.asyncio
-    async def test_review_modal_has_text_areas(self, client):
-        """맛 평가 / 그 외 리뷰 textarea가 포함됩니다."""
+    async def test_review_modal_has_text_area(self, client):
+        """리뷰 textarea가 포함됩니다."""
         response = await client.get("/")
         body = response.text
-        assert 'id="review-taste"' in body
-        assert 'id="review-other"' in body
-        assert "맛 평가" in body
-        assert "분위기" in body
+        assert 'id="review-text"' in body
+        assert "리뷰" in body
 
     @pytest.mark.asyncio
     async def test_review_modal_has_date_picker(self, client):

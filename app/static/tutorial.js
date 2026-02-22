@@ -36,7 +36,7 @@ const STEPS = [
       <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
     </svg>`,
     title: "사진 한 장은 필수!",
-    body: "리뷰를 남길 때 사진 한 장을\n꼭 첨부해 주세요.\n맛 평가와 그 외 후기를\n간략히 적어주시면 돼요.",
+    body: "리뷰를 남길 때 사진 한 장을\n꼭 첨부해 주세요.\n간단한 리뷰도 함께 적으면\n나중에 기억하기 좋아요.",
   },
   {
     icon: `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--c-primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">

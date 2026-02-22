@@ -120,8 +120,7 @@ K-daejeop/
 2. 리뷰 모달에서:
    - **별점** 선택 (1~3, 필수)
    - **사진** 1장 첨부 (필수, 드래그앤드롭 또는 클릭)
-   - **맛 평가** 텍스트 작성
-   - **그 외** (분위기, 서비스 등) 텍스트 작성
+   - **리뷰** 텍스트 작성 (맛, 분위기, 서비스 등 자유롭게)
    - **방문 날짜** 스크롤 휠로 선택 (기본: 오늘)
 3. "리뷰 저장하기" → Supabase Storage(사진) + Database(리뷰) 저장
 
@@ -185,8 +184,7 @@ K-daejeop/
 | place_category | text | 카테고리 |
 | place_x, place_y | text | 좌표 |
 | rating | smallint (1~3) | 별점 |
-| review_taste | text | 맛 리뷰 |
-| review_other | text | 그 외 리뷰 |
+| review_text | text | 리뷰 텍스트 |
 | photo_url | text | 사진 공개 URL |
 | visited_at | date | 방문 일자 (기본: 리뷰 작성일) |
 | created_at | timestamptz | 생성 시각 |
