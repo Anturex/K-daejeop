@@ -1,6 +1,27 @@
+# ── Python ──
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# ── Virtual env ──
 .venv/
+
+# ── uv ──
+.uv-cache/
+
+# ── Test ──
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Environment ──
 .env
 .env.*
 !.env.*.example
-__pycache__/
-*.pyc
+
+# ── OS ──
+.DS_Store
+Thumbs.db

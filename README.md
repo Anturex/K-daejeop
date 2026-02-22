@@ -60,37 +60,48 @@
 
 ```
 K-daejeop/
-├── app/
-│   ├── main.py              # FastAPI 앱 생성, 라우터 등록, 정적 파일 마운트
+├── app/                         # FastAPI 애플리케이션
+│   ├── __init__.py
+│   ├── main.py                  # create_app() 팩토리, 라우터 등록, static 마운트
 │   ├── core/
-│   │   ├── config.py        # pydantic BaseSettings 환경 변수 설정
-│   │   └── auth.py          # Supabase JWT 검증, FastAPI 의존성
+│   │   ├── __init__.py
+│   │   ├── config.py            # Settings(BaseSettings), get_settings()
+│   │   └── auth.py              # JWT 검증, get_current_user, get_optional_user
 │   ├── routers/
-│   │   ├── health.py        # GET /api/health — 헬스체크
-│   │   ├── auth.py          # GET /api/auth/me — 현재 유저 정보
-│   │   ├── pages.py         # GET / — Jinja2 HTML 렌더링
-│   │   └── places.py        # GET /api/places — 카카오 장소 검색 프록시
+│   │   ├── __init__.py
+│   │   ├── health.py            # GET /api/health
+│   │   ├── auth.py              # GET /api/auth/me
+│   │   ├── pages.py             # GET / (Jinja2 렌더링, 캐시 버스터)
+│   │   └── places.py            # GET /api/places?query= (카카오 프록시)
 │   ├── services/
-│   │   └── kakao.py         # KakaoPlacesClient — 카카오 REST API 클라이언트
+│   │   ├── __init__.py
+│   │   └── kakao.py             # KakaoPlacesClient (httpx)
 │   ├── static/
-│   │   ├── auth.js          # Supabase JS 인증 모듈 (Google OAuth)
-│   │   ├── main.js          # 프론트엔드 검색·지도 인터랙션
-│   │   └── styles.css       # 스타일시트
+│   │   ├── auth.js              # Supabase 인증, 로그인/앱 화면 전환
+│   │   ├── main.js              # 지도 초기화, 검색, 자동완성, 마커
+│   │   └── styles.css           # 디자인 토큰, 로그인, 앱 레이아웃
 │   └── templates/
-│       └── index.html       # 메인 페이지 Jinja2 템플릿
-├── scripts/
-│   └── serve.sh             # uvicorn 실행 스크립트
-├── tests/                   # pytest 테스트 (65개)
-│   ├── conftest.py
+│       └── index.html           # login-screen + app 2단 구조
+├── tests/                       # pytest 테스트 (65개)
+│   ├── __init__.py
+│   ├── conftest.py              # fixtures, mock 환경변수
 │   ├── test_app.py
-│   ├── test_auth.py         # 인증 관련 테스트 (JWT 검증, /api/auth/me)
+│   ├── test_auth.py
 │   ├── test_config.py
 │   ├── test_health.py
 │   ├── test_pages.py
-│   └── test_places.py
-├── .env.development.example # 개발 환경 변수 예제
-├── .env.production.example  # 운영 환경 변수 예제
-├── pyproject.toml           # 프로젝트 메타 & 의존성 (uv)
+│   ├── test_places.py
+│   └── test_supabase_connection.py  # 실제 Supabase 연결 검증 (네트워크 필요)
+├── scripts/
+│   └── serve.sh                 # uv run uvicorn 실행 (--reload)
+├── .cursorrules                 # AI 컨텍스트 (Cursor)
+├── AGENTS.md                    # AI 컨텍스트 (범용)
+├── .github/
+│   └── copilot-instructions.md  # AI 컨텍스트 (GitHub Copilot)
+├── .env.development.example     # 개발 환경 변수 예제
+├── .env.production.example      # 운영 환경 변수 예제
+├── .gitignore
+├── pyproject.toml               # 프로젝트 메타 & 의존성 (uv)
 ├── uv.lock
 └── README.md
 ```
@@ -194,21 +205,22 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_JWT_SECRET=your_supabase_jwt_secret
 ```
 
-## 실행 (uv)
-
-`uv`를 사용합니다.
+## 실행
 
 ```bash
-uv venv
-uv sync
-./scripts/serve.sh
+uv sync                    # 의존성 설치
+./scripts/serve.sh         # 개발 서버 시작 (--reload)
 ```
 
 브라우저 접속: `http://127.0.0.1:5173`
 
-## 테스트 실행
+## 테스트
 
 ```bash
+# 전체 테스트 (Supabase 연결 제외)
+uv run pytest tests/ -v --ignore=tests/test_supabase_connection.py
+
+# Supabase 연결 테스트 포함
 uv run pytest tests/ -v
 ```
 
