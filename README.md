@@ -1,52 +1,44 @@
 # K-daejeop
 
-카카오맵 API를 활용해 한국 지도 기반 검색/확대를 제공하는 프로토타입입니다.
+카카오맵 API + Supabase를 활용한 한국 지도 기반 **폐쇄형 맛집 리뷰 서비스**.
+사용자가 음식점을 검색하고 별점(1~3)·사진·리뷰를 남기면, 10개 이상 쌓은 뒤 다른 사용자의 추천 맛집을 볼 수 있습니다.
 
 ## 아키텍처 개요
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │  Browser (클라이언트)                                              │
-│  ┌─────────────┐ ┌─────────────┐ ┌────────────────────────────┐  │
-│  │ index.html   │ │ auth.js     │ │ main.js                    │  │
-│  │ (Jinja2)     │ │ Supabase JS │ │  - 카카오맵 SDK 초기화      │  │
-│  │              │ │ Google OAuth│ │  - 검색 UI / 자동완성       │  │
-│  │              │ │ 세션 관리    │ │  - 마커·하이라이트 렌더링   │  │
-│  └─────────────┘ └──────┬──────┘ └──────────┬─────────────────┘  │
-│                         │                    │                    │
-│           signInWithOAuth('google')  fetch /api/places            │
-│                         │                    │                    │
-│                         ▼                    │                    │
-│                  ┌──────────────┐             │                    │
-│                  │ Supabase Auth│             │                    │
-│                  │ (Google OAuth│             │                    │
-│                  │  콜백 처리)  │             │                    │
-│                  └──────────────┘             │                    │
-│                         │                    │                    │
-│          세션 토큰 (access_token)             │                    │
-│                         │                    │                    │
-│               Authorization: Bearer          │                    │
-│                         │                    │                    │
-└─────────────────────────┼────────────────────┼────────────────────┘
-                          │                    │
-┌─────────────────────────┼────────────────────┼────────────────────┐
-│  FastAPI Server         ▼                    ▼                    │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐ ┌──────────┐ │
+│  │index.html│ │ auth.js  │ │ main.js  │ │reviews │ │tutorial  │ │
+│  │(Jinja2)  │ │Supabase  │ │카카오맵   │ │  .js   │ │  .js     │ │
+│  │          │ │OAuth+세션│ │검색·마커  │ │별점·사진│ │온보딩    │ │
+│  └──────────┘ └────┬─────┘ └────┬─────┘ └───┬────┘ └──────────┘ │
+│                    │            │            │                    │
+│      signInWithOAuth    /api/places   Supabase DB+Storage        │
+│                    │            │            │                    │
+│                    ▼            │            ▼                    │
+│             ┌──────────┐       │     ┌────────────┐              │
+│             │Supabase  │       │     │Supabase    │              │
+│             │Auth      │       │     │Database +  │              │
+│             │(Google)  │       │     │Storage     │              │
+│             └──────────┘       │     └────────────┘              │
+│                    │           │                                  │
+└────────────────────┼───────────┼──────────────────────────────────┘
+                     │           │
+┌────────────────────┼───────────┼──────────────────────────────────┐
+│  FastAPI Server    ▼           ▼                                  │
 │  ┌────────────────────────────────────────────────────────────┐   │
 │  │  Routers                                                    │   │
 │  │  ├── GET /              → pages.router  (HTML 렌더)         │   │
 │  │  ├── GET /api/health    → health.router (헬스체크)           │   │
-│  │  ├── GET /api/places    → places.router (장소 검색 프록시)   │   │
-│  │  └── GET /api/auth/me   → auth.router  (현재 유저 정보)     │   │
+│  │  ├── GET /api/places    → places.router (카카오 프록시)      │   │
+│  │  └── GET /api/auth/me   → auth.router  (JWT 유저 정보)      │   │
 │  └──────────────┬───────────────────────┬─────────────────────┘   │
-│                 │                       │                         │
 │  ┌──────────────▼──────────────┐ ┌──────▼──────────────────────┐  │
 │  │  Core                       │ │  Services                    │  │
 │  │  ├── config.py (Settings)   │ │  └── KakaoPlacesClient       │  │
 │  │  │    .env.{APP_ENV} 로딩   │ │       httpx → Kakao REST API │  │
-│  │  │    Supabase 설정 포함    │ │                               │  │
-│  │  └── auth.py                │ └───────────────────────────────┘  │
-│  │       PyJWT 검증            │                                   │
-│  │       get_current_user      │                                   │
+│  │  └── auth.py (JWT 검증)     │ └───────────────────────────────┘  │
 │  └─────────────────────────────┘                                   │
 └──────────────────────────────────────────────────────────────────┘
                                      │
@@ -77,12 +69,17 @@ K-daejeop/
 │   │   ├── __init__.py
 │   │   └── kakao.py             # KakaoPlacesClient (httpx)
 │   ├── static/
-│   │   ├── auth.js              # Supabase 인증, 로그인/앱 화면 전환
-│   │   ├── main.js              # 지도 초기화, 검색, 자동완성, 마커
-│   │   └── styles.css           # 디자인 토큰, 로그인, 앱 레이아웃
+│   │   ├── auth.js              # Supabase 인증, 로그인/앱 화면 전환, 튜토리얼 체크
+│   │   ├── main.js              # 지도 초기화, 검색, 자동완성, 마커, 리뷰 버튼
+│   │   ├── reviews.js           # 리뷰 모달 (별점·사진·텍스트·날짜), Supabase CRUD
+│   │   ├── tutorial.js          # 온보딩 튜토리얼 5단계 카드
+│   │   └── styles.css           # 디자인 토큰, 로그인, 앱, 리뷰, 튜토리얼 스타일
 │   └── templates/
-│       └── index.html           # login-screen + app 2단 구조
-├── tests/                       # pytest 테스트 (65개)
+│       └── index.html           # login-screen + app + review-modal + tutorial
+├── supabase/
+│   └── migrations/
+│       └── 001_reviews_and_profiles.sql  # reviews, user_profiles, storage 스키마
+├── tests/                       # pytest 테스트 (86개)
 │   ├── __init__.py
 │   ├── conftest.py              # fixtures, mock 환경변수
 │   ├── test_app.py
@@ -91,6 +88,7 @@ K-daejeop/
 │   ├── test_health.py
 │   ├── test_pages.py
 │   ├── test_places.py
+│   ├── test_reviews_ui.py       # 리뷰 모달·튜토리얼 HTML 렌더링 검증
 │   └── test_supabase_connection.py  # 실제 Supabase 연결 검증 (네트워크 필요)
 ├── scripts/
 │   └── serve.sh                 # uv run uvicorn 실행 (--reload)
@@ -106,14 +104,36 @@ K-daejeop/
 └── README.md
 ```
 
-## 핵심 흐름
+## 핵심 기능
 
-1. **페이지 로드**: `GET /` → `pages.router` → Jinja2가 카카오·Supabase 키를 주입하여 HTML 렌더링
-2. **지도 초기화**: 브라우저에서 카카오맵 SDK 로드 → `main.js`의 `boot()` → `initMap()` 실행
-3. **자동완성**: 사용자 타이핑 → 200ms 디바운스 → `/api/places` 호출 → 추천 장소 드롭다운 표시 (최대 8건)
-4. **장소 검색**: 추천 항목 클릭 또는 Enter → `doSearch()` → 카카오 REST API → JSON 반환
-5. **결과 렌더링**: 응답의 `documents`를 파싱 → 마커 표시 → 가까운 결과만 필터링 → **검색 장소를 지도 중심에 고정** + 원형 하이라이트
-6. **결과 없음**: 빈 `documents` → 에러 토스트 4초 표시
+### 리뷰 시스템 (별점 3단계)
+
+| 별점 | 의미 | 설명 |
+|------|------|------|
+| ⭐ | 동네 맛집 | 괜찮아서 동네에서 갈만한 곳 |
+| ⭐⭐ | 추천 맛집 | 여기 가면 이거 먹으라고 추천할 정도 |
+| ⭐⭐⭐ | 인생 맛집 | 정말정말 맛있었던 최고의 맛집 |
+
+### 리뷰 작성 흐름
+
+1. 장소 검색 → 마커 클릭 → 인포윈도우의 **"리뷰 남기기"** 버튼
+2. 리뷰 모달에서:
+   - **별점** 선택 (1~3, 필수)
+   - **사진** 1장 첨부 (필수, 드래그앤드롭 또는 클릭)
+   - **맛 평가** 텍스트 작성
+   - **그 외** (분위기, 서비스 등) 텍스트 작성
+   - **방문 날짜** 스크롤 휠로 선택 (기본: 오늘)
+3. "리뷰 저장하기" → Supabase Storage(사진) + Database(리뷰) 저장
+
+### 폐쇄형 시스템 (향후 구현)
+
+- 리뷰 10개 이상 작성 → 다른 사용자의 추천 맛집을 볼 수 있음
+
+### 온보딩 튜토리얼
+
+- 첫 로그인 시 5단계 카드 형태 튜토리얼 자동 표시
+- 언제든 유저 메뉴 → "튜토리얼 다시 보기"로 재표시
+- `user_profiles.tutorial_seen` 플래그로 상태 관리
 
 ## 인증 (Google OAuth via Supabase)
 
@@ -122,7 +142,7 @@ K-daejeop/
 1. 사용자가 **"Google 로그인"** 버튼 클릭
 2. `auth.js`가 Supabase JS SDK의 `signInWithOAuth({ provider: 'google' })` 호출
 3. Google 동의 화면 → Supabase 콜백 → 앱으로 리다이렉트 (세션 자동 획득)
-4. `onAuthStateChange`가 세션 감지 → **로그인 화면에서 앱 화면으로 전환**, 헤더에 유저 아바타·이름 표시
+4. `onAuthStateChange`가 세션 감지 → **로그인 화면에서 앱 화면으로 전환**
 5. **보호된 API 호출 시**: `Authorization: Bearer <access_token>` 헤더 전송
 6. 백엔드 `app/core/auth.py`가 PyJWT로 HS256 검증 (audience=`authenticated`)
 
@@ -146,43 +166,43 @@ K-daejeop/
 4. **Authentication → URL Configuration**
    - Site URL: `http://127.0.0.1:5173` (개발) 또는 프로덕션 도메인
    - Redirect URLs: `http://127.0.0.1:5173/` 추가
+5. **SQL Editor**에서 `supabase/migrations/001_reviews_and_profiles.sql` 실행
+   - `reviews` 테이블 + RLS
+   - `user_profiles` 테이블 + 자동 생성 트리거
+   - `review-photos` 스토리지 버킷 + 정책
 
-## 프론트엔드 기능
+## 데이터 모델 (Supabase)
 
-| 기능 | 설명 |
-|------|------|
-| **전체화면 로그인** | 로그인 전 로그인 카드 UI 표시, 로그인 후 앱 화면으로 부드럽게 전환 |
-| **Google 로그인** | Supabase JS SDK + Google OAuth, 헤더에 유저 아바타·이름 표시 |
-| **유저 메뉴 드롭다운** | 로그인 시 이메일 확인·로그아웃 |
-| **자동완성 드롭다운** | 타이핑 시 추천 장소를 실시간 표시, 클릭 또는 ↑↓ + Enter로 선택 |
-| **한글 IME 지원** | `input` 이벤트 + 디바운스로 한글 조합 중에도 실시간 자동완성 |
-| **결과 없음 안내** | 검색 결과가 없으면 에러 토스트 4초간 표시 후 자동 사라짐 |
-| **리치 인포윈도우** | 장소명, 카테고리, 도로명 주소, 전화번호, 상세보기 링크 카드 |
-| **검색 결과 중심 고정** | 검색 시 첫 번째 결과를 항상 지도 중심에 배치, 다중 결과도 중심 유지 |
-| **검색 오류 분리** | API 오류와 지도 SDK 오류를 분리 처리, 검색 ID로 stale 응답 무시 |
-| **캐시 버스팅** | 서버 시작 시점 타임스탬프로 CSS/JS URL에 `?v=` 쿼리 추가, 브라우저 캐시 방지 |
-| **반응형 디자인** | 모바일/태블릿/데스크탑 대응 (840px, 480px 브레이크포인트) |
+### reviews 테이블
 
-## 비밀값 분리(서버 프록시)
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| id | uuid (PK) | 자동 생성 |
+| user_id | uuid (FK → auth.users) | 작성자 |
+| place_id | text | 카카오 장소 ID |
+| place_name | text | 장소명 |
+| place_address | text | 주소 |
+| place_category | text | 카테고리 |
+| place_x, place_y | text | 좌표 |
+| rating | smallint (1~3) | 별점 |
+| review_taste | text | 맛 리뷰 |
+| review_other | text | 그 외 리뷰 |
+| photo_url | text | 사진 공개 URL |
+| visited_at | date | 방문 일자 (기본: 리뷰 작성일) |
+| created_at | timestamptz | 생성 시각 |
+| updated_at | timestamptz | 수정 시각 (자동) |
 
-- 검색은 서버가 카카오 REST API를 호출합니다.
-- 클라이언트는 `/api/places`만 호출합니다.
-- 카카오 JavaScript 키는 지도 렌더링에 필요하므로 브라우저에서 사용됩니다.
-- Supabase URL과 anon key는 공개(public) 키로, 브라우저에서 사용됩니다.
-- Supabase JWT Secret은 서버에서만 사용됩니다 (토큰 검증).
+### user_profiles 테이블
 
-## 환경 분리 (dev/prod)
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| user_id | uuid (PK, FK → auth.users) | 유저 |
+| tutorial_seen | boolean | 튜토리얼 완료 여부 |
+| created_at | timestamptz | 생성 시각 |
 
-- 기본적으로 `APP_ENV=development`가 적용됩니다.
-- 설정 로딩 우선순위: `.env.{APP_ENV}` → `.env`
-- 예: `APP_ENV=development`이면 `.env.development`를 우선 로딩합니다.
+### RLS 정책
 
-### 샘플 파일
-
-- `.env.development.example`
-- `.env.production.example`
-
-원하는 환경 파일을 복사해 실제 `.env.development` 또는 `.env.production`으로 사용하세요.
+모든 테이블에 Row Level Security 적용 — 사용자는 자신의 데이터만 CRUD 가능.
 
 ## 로컬 설정
 
@@ -235,5 +255,7 @@ uv run pytest tests/ -v
 | 설정 관리 | pydantic 1.10.15 (BaseSettings) |
 | JWT 검증 | PyJWT 2.8.0 |
 | 인증 | Supabase Auth (Google OAuth) |
+| 데이터베이스 | Supabase (PostgreSQL + RLS) |
+| 파일 스토리지 | Supabase Storage (review-photos) |
 | 패키지 매니저 | uv |
 | 외부 API | 카카오맵 REST API / JavaScript SDK |

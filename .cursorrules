@@ -1,8 +1,9 @@
 # K-daejeop — AI Context Guide
 
 ## 프로젝트 개요
-카카오맵 API + Supabase를 활용한 한국 지도 기반 장소 검색 서비스.
+카카오맵 API + Supabase를 활용한 한국 지도 기반 **폐쇄형 맛집 리뷰 서비스**.
 FastAPI 백엔드 + Jinja2 SSR + Vanilla JS 프론트엔드 구조.
+사용자가 음식점을 검색하고 별점(1~3)·사진·리뷰를 남기면, 10개 이상 쌓은 뒤 다른 사용자의 추천 맛집을 볼 수 있음.
 
 ## 기술 스택 & 버전
 - Python 3.9 / FastAPI 0.111 / Uvicorn 0.30
@@ -10,7 +11,7 @@ FastAPI 백엔드 + Jinja2 SSR + Vanilla JS 프론트엔드 구조.
 - Jinja2 3.1 (서버사이드 템플릿)
 - pydantic 1.x BaseSettings (환경 변수 관리)
 - PyJWT 2.8 (Supabase JWT HS256 검증)
-- Supabase JS SDK v2 (프론트엔드 인증)
+- Supabase JS SDK v2 (프론트엔드 인증 + DB + Storage)
 - 카카오맵 JavaScript SDK (지도 렌더링)
 - pytest 8.2 + pytest-asyncio 0.23 (테스트)
 - uv (패키지 매니저)
@@ -27,6 +28,12 @@ FastAPI 백엔드 + Jinja2 SSR + Vanilla JS 프론트엔드 구조.
 2. 프론트엔드: `onAuthStateChange` → 로그인 화면 ↔ 앱 화면 전환
 3. 백엔드 보호 API 호출 시: `Authorization: Bearer <access_token>` → `core/auth.py`의 `verify_supabase_token`이 PyJWT로 HS256/audience=authenticated 검증
 4. `get_current_user` (필수 인증) / `get_optional_user` (선택 인증) FastAPI 의존성
+
+### 리뷰 시스템 (Supabase 직접 접근)
+- 리뷰 CRUD는 프론트엔드에서 Supabase JS SDK로 직접 수행 (RLS가 보안 담당)
+- 사진은 Supabase Storage `review-photos` 버킷에 업로드 (경로: `{user_id}/{timestamp}.{ext}`)
+- `reviews.js`에서 `window.__getSupabase()`로 supabase 클라이언트 접근
+- DB 스키마: `supabase/migrations/001_reviews_and_profiles.sql`
 
 ### 환경 변수 분리
 - `APP_ENV` 환경 변수로 `development` / `production` 구분
@@ -56,12 +63,30 @@ app/
 ├── services/
 │   └── kakao.py         # KakaoPlacesClient (httpx 기반)
 ├── static/
-│   ├── auth.js          # Supabase 인증, 화면 전환 (app:visible 이벤트)
-│   ├── main.js          # 지도 초기화, 검색, 자동완성, 마커 렌더링
-│   └── styles.css       # 디자인 토큰, 로그인 화면, 앱 레이아웃
+│   ├── auth.js          # Supabase 인증, 화면 전환, 튜토리얼 상태 체크
+│   ├── main.js          # 지도 초기화, 검색, 자동완성, 마커, 리뷰 버튼
+│   ├── reviews.js       # 리뷰 모달 (별점·사진·날짜·텍스트), Supabase CRUD
+│   ├── tutorial.js      # 온보딩 튜토리얼 5단계 카드
+│   └── styles.css       # 디자인 토큰, 로그인, 앱, 리뷰, 튜토리얼 스타일
 └── templates/
-    └── index.html       # login-screen + app 2단 구조
+    └── index.html       # login-screen + app + review-modal + tutorial
+supabase/
+└── migrations/
+    └── 001_reviews_and_profiles.sql  # reviews, user_profiles, storage 스키마
 ```
+
+## 모듈 간 통신
+
+### JS 모듈 공유 패턴
+- `auth.js`: supabase 클라이언트 생성 → `window.__getSupabase()` 노출
+- `auth.js`: 튜토리얼 저장 → `window.__markTutorialSeen()` 노출
+- `main.js`: 리뷰 모달 열기 → `window.__openReviewModal(place)` 호출
+- 커스텀 이벤트: `app:visible`, `tutorial:show`, `review:saved`
+
+### Supabase 테이블 (RLS 적용)
+- `reviews`: 별점(1~3), 사진URL, 맛리뷰, 기타리뷰, 방문일자
+- `user_profiles`: tutorial_seen 플래그, 자동 생성 트리거
+- Storage `review-photos`: 유저별 폴더, 공개 읽기
 
 ## 코딩 규칙
 
@@ -84,7 +109,7 @@ app/
 - 디자인 토큰은 `:root` CSS 변수로 관리
 - BEM-like 클래스 네이밍 (`block__element`, `block--modifier`)
 - `.is-*` 상태 클래스 (`is-visible`, `is-open`, `is-active`, `is-leaving`)
-- z-index: 헤더 9000, 자동완성 9999, 로그인 화면 10000
+- z-index: 헤더 9000, 자동완성 9999, 로그인 화면 10000, 리뷰 모달 10001~10002, 튜토리얼 10010
 
 ### 테스트
 - pytest + pytest-asyncio (asyncio_mode = "auto")
@@ -100,7 +125,10 @@ app/
 4. **캐시 버스팅**: `pages.py`의 `_CACHE_BUSTER`(서버 시작 타임스탬프)를 CSS/JS URL에 `?v=` 파라미터로 붙임.
 5. **한글 IME**: `keydown`에서 `keyCode === 229` 체크 필수. `input` 이벤트는 IME 완료 후에도 발생하므로 자동완성 트리거로 적합.
 6. **테스트 필수**: 모든 변경 후 `uv run pytest tests/ -v` 실행. `test_supabase_connection.py`는 실제 네트워크 필요 시 `--ignore`로 제외 가능.
+7. **리뷰 모달 z-index**: 오버레이 10001, 모달 10002. 로그인 화면(10000)보다 위.
+8. **Supabase 직접 접근**: 리뷰 CRUD와 사진 업로드는 프론트엔드에서 Supabase JS SDK로 직접 수행. RLS가 보안 담당.
 
 ## 향후 확장 예정
-- Supabase 테이블(saved_places 등) + RLS로 유저별 데이터 저장
+- 리뷰 10개 달성 시 다른 사용자 추천 맛집 노출 기능
 - 즐겨찾기, 검색 기록 기능
+- 리뷰 목록 / 편집 / 삭제 UI

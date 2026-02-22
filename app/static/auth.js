@@ -1,10 +1,11 @@
 /**
  * Supabase 인증 모듈
  *
- * 1. Supabase JS SDK 초기화
+ * 1. Supabase JS SDK 초기화 + 클라이언트 공유
  * 2. 로그인 화면 ↔ 앱 화면 전환
  * 3. Google OAuth 로그인 / 로그아웃
  * 4. 인증 상태 변경 시 UI 업데이트
+ * 5. 로그인 후 튜토리얼 상태 체크
  */
 
 /* ===== DOM — 로그인 화면 ===== */
@@ -14,13 +15,13 @@ const googleLoginBtn = document.getElementById("google-login-btn");
 
 /* ===== DOM — 앱 화면 ===== */
 const appEl = document.getElementById("app");
-const userMenu = document.getElementById("user-menu");
 const userMenuToggle = document.getElementById("user-menu-toggle");
 const userDropdown = document.getElementById("user-dropdown");
 const userAvatar = document.getElementById("user-avatar");
 const userName = document.getElementById("user-name");
 const userEmail = document.getElementById("user-email");
 const logoutBtn = document.getElementById("logout-btn");
+const tutorialToggleBtn = document.getElementById("tutorial-toggle-btn");
 
 /* ===== Supabase Client ===== */
 const SUPABASE_URL =
@@ -47,6 +48,9 @@ function getSupabase() {
   return supabaseClient;
 }
 
+// 다른 모듈에서 supabase 클라이언트 사용 가능
+window.__getSupabase = getSupabase;
+
 /* ===== 화면 전환 ===== */
 function showLoginScreen() {
   loginLoading.hidden = true;
@@ -56,10 +60,8 @@ function showLoginScreen() {
 }
 
 function showApp(user) {
-  // 유저 정보 업데이트
   updateUserUI(user);
 
-  // 화면 전환 (부드러운 트랜지션)
   loginScreen.classList.remove("is-visible");
   loginScreen.classList.add("is-leaving");
 
@@ -71,6 +73,9 @@ function showApp(user) {
 
     // 지도 초기화/재배치 트리거 (hidden → visible 전환 후)
     window.dispatchEvent(new CustomEvent("app:visible"));
+
+    // 튜토리얼 상태 확인
+    checkTutorialStatus(user);
   }, 400);
 }
 
@@ -78,6 +83,53 @@ function showLoading() {
   loginLoading.hidden = false;
   loginScreen.hidden = false;
 }
+
+/* ===== 튜토리얼 상태 ===== */
+async function checkTutorialStatus(user) {
+  const sb = getSupabase();
+  if (!sb) return;
+
+  try {
+    // user_profiles에서 tutorial_seen 확인
+    const { data, error } = await sb
+      .from("user_profiles")
+      .select("tutorial_seen")
+      .eq("user_id", user.id)
+      .single();
+
+    if (error && error.code === "PGRST116") {
+      // 프로필이 없으면 생성 (handle_new_user 트리거 미작동 시 fallback)
+      await sb.from("user_profiles").insert({ user_id: user.id });
+      window.dispatchEvent(new CustomEvent("tutorial:show"));
+      return;
+    }
+
+    if (!data?.tutorial_seen) {
+      window.dispatchEvent(new CustomEvent("tutorial:show"));
+    }
+  } catch (err) {
+    console.warn("[auth] tutorial check failed:", err);
+  }
+}
+
+async function markTutorialSeen() {
+  const sb = getSupabase();
+  if (!sb) return;
+
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return;
+
+    await sb
+      .from("user_profiles")
+      .update({ tutorial_seen: true })
+      .eq("user_id", user.id);
+  } catch (err) {
+    console.warn("[auth] tutorial mark failed:", err);
+  }
+}
+
+window.__markTutorialSeen = markTutorialSeen;
 
 /* ===== 유저 UI ===== */
 function updateUserUI(user) {
@@ -113,7 +165,7 @@ function closeDropdown(e) {
 async function handleGoogleLogin() {
   const sb = getSupabase();
   if (!sb) {
-    alert("로그인 기능이 설정되지 않았습니다.\nSUPABASE_URL과 SUPABASE_ANON_KEY를 확인하세요.");
+    alert("로그인 기능이 설정되지 않았습니다.");
     return;
   }
 
@@ -122,9 +174,7 @@ async function handleGoogleLogin() {
 
   const { error } = await sb.auth.signInWithOAuth({
     provider: "google",
-    options: {
-      redirectTo: window.location.origin + "/",
-    },
+    options: { redirectTo: window.location.origin + "/" },
   });
 
   if (error) {
@@ -133,18 +183,13 @@ async function handleGoogleLogin() {
     googleLoginBtn.disabled = false;
     googleLoginBtn.classList.remove("is-loading");
   }
-  // 성공 시 Google로 리다이렉트됨 → 돌아온 뒤 onAuthStateChange가 처리
 }
 
 async function handleLogout() {
   const sb = getSupabase();
   if (!sb) return;
-
   const { error } = await sb.auth.signOut();
-  if (error) {
-    console.error("[auth] 로그아웃 실패:", error.message);
-  }
-  // onAuthStateChange가 showLoginScreen() 호출
+  if (error) console.error("[auth] 로그아웃 실패:", error.message);
 }
 
 /* ===== 초기화 ===== */
@@ -157,16 +202,21 @@ function init() {
   userMenuToggle.addEventListener("click", toggleDropdown);
   document.addEventListener("mousedown", closeDropdown);
 
+  // 튜토리얼 다시 보기 버튼
+  if (tutorialToggleBtn) {
+    tutorialToggleBtn.addEventListener("click", () => {
+      userDropdown.hidden = true;
+      window.dispatchEvent(new CustomEvent("tutorial:show"));
+    });
+  }
+
   if (!sb) {
-    // Supabase 미설정: 로그인 화면에 에러 표시
     showLoginScreen();
     return;
   }
 
-  // 로딩 상태 표시 (세션 확인 중)
   showLoading();
 
-  // 인증 상태 변경 리스너
   sb.auth.onAuthStateChange((event, session) => {
     if (session?.user) {
       showApp(session.user);
@@ -175,7 +225,6 @@ function init() {
     }
   });
 
-  // 초기 세션 확인
   sb.auth.getSession().then(({ data: { session } }) => {
     if (session?.user) {
       showApp(session.user);

@@ -80,13 +80,22 @@ function buildInfoContent(place) {
   const address = place.road_address_name || place.address_name || "";
   const phone = place.phone || "";
   const url = place.place_url || "";
+  const pid = place.id || "";
 
   let h = '<div class="iw-card">';
   h += `<div class="iw-card__name">${escapeHtml(name)}</div>`;
   if (category) h += `<span class="iw-card__category">${escapeHtml(category)}</span>`;
   if (address) h += `<div class="iw-card__address">${escapeHtml(address)}</div>`;
   if (phone) h += `<div class="iw-card__phone">📞 ${escapeHtml(phone)}</div>`;
+
+  // 리뷰/상세 버튼 행
+  h += '<div class="iw-card__actions">';
+  h += `<button class="iw-card__review-btn" data-place-id="${escapeHtml(pid)}" data-place-name="${escapeHtml(name)}" data-place-address="${escapeHtml(address)}" data-place-category="${escapeHtml(category)}" data-place-x="${escapeHtml(place.x || "")}" data-place-y="${escapeHtml(place.y || "")}">`;
+  h += `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+  h += ` 리뷰 남기기</button>`;
   if (url) h += `<a class="iw-card__link" href="${escapeHtml(url)}" target="_blank" rel="noopener">상세보기 →</a>`;
+  h += "</div>";
+
   h += "</div>";
   return h;
 }
@@ -421,6 +430,24 @@ function bindEvents() {
   document.addEventListener("mousedown", (e) => {
     if (!e.target.closest(".search-wrapper")) {
       closeSuggestions();
+    }
+  });
+
+  // 인포윈도우 내 "리뷰 남기기" 버튼 (이벤트 위임)
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".iw-card__review-btn");
+    if (!btn) return;
+    e.preventDefault();
+    const place = {
+      id: btn.dataset.placeId,
+      name: btn.dataset.placeName,
+      address: btn.dataset.placeAddress,
+      category: btn.dataset.placeCategory,
+      x: btn.dataset.placeX,
+      y: btn.dataset.placeY,
+    };
+    if (window.__openReviewModal) {
+      window.__openReviewModal(place);
     }
   });
 }

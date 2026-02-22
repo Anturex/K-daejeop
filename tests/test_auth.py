@@ -210,7 +210,8 @@ class TestSupabaseConfigInPage:
         response = await client.get("/")
         body = response.text
         assert "실시간 장소 검색" in body
-        assert "즐겨찾기" in body
+        assert "별점 리뷰" in body
+        assert "추천 맛집 해금" in body
 
     @pytest.mark.asyncio
     async def test_app_hidden_by_default(self, client):

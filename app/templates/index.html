@@ -33,7 +33,7 @@
             </svg>
           </div>
           <h1 class="login-card__title">K-daejeop</h1>
-          <p class="login-card__subtitle">한국의 모든 장소를 탐색하세요</p>
+          <p class="login-card__subtitle">나만의 맛집 리뷰를 기록하고,<br/>다른 사람의 추천 맛집을 발견하세요</p>
         </div>
 
         <div class="login-card__features">
@@ -41,19 +41,19 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <span>실시간 장소 검색 및 추천</span>
+            <span>실시간 장소 검색</span>
           </div>
           <div class="login-card__feature">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
             </svg>
-            <span>지도 위에서 상세 정보 확인</span>
+            <span>3단계 별점 리뷰 시스템</span>
           </div>
           <div class="login-card__feature">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
-            <span>즐겨찾기 및 개인 데이터 저장</span>
+            <span>10개 리뷰 → 추천 맛집 해금</span>
           </div>
         </div>
 
@@ -101,7 +101,7 @@
             <input
               id="search-input"
               type="text"
-              placeholder="장소, 주소, 키워드로 검색"
+              placeholder="음식점, 카페, 키워드로 검색"
               autocomplete="off"
               spellcheck="false"
             />
@@ -130,6 +130,13 @@
               <div class="user-menu__info">
                 <span id="user-email" class="user-menu__email"></span>
               </div>
+              <hr class="user-menu__divider" />
+              <button id="tutorial-toggle-btn" class="user-menu__item" type="button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                튜토리얼 다시 보기
+              </button>
               <button id="logout-btn" class="user-menu__logout" type="button">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -164,10 +171,132 @@
       </main>
     </div>
 
+    <!-- ==================== 리뷰 모달 ==================== -->
+    <div id="review-overlay" class="review-overlay" hidden></div>
+    <div id="review-modal" class="review-modal" hidden role="dialog" aria-modal="true" aria-label="리뷰 작성">
+      <div class="review-modal__header">
+        <h2 class="review-modal__title">리뷰 남기기</h2>
+        <button id="review-close-btn" class="review-modal__close" type="button" aria-label="닫기">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="review-modal__body">
+        <!-- 장소 정보 -->
+        <div class="review-place">
+          <div class="review-place__icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+          <div>
+            <div id="review-place-name" class="review-place__name"></div>
+            <div id="review-place-meta" class="review-place__meta"></div>
+          </div>
+        </div>
+
+        <!-- 별점 선택 -->
+        <div class="review-section">
+          <label class="review-section__label">별점</label>
+          <div class="rating-group">
+            <button type="button" class="rating-card" data-rating="1">
+              <span class="rating-card__stars">⭐</span>
+              <span class="rating-card__title">동네 맛집</span>
+              <span class="rating-card__desc">괜찮아서 갈만한 곳</span>
+            </button>
+            <button type="button" class="rating-card" data-rating="2">
+              <span class="rating-card__stars">⭐⭐</span>
+              <span class="rating-card__title">추천 맛집</span>
+              <span class="rating-card__desc">여기 가면 이거 먹어</span>
+            </button>
+            <button type="button" class="rating-card" data-rating="3">
+              <span class="rating-card__stars">⭐⭐⭐</span>
+              <span class="rating-card__title">인생 맛집</span>
+              <span class="rating-card__desc">인생 최고의 맛</span>
+            </button>
+          </div>
+          <input type="hidden" id="review-rating-value" />
+        </div>
+
+        <!-- 사진 업로드 -->
+        <div class="review-section">
+          <label class="review-section__label">사진 <span class="review-section__required">필수</span></label>
+          <div id="photo-zone" class="photo-zone">
+            <input id="photo-input" type="file" accept="image/*" hidden />
+            <img id="photo-preview" class="photo-zone__preview" src="" alt="미리보기" hidden />
+            <div id="photo-prompt" class="photo-zone__prompt">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <span>클릭하거나 드래그하여 사진 첨부</span>
+              <span class="photo-zone__hint">JPG, PNG (최대 10MB)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 리뷰 텍스트 -->
+        <div class="review-section">
+          <label class="review-section__label" for="review-taste">맛 평가</label>
+          <textarea id="review-taste" class="review-textarea" rows="2" placeholder="맛은 어땠나요? (예: 국물이 진하고 면발이 쫄깃해요)"></textarea>
+        </div>
+
+        <div class="review-section">
+          <label class="review-section__label" for="review-other">그 외 (분위기, 서비스 등)</label>
+          <textarea id="review-other" class="review-textarea" rows="2" placeholder="분위기, 서비스, 가격 등 자유롭게 작성"></textarea>
+        </div>
+
+        <!-- 방문 날짜 -->
+        <div class="review-section">
+          <label class="review-section__label">방문 날짜</label>
+          <p class="review-section__hint">스크롤하여 날짜를 선택하세요 (기본: 오늘)</p>
+          <div class="date-picker">
+            <div class="date-picker__highlight"></div>
+            <div class="date-picker__col">
+              <ul id="wheel-year" class="wheel"></ul>
+            </div>
+            <div class="date-picker__col">
+              <ul id="wheel-month" class="wheel"></ul>
+            </div>
+            <div class="date-picker__col">
+              <ul id="wheel-day" class="wheel"></ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 에러 메시지 -->
+        <div id="review-error" class="review-error" hidden></div>
+      </div>
+
+      <div class="review-modal__footer">
+        <button id="review-cancel-btn" class="review-modal__cancel" type="button">취소</button>
+        <button id="review-submit-btn" class="review-modal__submit" type="button">리뷰 저장하기</button>
+      </div>
+    </div>
+
+    <!-- ==================== 튜토리얼 오버레이 ==================== -->
+    <div id="tutorial-overlay" class="tutorial" hidden>
+      <div id="tutorial-card" class="tutorial__card">
+        <div id="tutorial-icon" class="tutorial__icon"></div>
+        <h2 id="tutorial-title" class="tutorial__title"></h2>
+        <p id="tutorial-body" class="tutorial__body"></p>
+        <div id="tutorial-dots" class="tutorial__dots"></div>
+        <div class="tutorial__actions">
+          <button id="tutorial-prev" class="tutorial__btn tutorial__btn--secondary" type="button">이전</button>
+          <button id="tutorial-next" class="tutorial__btn tutorial__btn--primary" type="button">다음</button>
+        </div>
+        <button id="tutorial-skip" class="tutorial__skip" type="button">건너뛰기</button>
+      </div>
+    </div>
+
+    <!-- ==================== Scripts ==================== -->
     <!-- Supabase JS SDK (v2) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="{{ kakao_sdk_url }}?appkey={{ kakao_js_key }}&autoload=false&libraries=services"></script>
     <script type="module" src="/static/auth.js?v={{ v }}"></script>
     <script type="module" src="/static/main.js?v={{ v }}"></script>
+    <script type="module" src="/static/reviews.js?v={{ v }}"></script>
+    <script type="module" src="/static/tutorial.js?v={{ v }}"></script>
   </body>
 </html>
