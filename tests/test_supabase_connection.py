@@ -231,18 +231,21 @@ class TestSupabaseTables:
     @pytest.mark.asyncio
     async def test_storage_bucket_exists(self):
         """review-photos 스토리지 버킷이 존재합니다."""
-        resp = await _rest_get(self._base, "/storage/v1/bucket/review-photos", self._headers)
-        if resp.status_code in (400, 404) or (
-            resp.status_code == 200 and "error" in resp.text.lower()
-        ):
-            pytest.skip("review-photos 버킷 미생성 — 마이그레이션 SQL 실행 필요")
+        # anon key로는 /storage/v1/bucket/ 관리 API 접근 불가하므로
+        # public 버킷의 오브젝트 목록 조회 엔드포인트로 존재 여부를 확인합니다.
+        headers = {**self._headers, "Content-Type": "application/json"}
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                f"{self._base}/storage/v1/object/list/review-photos",
+                headers=headers,
+                json={"prefix": "", "limit": 1},
+            )
         assert resp.status_code == 200, (
             f"review-photos 버킷 조회 실패 ({resp.status_code}): {resp.text[:300]}"
         )
         data = resp.json()
-        assert data.get("id") == "review-photos", f"버킷 id 불일치: {data.get('id')}"
-        assert data.get("public") is True, "review-photos 버킷이 public이 아닙니다."
-        print(f"\n  ✅ review-photos 버킷 존재 (public=true)")
+        assert isinstance(data, list), f"오브젝트 목록이 배열이 아닙니다: {type(data)}"
+        print(f"\n  ✅ review-photos 버킷 존재 확인 (오브젝트 {len(data)}개)")
 
     # ── RLS 동작 확인 ──
 

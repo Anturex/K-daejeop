@@ -1273,6 +1273,8 @@ body {
   -webkit-overflow-scrolling: touch;
   padding: 0;
   margin: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .wheel::-webkit-scrollbar {
@@ -1396,6 +1398,19 @@ body {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.tutorial__card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent) 0%, #40c057 50%, var(--warning) 100%);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .tutorial__card.slide-in {
@@ -1414,7 +1429,24 @@ body {
 }
 
 .tutorial__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-light) 0%, rgba(64, 192, 87, 0.08) 100%);
   margin-bottom: 1.25rem;
+  position: relative;
+}
+
+.tutorial__icon::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px dashed var(--border);
+  opacity: 0.5;
 }
 
 .tutorial__icon svg {
@@ -1449,14 +1481,15 @@ body {
 .tutorial-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 4px;
   background: var(--border-strong);
-  transition: background 200ms var(--ease), transform 200ms var(--ease);
+  transition: background 300ms var(--ease), width 300ms var(--ease), transform 200ms var(--ease);
 }
 
 .tutorial-dot.is-active {
   background: var(--accent);
-  transform: scale(1.25);
+  width: 24px;
+  transform: scale(1);
 }
 
 /* ── Actions ── */
@@ -1525,6 +1558,19 @@ body {
 
 .tutorial__skip[hidden] {
   display: none;
+}
+
+/* ── Tutorial step number ── */
+.tutorial__step-num {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-light);
+  padding: 0.2rem 0.625rem;
+  border-radius: var(--radius-full);
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.03em;
 }
 
 /* ===== Review Modal Responsive ===== */

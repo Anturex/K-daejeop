@@ -85,7 +85,12 @@ function resetForm() {
 
   errorEl.textContent = "";
   errorEl.hidden = true;
-  submitBtn.disabled = false;
+  updateSubmitState();
+}
+
+/* ===== 제출 버튼 상태 관리 ===== */
+function updateSubmitState() {
+  submitBtn.disabled = !(selectedRating > 0 && selectedFile !== null);
 }
 
 // 글로벌 접근
@@ -100,6 +105,7 @@ function handleRating(e) {
   ratingBtns.forEach((b) =>
     b.classList.toggle("is-active", Number(b.dataset.rating) === val),
   );
+  updateSubmitState();
 }
 
 /* ===== 사진 업로드 ===== */
@@ -138,6 +144,7 @@ function processFile(file) {
     return;
   }
   selectedFile = file;
+  updateSubmitState();
   const reader = new FileReader();
   reader.onload = (ev) => {
     photoPreview.src = ev.target.result;
@@ -183,10 +190,12 @@ function buildWheelItems(container, values, selected, formatter) {
     container.appendChild(createWheelItem("", ""));
   }
 
-  // 선택 값으로 스크롤
+  // 선택 값으로 스크롤 (레이아웃 후 실행 보장)
   const idx = values.indexOf(selected);
   if (idx >= 0) {
-    container.scrollTop = idx * ITEM_H;
+    requestAnimationFrame(() => {
+      container.scrollTop = idx * ITEM_H;
+    });
   }
 }
 

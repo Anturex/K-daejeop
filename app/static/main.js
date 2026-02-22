@@ -109,6 +109,7 @@ function renderPlace(place) {
   kakao.maps.event.addListener(marker, "click", () => {
     infoWindow.setContent(content);
     infoWindow.open(map, marker);
+    map.panTo(pos);
   });
   infoWindow.setContent(content);
   infoWindow.open(map, marker);
@@ -311,23 +312,35 @@ async function doSearch(query) {
 
   // ── 3) 항상 첫 번째 결과를 지도 중심에 고정 ──
   try {
-    map.setCenter(focusPos);
-
     if (local.length > 1) {
       const bounds = new kakao.maps.LatLngBounds();
       local.forEach(({ position }) => bounds.extend(position));
       map.setBounds(bounds);
-      // setBounds가 계산한 줌 레벨을 가져온 뒤 다시 중심 고정
-      const fitLevel = map.getLevel();
-      map.setCenter(focusPos);
-      map.setLevel(Math.min(fitLevel, 6));
+      // setBounds는 비동기로 동작 — 완료 후 중심 고정
+      setTimeout(() => {
+        const fitLevel = map.getLevel();
+        map.setCenter(focusPos);
+        map.setLevel(Math.min(fitLevel, 6));
+      }, 100);
     } else {
+      map.setCenter(focusPos);
       map.setLevel(3);
     }
 
-    kakao.maps.event.addListenerOnce(map, "idle", () =>
-      highlightArea(focusPos),
-    );
+    // idle 이벤트로 하이라이트 표시 (첫 번째 검색에서 idle 미발생 시 fallback)
+    let highlighted = false;
+    kakao.maps.event.addListenerOnce(map, "idle", () => {
+      if (!highlighted) {
+        highlighted = true;
+        highlightArea(focusPos);
+      }
+    });
+    setTimeout(() => {
+      if (!highlighted) {
+        highlighted = true;
+        highlightArea(focusPos);
+      }
+    }, 500);
   } catch (e) {
     console.warn("[K-daejeop] map adjust:", e);
     // 지도 조작 실패해도 에러 토스트 표시 안 함 (결과는 이미 보임)
@@ -470,9 +483,12 @@ function initMap() {
 
 function relayoutMap() {
   if (!map) return;
+  // 현재 위치·줄 레벨 보존 (탭 전환 시 초기화 방지)
+  const center = map.getCenter();
+  const level = map.getLevel();
   map.relayout();
-  map.setCenter(new kakao.maps.LatLng(KOREA_CENTER.lat, KOREA_CENTER.lng));
-  map.setLevel(DEFAULT_LEVEL);
+  map.setCenter(center);
+  map.setLevel(level);
 }
 
 function boot() {
