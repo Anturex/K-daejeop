@@ -217,20 +217,42 @@ function init() {
 
   showLoading();
 
+  // OAuth 콜백 감지: Google 로그인 후 Supabase가 ?code= 파라미터와 함께 리다이렉트
+  // INITIAL_SESSION은 code 교환 완료 전에 null session으로 발화하므로 이 경우 로딩 유지
+  const isOAuthCallback = new URLSearchParams(window.location.search).has("code");
+  let authResolved = false;
+
+  // 2FA 등으로 교환이 오래 걸릴 경우 대비 타임아웃 (10초)
+  if (isOAuthCallback) {
+    setTimeout(() => {
+      if (!authResolved) {
+        authResolved = true;
+        showLoginScreen();
+      }
+    }, 10000);
+  }
+
   sb.auth.onAuthStateChange((event, session) => {
     if (session?.user) {
+      authResolved = true;
       showApp(session.user);
+    } else if (event === "INITIAL_SESSION" && isOAuthCallback && !authResolved) {
+      // code 교환 완료 전 — 로딩 스피너 유지
     } else {
+      authResolved = true;
       showLoginScreen();
     }
   });
 
   sb.auth.getSession().then(({ data: { session } }) => {
+    if (authResolved) return; // onAuthStateChange가 이미 처리함
+    authResolved = true;
     if (session?.user) {
       showApp(session.user);
-    } else {
+    } else if (!isOAuthCallback) {
       showLoginScreen();
     }
+    // isOAuthCallback + session null: onAuthStateChange(SIGNED_IN) 대기
   });
 }
 
