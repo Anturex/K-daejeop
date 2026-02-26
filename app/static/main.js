@@ -497,7 +497,7 @@ function bindEvents() {
 
 /* ===== Init ===== */
 const KOREA_CENTER = { lat: 36.5, lng: 127.0 };
-const DEFAULT_LEVEL = 12;
+const DEFAULT_LEVEL = window.innerWidth <= 640 ? 13 : 12;
 let mapInitialized = false;
 
 function initMap() {
