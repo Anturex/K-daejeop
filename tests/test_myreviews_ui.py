@@ -399,3 +399,22 @@ class TestMyReviewsSidePanel:
         """개별 핀에는 다중 방문 배지를 표시하지 않습니다 (같은 식당은 1개로 카운트)."""
         src = pathlib.Path("app/static/myreviews.js").read_text()
         assert "rv-pin__multi" not in src
+
+    def test_main_js_search_centering_uses_idle_event(self):
+        """main.js 다중 결과 검색 시 setBounds 완료를 idle 이벤트로 감지합니다."""
+        src = pathlib.Path("app/static/main.js").read_text()
+        # idle 이벤트 기반 중심 고정 (첫 검색에서 level 12→5 애니메이션 대응)
+        assert "onBoundsIdle" in src
+        assert "addListener" in src
+        assert "removeListener" in src
+
+    def test_css_infowindow_name_word_break(self):
+        """styles.css 인포윈도우 가게 이름에 줄바꿈 처리가 있습니다."""
+        css = pathlib.Path("app/static/styles.css").read_text()
+        assert "word-break: keep-all" in css
+        assert "overflow-wrap: break-word" in css
+
+    def test_css_infowindow_actions_wrap(self):
+        """styles.css 인포윈도우 액션 영역이 flex-wrap을 사용합니다."""
+        css = pathlib.Path("app/static/styles.css").read_text()
+        assert "flex-wrap: wrap" in css

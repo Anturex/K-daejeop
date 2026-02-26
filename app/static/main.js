@@ -322,12 +322,27 @@ async function doSearch(query) {
       const bounds = new kakao.maps.LatLngBounds();
       local.forEach(({ position }) => bounds.extend(position));
       map.setBounds(bounds);
-      // setBounds는 비동기로 동작 — 완료 후 중심 고정
-      setTimeout(() => {
+      // setBounds 애니메이션 완료를 idle 이벤트로 감지 후 중심 고정
+      // (첫 검색 시 level 12→5 애니메이션이 100ms 넘어 setTimeout 방식이 실패함)
+      let centerDone = false;
+      const onBoundsIdle = () => {
+        kakao.maps.event.removeListener(map, "idle", onBoundsIdle);
+        if (centerDone) return;
+        centerDone = true;
         const fitLevel = map.getLevel();
         map.setCenter(focusPos);
         map.setLevel(Math.min(fitLevel, 6));
-      }, 100);
+      };
+      kakao.maps.event.addListener(map, "idle", onBoundsIdle);
+      setTimeout(() => {
+        if (!centerDone) {
+          centerDone = true;
+          kakao.maps.event.removeListener(map, "idle", onBoundsIdle);
+          const fitLevel = map.getLevel();
+          map.setCenter(focusPos);
+          map.setLevel(Math.min(fitLevel, 6));
+        }
+      }, 600);
     } else {
       map.setCenter(focusPos);
       map.setLevel(3);

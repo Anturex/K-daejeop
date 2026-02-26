@@ -40,7 +40,7 @@ class TestReviewModalPresent:
         body = response.text
         assert 'id="photo-zone"' in body
         assert 'id="photo-input"' in body
-        assert 'accept="image/*"' in body
+        assert 'accept="image/*,.heic,.heif"' in body
 
     @pytest.mark.asyncio
     async def test_review_modal_has_text_area(self, client):
@@ -234,3 +234,36 @@ class TestMigrationFileExists:
         import pathlib
         css = pathlib.Path("app/static/styles.css").read_text()
         assert ".review-visit-badge" in css
+
+    @pytest.mark.asyncio
+    async def test_html_has_heic2any_script(self, client):
+        """index.html에 heic2any CDN 스크립트가 포함됩니다."""
+        response = await client.get("/")
+        body = response.text
+        assert "heic2any" in body
+
+    @pytest.mark.asyncio
+    async def test_html_photo_input_accepts_heic(self, client):
+        """파일 입력에 .heic/.heif 확장자가 허용됩니다."""
+        response = await client.get("/")
+        body = response.text
+        assert ".heic" in body
+        assert ".heif" in body
+
+    def test_reviews_js_has_heic_conversion(self):
+        """reviews.js에 HEIC 감지 및 변환 로직이 있습니다."""
+        import pathlib
+        src = pathlib.Path("app/static/reviews.js").read_text()
+        assert "isHeicFile" in src
+        assert "heic2any" in src
+        assert "image/heic" in src
+        assert "image/jpeg" in src
+
+    def test_reviews_js_isheicfile_ios_guard(self):
+        """isHeicFile이 MIME type이 image/*이면 false를 반환합니다 (iOS JPEG with .heic filename)."""
+        import pathlib
+        src = pathlib.Path("app/static/reviews.js").read_text()
+        # iOS Safari sends image/jpeg MIME type even for .heic files
+        # The guard prevents heic2any being called on already-decoded JPEG
+        assert 'file.type.startsWith("image/")' in src
+        assert "return false" in src

@@ -155,7 +155,44 @@ function handlePhotoSelect(e) {
   if (file) processFile(file);
 }
 
-function processFile(file) {
+function isHeicFile(file) {
+  if (file.type === "image/heic" || file.type === "image/heif") return true;
+  if (file.type.startsWith("image/")) return false; // iOS: JPEG bytes with .heic filename
+  const ext = file.name.split(".").pop().toLowerCase();
+  return ext === "heic" || ext === "heif";
+}
+
+async function processFile(file) {
+  // HEIC/HEIF → JPEG 변환 (대부분 브라우저가 HEIC 미지원)
+  if (isHeicFile(file)) {
+    if (file.size > 10 * 1024 * 1024) {
+      showError("파일 크기는 10MB 이하여야 합니다.");
+      return;
+    }
+    if (!window.heic2any) {
+      showError("HEIC 변환 라이브러리를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+      return;
+    }
+    const hintEl = photoPrompt.querySelector(".photo-zone__hint");
+    const origHint = hintEl?.textContent;
+    if (hintEl) hintEl.textContent = "HEIC 변환 중…";
+    try {
+      const result = await window.heic2any({ blob: file, toType: "image/jpeg", quality: 0.85 });
+      const blob = Array.isArray(result) ? result[0] : result;
+      const converted = new File(
+        [blob],
+        file.name.replace(/\.(heic|heif)$/i, ".jpg"),
+        { type: "image/jpeg" }
+      );
+      if (hintEl) hintEl.textContent = origHint;
+      await processFile(converted);
+    } catch {
+      if (hintEl) hintEl.textContent = origHint;
+      showError("HEIC 변환에 실패했습니다. JPG 또는 PNG로 올려 주세요.");
+    }
+    return;
+  }
+
   if (!file.type.startsWith("image/")) {
     showError("이미지 파일만 첨부할 수 있습니다.");
     return;
