@@ -739,7 +739,8 @@ function initPanelSwipe() {
     panel.style.transition = "";
     panel.style.transform = "";
     if (dragY > 120) {
-      window.__deactivateMyReviews?.();
+      // 패널만 숨김 — 핀은 유지 (완전 종료는 별 버튼 재클릭)
+      hidePanel();
     }
     // dragY ≤ 120: CSS transition이 is-open translateY(0)로 복귀
   });

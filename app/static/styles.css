@@ -2329,7 +2329,6 @@ body {
 
   /* 내 맛집 버튼: 텍스트 숨기고 아이콘만 */
   .my-reviews-toggle {
-    font-size: 0;
     width: 36px;
     height: 36px;
     padding: 0;
@@ -2339,6 +2338,9 @@ body {
   }
   .my-reviews-toggle svg {
     flex-shrink: 0;
+  }
+  .my-reviews-toggle__text {
+    display: none;
   }
 
   /* 유저 메뉴: 이름·캐럿 숨기고 아바타만 */
