@@ -83,6 +83,12 @@ function buildInfoContent(place) {
   const pid = place.id || "";
 
   let h = '<div class="iw-card">';
+  h += `<button class="iw-card__close-btn" type="button" aria-label="닫기">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+      stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </button>`;
   h += `<div class="iw-card__name">${escapeHtml(name)}</div>`;
   if (category) h += `<span class="iw-card__category">${escapeHtml(category)}</span>`;
   if (address) h += `<div class="iw-card__address">${escapeHtml(address)}</div>`;
@@ -327,14 +333,16 @@ async function doSearch(query) {
       map.setLevel(3);
     }
 
-    // idle 이벤트로 하이라이트 표시 (첫 번째 검색에서 idle 미발생 시 fallback)
+    // idle 이벤트로 하이라이트 표시 (addListenerOnce 미지원 → 수동 once 구현)
     let highlighted = false;
-    kakao.maps.event.addListenerOnce(map, "idle", () => {
+    const onHighlightIdle = () => {
+      kakao.maps.event.removeListener(map, "idle", onHighlightIdle);
       if (!highlighted) {
         highlighted = true;
         highlightArea(focusPos);
       }
-    });
+    };
+    kakao.maps.event.addListener(map, "idle", onHighlightIdle);
     setTimeout(() => {
       if (!highlighted) {
         highlighted = true;
@@ -446,6 +454,13 @@ function bindEvents() {
     }
   });
 
+  // 인포윈도우 닫기 버튼 (이벤트 위임)
+  document.addEventListener("click", (e) => {
+    if (e.target.closest(".iw-card__close-btn")) {
+      infoWindow.close();
+    }
+  });
+
   // 인포윈도우 내 "리뷰 남기기" 버튼 (이벤트 위임)
   document.addEventListener("click", (e) => {
     const btn = e.target.closest(".iw-card__review-btn");
@@ -478,6 +493,13 @@ function initMap() {
   });
   infoWindow = new kakao.maps.InfoWindow({ zIndex: 2 });
   mapInitialized = true;
+  // myreviews.js에서 접근할 수 있도록 노출
+  window.__getMap = () => map;
+  window.__clearSearchMarkers = () => {
+    clearMarkers();
+    clearHighlight();
+    infoWindow.close();
+  };
   bindEvents();
 }
 

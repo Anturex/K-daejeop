@@ -72,6 +72,7 @@ K-daejeop/
 │   │   ├── auth.js              # Supabase 인증, 로그인/앱 화면 전환, 튜토리얼 체크
 │   │   ├── main.js              # 지도 초기화, 검색, 자동완성, 마커, 리뷰 버튼
 │   │   ├── reviews.js           # 리뷰 모달 (별점·사진·텍스트·날짜), Supabase CRUD
+│   │   ├── myreviews.js         # 내 맛집 클러스터 맵 (클러스터링 + 플라잉 애니메이션)
 │   │   ├── tutorial.js          # 온보딩 튜토리얼 5단계 카드
 │   │   └── styles.css           # 디자인 토큰, 로그인, 앱, 리뷰, 튜토리얼 스타일
 │   └── templates/
@@ -79,7 +80,7 @@ K-daejeop/
 ├── supabase/
 │   └── migrations/
 │       └── 001_reviews_and_profiles.sql  # reviews, user_profiles, storage 스키마
-├── tests/                       # pytest 테스트 (86개)
+├── tests/                       # pytest 테스트 (138개)
 │   ├── __init__.py
 │   ├── conftest.py              # fixtures, mock 환경변수
 │   ├── test_app.py
@@ -89,6 +90,7 @@ K-daejeop/
 │   ├── test_pages.py
 │   ├── test_places.py
 │   ├── test_reviews_ui.py       # 리뷰 모달·튜토리얼 HTML 렌더링 검증
+│   ├── test_myreviews_ui.py     # 내 맛집 클러스터 맵 HTML/JS/CSS 검증
 │   └── test_supabase_connection.py  # 실제 Supabase 연결 검증 (네트워크 필요)
 ├── scripts/
 │   └── serve.sh                 # uv run uvicorn 실행 (--reload)
@@ -123,6 +125,19 @@ K-daejeop/
    - **리뷰** 텍스트 작성 (맛, 분위기, 서비스 등 자유롭게)
    - **방문 날짜** 스크롤 휠로 선택 (기본: 오늘)
 3. "리뷰 저장하기" → Supabase Storage(사진) + Database(리뷰) 저장
+
+### 내 맛집 클러스터 맵
+
+헤더의 **"내 맛집"** 버튼으로 활성화.
+
+- 내가 리뷰한 식당 전체를 지도 위에 표시
+- **줌 레벨에 따라 자동 클러스터링**: 줌아웃 시 근처 리뷰들이 2×2 사진 그리드 핀으로 합쳐지고, 줌인 시 다시 개별 핀으로 퍼짐
+- **플라잉 애니메이션**: 클러스터가 뭉치고 흩어질 때 이전 위치→새 위치로 날아가는 CSS 트랜지션
+- **클러스터 클릭** → 해당 지역으로 줌인
+- **개별 핀 클릭** → 리뷰 상세 bottom sheet (사진·별점·방문일·텍스트)
+- **사이드 패널 드릴다운**: 지역 목록 → 클릭 시 해당 지역 내 장소 목록(Level 1) → 장소 클릭 시 지도 이동 + 리뷰 상세 표시
+- **같은 장소 여러 방문**: 핀을 클릭하면 방문 횟수 배지 표시, 리뷰 상세 패널에서 ← → 버튼으로 방문별 리뷰 스와이프
+- **검색 결과 카드 닫기**: 우상단 ✕ 버튼으로 인포윈도우 닫기
 
 ### 폐쇄형 시스템 (향후 구현)
 

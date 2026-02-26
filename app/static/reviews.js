@@ -33,6 +33,7 @@ const dayWheel = document.getElementById("wheel-day");
 
 const submitBtn = document.getElementById("review-submit-btn");
 const errorEl = document.getElementById("review-error");
+const visitBadgeEl = document.getElementById("review-visit-badge");
 
 /* ===== 상태 ===== */
 let currentPlace = null; // { id, name, address, category, x, y }
@@ -61,6 +62,25 @@ function openReviewModal(place) {
 
   // 포커스 트랩
   setTimeout(() => closeBtn.focus(), 100);
+
+  // 이미 방문한 식당이면 N번째 방문 뱃지 표시
+  if (place.id) loadVisitCount(place.id);
+}
+
+async function loadVisitCount(placeId) {
+  const sb = window.__getSupabase?.();
+  if (!sb) return;
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  const { count } = await sb
+    .from("reviews")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("place_id", placeId);
+  if (count > 0 && visitBadgeEl) {
+    visitBadgeEl.textContent = `🍽️ ${count + 1}번째 방문`;
+    visitBadgeEl.hidden = false;
+  }
 }
 
 function closeReviewModal() {
@@ -85,6 +105,7 @@ function resetForm() {
 
   errorEl.textContent = "";
   errorEl.hidden = true;
+  if (visitBadgeEl) visitBadgeEl.hidden = true;
   updateSubmitState();
 }
 

@@ -205,3 +205,32 @@ class TestMigrationFileExists:
         sql = pathlib.Path("supabase/migrations/001_reviews_and_profiles.sql").read_text()
         assert "handle_new_user" in sql
         assert "on_auth_user_created" in sql
+
+    @pytest.mark.asyncio
+    async def test_review_modal_has_visit_badge(self, client):
+        """리뷰 모달에 N번째 방문 뱃지 요소가 있습니다."""
+        response = await client.get("/")
+        body = response.text
+        assert 'id="review-visit-badge"' in body
+        assert 'review-visit-badge' in body
+
+    def test_reviews_js_has_visit_badge_logic(self):
+        """reviews.js에 N번째 방문 뱃지 로직이 있습니다."""
+        import pathlib
+        src = pathlib.Path("app/static/reviews.js").read_text()
+        assert "visitBadgeEl" in src
+        assert "loadVisitCount" in src
+        assert "번째 방문" in src
+
+    def test_myreviews_js_cluster_deduplicates_photos(self):
+        """buildCluster가 place_id 기준으로 사진을 중복 제거합니다."""
+        import pathlib
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        assert "uniqueReviews" in src
+        assert "seen.has(key)" in src
+
+    def test_css_has_visit_badge_style(self):
+        """styles.css에 N번째 방문 뱃지 스타일이 있습니다."""
+        import pathlib
+        css = pathlib.Path("app/static/styles.css").read_text()
+        assert ".review-visit-badge" in css

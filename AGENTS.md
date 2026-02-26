@@ -66,6 +66,7 @@ app/
 │   ├── auth.js          # Supabase 인증, 화면 전환, 튜토리얼 상태 체크
 │   ├── main.js          # 지도 초기화, 검색, 자동완성, 마커, 리뷰 버튼
 │   ├── reviews.js       # 리뷰 모달 (별점·사진·날짜·텍스트), Supabase CRUD
+│   ├── myreviews.js     # 내 맛집 클러스터 맵 (클러스터링 + 플라잉 애니메이션 + 사이드 패널)
 │   ├── tutorial.js      # 온보딩 튜토리얼 5단계 카드
 │   └── styles.css       # 디자인 토큰, 로그인, 앱, 리뷰, 튜토리얼 스타일
 └── templates/
@@ -81,6 +82,10 @@ supabase/
 - `auth.js`: supabase 클라이언트 생성 → `window.__getSupabase()` 노출
 - `auth.js`: 튜토리얼 저장 → `window.__markTutorialSeen()` 노출
 - `main.js`: 리뷰 모달 열기 → `window.__openReviewModal(place)` 호출
+- `main.js`: 지도 인스턴스 → `window.__getMap()` 노출 (initMap 이후)
+- `main.js`: 검색 마커 제거 → `window.__clearSearchMarkers()` 노출
+- `myreviews.js`: 내 맛집 모드 → `window.__activateMyReviews()` / `window.__deactivateMyReviews()` / `window.__refreshMyReviews()`
+- `myreviews.js`: 사이드 패널 → `showPanel()` / `hidePanel()` / `renderPanel()` / `groupByRegion()` / `extractRegion(address)`
 - 커스텀 이벤트: `app:visible`, `tutorial:show`, `review:saved`
 
 ### Supabase 테이블 (RLS 적용)
@@ -127,6 +132,14 @@ supabase/
 6. **테스트 필수**: 모든 변경 후 `uv run pytest tests/ -v` 실행. `test_supabase_connection.py`는 실제 네트워크 필요 시 `--ignore`로 제외 가능.
 7. **리뷰 모달 z-index**: 오버레이 10001, 모달 10002. 로그인 화면(10000)보다 위.
 8. **Supabase 직접 접근**: 리뷰 CRUD와 사진 업로드는 프론트엔드에서 Supabase JS SDK로 직접 수행. RLS가 보안 담당.
+
+9. **myreviews 클러스터링**: 지리 격자 기반(`GRID_DEG` 배열, 줌레벨 인덱스). `Math.floor(lat/grid), Math.floor(lng/grid)` 키로 그룹화. `fitBounds` 후 `idle` 이벤트 이전에는 `zoom_changed` 무시 (`initialRenderDone` 플래그).
+10. **플라잉 애니메이션**: `animateTransition()`은 구 클러스터와 신 클러스터를 geo 거리로 매칭 후 CSS `translate + scale` 트랜지션 적용. `requestAnimationFrame`을 두 번 감싸야 `transition: none`이 적용된 후 애니메이션이 실행됨. 픽셀 좌표 변환은 `containerPointFromCoords` → `containerPixelFromCoords` 순서로 시도 (API 버전 차이 대응).
+11. **사이드 패널 드릴다운**: Level 0 = 지역 목록(`renderPanel`), Level 1 = 지역 내 장소 목록(`renderPanelLevel1`). 지역 클릭 → Level 1, 뒤로가기 버튼 → `renderPanel()` 호출. Level 1 장소 클릭 → `myMap.setCenter/setLevel(3)` + `showDetail(cluster)`.
+12. **같은 장소 여러 리뷰**: `place_id`로 중복 제거 후 최신순 정렬. 핀 클릭 시 `showDetail(cluster)`에 전체 리뷰 배열 전달. `detailIdx` 로 현재 인덱스 관리, `review-detail-prev/next` 버튼으로 스와이프. 클러스터 배지는 항상 표시 (`count > MAX_CLUSTER_PHOTOS` 조건 제거).
+13. **인포윈도우 닫기**: `buildInfoContent`에 `.iw-card__close-btn` 추가. 이벤트 위임(`bindEvents`)으로 `infoWindow.close()` 처리.
+14. **Kakao Maps `addListenerOnce` 미존재**: `kakao.maps.event`에는 `addListenerOnce`가 없음. 수동 once 패턴 사용: `addListener` + 콜백 내 `removeListener`. `idle` 미발생 대비 setTimeout 폴백도 추가 (`idleRendered` 플래그로 중복 방지). `main.js`도 동일하게 적용.
+15. **테스트 기준 (138개)**: `test_myreviews_ui.py` 추가. 기능 추가 시 해당 파일에 테스트도 추가.
 
 ## 향후 확장 예정
 - 리뷰 10개 달성 시 다른 사용자 추천 맛집 노출 기능
