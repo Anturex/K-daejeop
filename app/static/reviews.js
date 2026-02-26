@@ -186,9 +186,10 @@ async function processFile(file) {
       );
       if (hintEl) hintEl.textContent = origHint;
       await processFile(converted);
-    } catch {
+    } catch (err) {
+      console.error("[reviews] heic2any 변환 실패:", err);
       if (hintEl) hintEl.textContent = origHint;
-      showError("HEIC 변환에 실패했습니다. JPG 또는 PNG로 올려 주세요.");
+      showError("HEIC 변환에 실패했습니다. iPhone에서 직접 올리거나, Mac 미리보기 앱에서 JPG로 내보내기 후 업로드해 주세요.");
     }
     return;
   }

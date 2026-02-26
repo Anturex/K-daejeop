@@ -79,8 +79,8 @@ function buildInfoContent(place) {
   const category = place.category_group_name || "";
   const address = place.road_address_name || place.address_name || "";
   const phone = place.phone || "";
-  const url = place.place_url || "";
   const pid = place.id || "";
+  const url = place.place_url || (pid ? `https://place.map.kakao.com/${pid}` : "");
 
   let h = '<div class="iw-card">';
   h += `<button class="iw-card__close-btn" type="button" aria-label="닫기">
