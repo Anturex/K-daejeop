@@ -462,12 +462,28 @@ function buildPin(cluster) {
 }
 
 /* ===== 사이드 패널: 지역별 리뷰 목록 ===== */
+function isMobile() {
+  return window.innerWidth <= 640;
+}
+
 function showPanel() {
   document.getElementById("my-reviews-panel")?.classList.add("is-open");
+  if (isMobile()) {
+    const backdrop = document.getElementById("panel-backdrop");
+    if (backdrop) {
+      backdrop.hidden = false;
+      requestAnimationFrame(() => backdrop.classList.add("is-visible"));
+    }
+  }
 }
 
 function hidePanel() {
   document.getElementById("my-reviews-panel")?.classList.remove("is-open");
+  const backdrop = document.getElementById("panel-backdrop");
+  if (backdrop) {
+    backdrop.classList.remove("is-visible");
+    backdrop.hidden = true;
+  }
 }
 
 function groupByRegion(reviews) {
@@ -695,6 +711,11 @@ function showToast(msg, duration = 0) {
 
 /* ===== 이벤트 바인딩 ===== */
 document.addEventListener("DOMContentLoaded", () => {
+  // 모바일 바텀시트 백드롭 클릭 → 패널 닫기
+  document.getElementById("panel-backdrop")?.addEventListener("click", () => {
+    window.__deactivateMyReviews?.();
+  });
+
   // 리뷰 상세 닫기
   document
     .getElementById("review-detail-close")

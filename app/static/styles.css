@@ -2243,3 +2243,102 @@ body {
   background: var(--surface-hover);
   color: var(--text-primary);
 }
+
+/* ===== 바텀시트 백드롭 ===== */
+.panel-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 8980;
+  animation: backdropIn 0.2s ease;
+}
+.panel-backdrop.is-visible {
+  display: block;
+}
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ===== 모바일 (≤640px): 컴팩트 헤더 + 바텀시트 패널 ===== */
+@media (max-width: 640px) {
+  /* CSS 변수 업데이트 → 맵 높이 자동 조정 */
+  :root {
+    --header-height: 52px;
+  }
+
+  /* 840px 규칙의 column 스태킹 해제 */
+  .topbar {
+    flex-direction: row;
+    align-items: center;
+    height: 52px;
+    padding: 0 0.75rem;
+    gap: 0.5rem;
+  }
+
+  /* 브랜드 텍스트 숨김, 아이콘만 표시 */
+  .brand__name {
+    display: none;
+  }
+
+  /* 검색창 남은 공간 모두 차지 */
+  .search-wrapper {
+    flex: 1;
+    max-width: none;
+  }
+
+  /* auth 버튼 절대 위치 해제 */
+  .auth {
+    position: static;
+    align-self: auto;
+  }
+
+  /* 맵 높이 (dvh: 모바일 브라우저 주소창 고려) */
+  #map {
+    height: calc(100vh - 52px);
+    height: calc(100dvh - 52px);
+    min-height: 0;
+  }
+
+  /* 내 맛집 패널 → 바텀시트 */
+  .my-reviews-panel {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 72vh;
+    max-height: 72vh;
+    transform: translateY(100%);
+    border-radius: 1rem 1rem 0 0;
+    box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.18);
+  }
+
+  .my-reviews-panel.is-open {
+    transform: translateY(0);
+  }
+
+  /* 바텀시트 드래그 핸들 */
+  .my-reviews-panel__header::before {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 10px;
+  }
+
+  .my-reviews-panel__header {
+    flex-direction: column;
+    align-items: stretch;
+    padding-top: 10px;
+  }
+
+  .my-reviews-panel__header > div,
+  .my-reviews-panel__header > span {
+    display: flex;
+    align-items: center;
+  }
+}

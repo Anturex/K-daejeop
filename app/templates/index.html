@@ -207,6 +207,9 @@
       </div>
     </main>
 
+    <!-- 모바일 바텀시트 백드롭 -->
+    <div id="panel-backdrop" class="panel-backdrop" hidden></div>
+
     <!-- ==================== 내 맛집 사이드 패널 ==================== -->
     <aside id="my-reviews-panel" class="my-reviews-panel" aria-label="내 맛집 목록">
       <div class="my-reviews-panel__header">
@@ -284,7 +287,7 @@
       <div class="review-section">
         <label class="review-section__label">사진 <span class="review-section__required">필수</span></label>
         <div id="photo-zone" class="photo-zone">
-          <input id="photo-input" type="file" accept="image/*" hidden />
+          <input id="photo-input" type="file" accept="image/*,.heic,.heif" hidden />
           <img id="photo-preview" class="photo-zone__preview" src="" alt="미리보기" hidden />
           <div id="photo-prompt" class="photo-zone__prompt">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
@@ -294,7 +297,7 @@
               <polyline points="21 15 16 10 5 21" />
             </svg>
             <span>클릭하거나 드래그하여 사진 첨부</span>
-            <span class="photo-zone__hint">JPG, PNG (최대 10MB)</span>
+            <span class="photo-zone__hint">JPG, PNG, HEIC (최대 10MB)</span>
           </div>
         </div>
       </div>
@@ -393,6 +396,8 @@
   <!-- ==================== Scripts ==================== -->
   <!-- Supabase JS SDK (v2) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- HEIC → JPEG 변환 (iOS 사진 업로드 지원) -->
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="{{ kakao_sdk_url }}?appkey={{ kakao_js_key }}&autoload=false&libraries=services"></script>
   <script type="module" src="/static/auth.js?v={{ v }}"></script>
   <script type="module" src="/static/main.js?v={{ v }}"></script>
