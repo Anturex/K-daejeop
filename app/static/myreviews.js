@@ -711,7 +711,10 @@ function showToast(msg, duration = 0) {
 
 /* ===== 이벤트 바인딩 ===== */
 document.addEventListener("DOMContentLoaded", () => {
-  // 모바일 바텀시트 백드롭 클릭 → 패널 닫기
+  // 모바일 바텀시트 닫기 버튼 + 백드롭 클릭 → 패널 닫기
+  document.getElementById("my-reviews-panel-close")?.addEventListener("click", () => {
+    window.__deactivateMyReviews?.();
+  });
   document.getElementById("panel-backdrop")?.addEventListener("click", () => {
     window.__deactivateMyReviews?.();
   });
