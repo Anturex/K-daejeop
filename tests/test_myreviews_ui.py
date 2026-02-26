@@ -414,7 +414,8 @@ class TestMyReviewsSidePanel:
         assert "word-break: keep-all" in css
         assert "overflow-wrap: break-word" in css
 
-    def test_css_infowindow_actions_column(self):
-        """styles.css 인포윈도우 액션 영역이 column 방향으로 버튼 오버플로를 방지합니다."""
+    def test_css_infowindow_actions_row(self):
+        """styles.css 인포윈도우 액션 영역이 row 방향으로 버튼을 한 줄에 표시합니다."""
         css = pathlib.Path("app/static/styles.css").read_text()
-        assert "flex-direction: column" in css
+        assert "flex-direction: row" in css
+        assert "flex-wrap: wrap" in css
