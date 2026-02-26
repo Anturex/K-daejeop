@@ -419,3 +419,19 @@ class TestMyReviewsSidePanel:
         css = pathlib.Path("app/static/styles.css").read_text()
         assert "flex-direction: row" in css
         assert "flex-wrap: wrap" in css
+
+    def test_css_mobile_fixed_viewport(self):
+        """styles.css 모바일 뷰포트가 position: fixed로 iOS 횡스크롤을 차단합니다."""
+        css = pathlib.Path("app/static/styles.css").read_text()
+        assert "position: fixed" in css
+        # html/body fixed + app fixed inset:0 이 있어야 함
+        assert "inset: 0" in css
+
+    def test_myreviews_js_has_panel_swipe(self):
+        """myreviews.js에 바텀시트 스와이프 닫기 제스처가 구현돼 있습니다."""
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        assert "initPanelSwipe" in src
+        assert "touchstart" in src
+        assert "touchmove" in src
+        assert "touchend" in src
+        assert "dragY" in src

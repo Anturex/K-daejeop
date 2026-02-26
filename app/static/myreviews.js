@@ -709,12 +709,47 @@ function showToast(msg, duration = 0) {
     setTimeout(() => statusEl.classList.remove("is-visible"), duration);
 }
 
+/* ===== 바텀시트 스와이프 닫기 ===== */
+function initPanelSwipe() {
+  const panel = document.getElementById("my-reviews-panel");
+  const header = panel?.querySelector(".my-reviews-panel__header");
+  if (!panel || !header) return;
+
+  let startY = 0;
+  let dragY = 0;
+  let dragging = false;
+
+  header.addEventListener("touchstart", (e) => {
+    if (!panel.classList.contains("is-open")) return;
+    startY = e.touches[0].clientY;
+    dragY = 0;
+    dragging = true;
+    panel.style.transition = "none";
+  }, { passive: true });
+
+  header.addEventListener("touchmove", (e) => {
+    if (!dragging) return;
+    dragY = Math.max(0, e.touches[0].clientY - startY);
+    panel.style.transform = `translateY(${dragY}px)`;
+  }, { passive: true });
+
+  header.addEventListener("touchend", () => {
+    if (!dragging) return;
+    dragging = false;
+    panel.style.transition = "";
+    panel.style.transform = "";
+    if (dragY > 120) {
+      window.__deactivateMyReviews?.();
+    }
+    // dragY ≤ 120: CSS transition이 is-open translateY(0)로 복귀
+  });
+}
+
 /* ===== 이벤트 바인딩 ===== */
 document.addEventListener("DOMContentLoaded", () => {
-  // 모바일 바텀시트 닫기 버튼 + 백드롭 클릭 → 패널 닫기
-  document.getElementById("my-reviews-panel-close")?.addEventListener("click", () => {
-    window.__deactivateMyReviews?.();
-  });
+  initPanelSwipe();
+
+  // 백드롭 클릭 → 패널 닫기
   document.getElementById("panel-backdrop")?.addEventListener("click", () => {
     window.__deactivateMyReviews?.();
   });
