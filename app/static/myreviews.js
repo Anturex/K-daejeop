@@ -450,8 +450,9 @@ function buildPin(cluster) {
   const review = cluster.reviews[0]; // 최신 방문 리뷰 (visited_at 내림차순 정렬됨)
   const stars = "★".repeat(review.rating) + "☆".repeat(3 - review.rating);
   const name = review.place_name || "";
+  // 짧은 이름(≤5자)은 가운데 정렬, 긴 이름은 왼쪽 기준 marquee
   const el = document.createElement("div");
-  el.className = "rv-pin";
+  el.className = "rv-pin" + (name.length <= 5 ? " rv-pin--short-name" : "");
   el.innerHTML = `
     <div class="rv-pin__photo-wrap">
       <div class="rv-pin__name"><span>${escHtml(name)}</span></div>

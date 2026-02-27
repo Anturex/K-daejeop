@@ -1761,6 +1761,7 @@ body {
 }
 
 .rv-pin__photo-wrap {
+  width: 74px; /* 사진(68px) + 좌우 마진(3px×2) 고정 — 긴 이름에 의한 폭 확장 방지 */
   background: var(--surface);
   border-radius: 10px;
   overflow: hidden;
@@ -1772,6 +1773,12 @@ body {
   overflow: hidden;
   padding: 5px 5px 4px;
   border-bottom: 1px solid var(--border);
+  text-align: left; /* 긴 이름: 왼쪽 기준 marquee */
+}
+
+/* 짧은 이름(≤5자): 가운데 정렬 */
+.rv-pin--short-name .rv-pin__name {
+  text-align: center;
 }
 
 .rv-pin__name span {
