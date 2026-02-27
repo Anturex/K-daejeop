@@ -162,6 +162,17 @@ function getFirstValidPosition(results) {
   return t ? toLatLng(t) : null;
 }
 
+/* ===== 음식점·카페 우선 정렬 =====
+ * Kakao category_group_code: FD6 = 음식점, CE7 = 카페
+ * 원래 API 순서를 유지하면서 음식 관련 장소를 앞으로 이동 */
+const FOOD_CATEGORY_CODES = new Set(["FD6", "CE7"]);
+
+function rankFoodFirst(docs) {
+  const food = docs.filter((d) => FOOD_CATEGORY_CODES.has(d.category_group_code));
+  const other = docs.filter((d) => !FOOD_CATEGORY_CODES.has(d.category_group_code));
+  return [...food, ...other];
+}
+
 function getNearbyResults(results, anchor) {
   const valid = results
     .map((place) => ({ place, position: toLatLng(place) }))
@@ -284,7 +295,7 @@ async function doSearch(query) {
   // 응답 도착 시점에 더 새로운 검색이 진행 중이면 무시
   if (mySeq !== searchSeq) return;
 
-  const results = data?.documents ?? [];
+  const results = rankFoodFirst(data?.documents ?? []);
 
   if (!results.length) {
     showNoResults(query);
@@ -386,7 +397,7 @@ function scheduleAutocomplete() {
   debounceTimer = setTimeout(async () => {
     try {
       const data = await fetchPlaces(query);
-      const docs = data?.documents ?? [];
+      const docs = rankFoodFirst(data?.documents ?? []);
       // 입력값이 바뀌었으면 무시
       if (inputEl.value.trim() !== query) return;
       openSuggestions(docs, query);
