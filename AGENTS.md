@@ -93,6 +93,26 @@ supabase/
 - `user_profiles`: tutorial_seen 플래그, 자동 생성 트리거
 - Storage `review-photos`: 유저별 폴더, 공개 읽기
 
+## 모바일 우선 원칙 (Mobile-First — 항상 적용)
+
+> 이 서비스는 **모바일에서 주로 사용**됩니다. 모든 디자인과 기능 구현 시 모바일 환경을 최우선으로 고려하세요.
+
+- 레이아웃: 터치 영역 충분히 확보 (버튼 최소 44px), 손가락으로 조작 가능한 크기
+- 타이포그래피: 작은 화면에서도 읽기 편한 폰트 크기 (최소 14px)
+- 스크롤/스와이프: iOS Safari 특성 고려 (`position: fixed` + `inset: 0`으로 횡스크롤 차단)
+- 성능: 모바일 네트워크 기준으로 API 호출 최소화, 이미지 lazy loading
+- 인터랙션: hover보다 touch/tap 기반으로 설계, 터치 이벤트 핸들링 포함
+
+## 기능 추가 필수 절차 (매번 반드시 수행)
+
+> 기능 추가·수정 시 아래 3단계를 **순서대로** 완료해야 합니다.
+
+1. **테스트 코드 추가**: 새 기능의 동작을 검증하는 테스트를 `tests/` 에 추가
+   - JS/CSS 변경 → `test_myreviews_ui.py` 또는 `test_reviews_ui.py`에 문자열 포함 여부 검증
+   - Python 변경 → 해당 라우터/서비스 테스트 파일에 추가
+2. **전체 테스트 실행**: `uv run pytest tests/ -q --ignore=tests/test_supabase_connection.py` 전부 통과 확인
+3. **문서 업데이트**: `README.md`(사용자용)와 `CLAUDE.md`(AI 컨텍스트)에 변경 내용 반영, 테스트 수 갱신
+
 ## 코딩 규칙
 
 ### Python
@@ -139,7 +159,15 @@ supabase/
 12. **같은 장소 여러 리뷰**: `place_id`로 중복 제거 후 최신순 정렬. 핀 클릭 시 `showDetail(cluster)`에 전체 리뷰 배열 전달. `detailIdx` 로 현재 인덱스 관리, `review-detail-prev/next` 버튼으로 스와이프. 클러스터 배지는 항상 표시 (`count > MAX_CLUSTER_PHOTOS` 조건 제거).
 13. **인포윈도우 닫기**: `buildInfoContent`에 `.iw-card__close-btn` 추가. 이벤트 위임(`bindEvents`)으로 `infoWindow.close()` 처리.
 14. **Kakao Maps `addListenerOnce` 미존재**: `kakao.maps.event`에는 `addListenerOnce`가 없음. 수동 once 패턴 사용: `addListener` + 콜백 내 `removeListener`. `idle` 미발생 대비 setTimeout 폴백도 추가 (`idleRendered` 플래그로 중복 방지). `main.js`도 동일하게 적용.
-15. **테스트 기준 (138개)**: `test_myreviews_ui.py` 추가. 기능 추가 시 해당 파일에 테스트도 추가.
+15. **테스트 기준 (176개)**: `test_myreviews_ui.py` 추가. 기능 추가 시 해당 파일에 테스트도 추가.
+16. **모바일 레이아웃**: `@media (max-width: 640px)`에서 `html { position: fixed }` + `.app { display: flex !important; position: fixed; inset: 0 }`으로 iOS 횡스크롤 완전 차단. `overflow-x: hidden`만으로는 iOS Safari에서 동작 안 함.
+17. **바텀시트 스와이프**: `initPanelSwipe()`가 `.my-reviews-panel__header`에 touch 이벤트 등록. 스와이프 > 120px이면 `hidePanel()`만 호출 (핀 유지). 완전 비활성화는 별 버튼 재클릭. 드래그 중 `panel.style.transition = "none"`, 손 떼면 `""`로 복원.
+18. **음식점 우선 정렬**: `rankFoodFirst(docs)`가 Kakao Places 결과에서 `category_group_code` FD6(음식점)·CE7(카페)를 앞으로 이동. `doSearch`와 자동완성 두 곳에 적용.
+19. **핀 식당명 표시**: `buildPin()`에서 `.rv-pin__name > span` 추가. 5자 이하는 `rv-pin--short-name` 클래스로 `text-align: center`, 긴 이름은 hover 시 CSS `@keyframes rv-name-scroll` (alternate infinite). `min(0px, calc(-100% + 64px))`으로 짧은 이름은 애니메이션 없이 고정.
+20. **초기 줌 레벨**: `DEFAULT_LEVEL = window.innerWidth <= 640 ? 13 : 12`. 모바일 작은 화면에서 동일 레벨이 더 확대되어 보이는 점 보정.
+21. **파란 검색 원 제거**: `highlightArea()` / `highlightCircle` / `clearHighlight()` / `kakao.maps.Circle` 전부 삭제. 검색 결과 표시 시 원이 표시되지 않음.
+22. **검색 결과 내 리뷰 뱃지**: `fetchMyReviewedIds(placeIds)`가 Supabase에서 현재 유저의 리뷰 `place_id`를 조회. `doSearch` 마커 렌더링 전 호출. 마커 탭 후 인포윈도우 카드에 `.iw-card__reviewed`로 "⭐ 내가 리뷰한 곳" / "⭐ N번 방문한 곳" 표시. 마커 위 오버레이 뱃지는 지도를 가려 제거.
+23. **모바일 OAuth 2회 클릭 문제**: ngrok 무료 플랜 최초 방문 시 인터스티셜 페이지가 `?code=` 파라미터를 제거해 PKCE 교환 실패. iOS Safari bfcache도 동일 증상. 수정: (1) `handleGoogleLogin`에서 `sessionStorage.setItem(OAUTH_PENDING_KEY, "1")` 설정, (2) `init()`에서 `hadOAuthPending` 감지 → 10초 대기 유지, (3) `pageshow` 핸들러로 bfcache 복원 대응, (4) `onAuthStateChange` catch-all else 제거 → `INITIAL_SESSION`/`SIGNED_OUT`만 명시적 처리.
 
 ## 향후 확장 예정
 - 리뷰 10개 달성 시 다른 사용자 추천 맛집 노출 기능

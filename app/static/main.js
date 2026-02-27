@@ -11,7 +11,6 @@ const suggestionsEl = document.getElementById("suggestions");
 let map = null;
 let infoWindow = null;
 const markers = [];
-let highlightCircle = null;
 let debounceTimer = null;
 let activeIndex = -1;
 let currentSuggestions = [];
@@ -55,15 +54,27 @@ function hideNoResults() {
   noResultsEl.classList.remove("is-visible");
 }
 
-/* ===== Markers & Highlight ===== */
+/* ===== Markers ===== */
 function clearMarkers() {
   while (markers.length) markers.pop().setMap(null);
 }
 
-function clearHighlight() {
-  if (highlightCircle) {
-    highlightCircle.setMap(null);
-    highlightCircle = null;
+/* ===== 내 리뷰 장소 조회 ===== */
+async function fetchMyReviewedIds(placeIds) {
+  const sb = window.__getSupabase?.();
+  if (!sb || !placeIds.length) return new Map();
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return new Map();
+    const { data } = await sb.from("reviews")
+      .select("place_id")
+      .eq("user_id", user.id)
+      .in("place_id", placeIds);
+    const counts = new Map();
+    (data ?? []).forEach((r) => counts.set(r.place_id, (counts.get(r.place_id) ?? 0) + 1));
+    return counts;
+  } catch {
+    return new Map();
   }
 }
 
@@ -74,7 +85,7 @@ function escapeHtml(str) {
   return d.innerHTML;
 }
 
-function buildInfoContent(place) {
+function buildInfoContent(place, reviewCount = 0) {
   const name = place.place_name || "";
   const category = place.category_group_name || "";
   const address = place.road_address_name || place.address_name || "";
@@ -90,6 +101,10 @@ function buildInfoContent(place) {
     </svg>
   </button>`;
   h += `<div class="iw-card__name">${escapeHtml(name)}</div>`;
+  if (reviewCount > 0) {
+    const visitText = reviewCount === 1 ? "내가 리뷰한 곳" : `${reviewCount}번 방문한 곳`;
+    h += `<div class="iw-card__reviewed">⭐ ${escapeHtml(visitText)}</div>`;
+  }
   if (category) h += `<span class="iw-card__category">${escapeHtml(category)}</span>`;
   if (address) h += `<div class="iw-card__address">${escapeHtml(address)}</div>`;
   if (phone) h += `<div class="iw-card__phone">📞 ${escapeHtml(phone)}</div>`;
@@ -106,12 +121,13 @@ function buildInfoContent(place) {
   return h;
 }
 
-function renderPlace(place) {
+function renderPlace(place, reviewCount = 0) {
   const pos = new kakao.maps.LatLng(place.y, place.x);
   const marker = new kakao.maps.Marker({ position: pos });
   marker.setMap(map);
   markers.push(marker);
-  const content = buildInfoContent(place);
+
+  const content = buildInfoContent(place, reviewCount);
   kakao.maps.event.addListener(marker, "click", () => {
     infoWindow.setContent(content);
     infoWindow.open(map, marker);
@@ -119,21 +135,6 @@ function renderPlace(place) {
   });
   infoWindow.setContent(content);
   infoWindow.open(map, marker);
-}
-
-function highlightArea(position, radius = 900) {
-  clearHighlight();
-  highlightCircle = new kakao.maps.Circle({
-    center: position,
-    radius,
-    strokeWeight: 2,
-    strokeColor: "#228be6",
-    strokeOpacity: 0.6,
-    strokeStyle: "solid",
-    fillColor: "#228be6",
-    fillOpacity: 0.1,
-  });
-  highlightCircle.setMap(map);
 }
 
 /* ===== Geo helpers ===== */
@@ -304,7 +305,6 @@ async function doSearch(query) {
 
   // ── 2) 지도 렌더링 (SDK 오류는 별도 처리) ──
   clearMarkers();
-  clearHighlight();
 
   const focusPos = getFirstValidPosition(results);
   if (!focusPos) {
@@ -318,10 +318,14 @@ async function doSearch(query) {
     return;
   }
 
+  // 내 리뷰 여부 조회 (실패해도 마커 렌더링은 계속)
+  const placeIds = local.map(({ place }) => place.id).filter(Boolean);
+  const reviewedMap = await fetchMyReviewedIds(placeIds);
+
   // 마커 렌더링
   local.forEach(({ place }) => {
     try {
-      renderPlace(place);
+      renderPlace(place, reviewedMap.get(place.id) ?? 0);
     } catch (e) {
       console.warn("[K-daejeop] marker render skip:", e);
     }
@@ -359,22 +363,6 @@ async function doSearch(query) {
       map.setLevel(3);
     }
 
-    // idle 이벤트로 하이라이트 표시 (addListenerOnce 미지원 → 수동 once 구현)
-    let highlighted = false;
-    const onHighlightIdle = () => {
-      kakao.maps.event.removeListener(map, "idle", onHighlightIdle);
-      if (!highlighted) {
-        highlighted = true;
-        highlightArea(focusPos);
-      }
-    };
-    kakao.maps.event.addListener(map, "idle", onHighlightIdle);
-    setTimeout(() => {
-      if (!highlighted) {
-        highlighted = true;
-        highlightArea(focusPos);
-      }
-    }, 500);
   } catch (e) {
     console.warn("[K-daejeop] map adjust:", e);
     // 지도 조작 실패해도 에러 토스트 표시 안 함 (결과는 이미 보임)
@@ -523,7 +511,6 @@ function initMap() {
   window.__getMap = () => map;
   window.__clearSearchMarkers = () => {
     clearMarkers();
-    clearHighlight();
     infoWindow.close();
   };
   bindEvents();

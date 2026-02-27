@@ -471,3 +471,51 @@ class TestMyReviewsSidePanel:
         assert "DEFAULT_LEVEL" in src
         # 모바일(640px 이하)에서 더 높은 레벨(줌아웃) 사용
         assert "640" in src
+
+    def test_main_js_no_highlight_circle(self):
+        """main.js에 파란 검색 원(highlightArea/highlightCircle)이 없어야 합니다."""
+        src = pathlib.Path("app/static/main.js").read_text()
+        assert "highlightCircle" not in src
+        assert "highlightArea" not in src
+        assert "kakao.maps.Circle" not in src
+
+    def test_main_js_reviewed_place_badge(self):
+        """main.js가 내가 리뷰한 검색 결과 인포윈도우에 뱃지를 표시합니다."""
+        src = pathlib.Path("app/static/main.js").read_text()
+        assert "fetchMyReviewedIds" in src
+        assert "iw-card__reviewed" in src
+        # 마커 위 오버레이 뱃지는 없어야 함 (지도를 가리기 때문)
+        assert "search-marker-badge" not in src
+        assert "reviewOverlays" not in src
+
+    def test_css_reviewed_badge_styles(self):
+        """styles.css에 인포윈도우 리뷰 뱃지 스타일이 있습니다."""
+        src = pathlib.Path("app/static/styles.css").read_text()
+        assert ".iw-card__reviewed" in src
+        assert ".search-marker-badge" not in src
+
+
+# ===== auth.js 모바일 OAuth 안정성 테스트 =====
+
+
+class TestAuthJsMobileOAuth:
+    """auth.js 모바일 OAuth 안정성 관련 테스트."""
+
+    def test_auth_js_has_oauth_pending_key(self):
+        """auth.js가 sessionStorage OAuth 플래그를 사용합니다 (ngrok 인터스티셜 대응)."""
+        src = pathlib.Path("app/static/auth.js").read_text()
+        assert "OAUTH_PENDING_KEY" in src
+        assert "sessionStorage" in src
+
+    def test_auth_js_has_pageshow_handler(self):
+        """auth.js가 bfcache 복원을 위한 pageshow 이벤트를 처리합니다 (iOS Safari 대응)."""
+        src = pathlib.Path("app/static/auth.js").read_text()
+        assert "pageshow" in src
+        assert "e.persisted" in src
+
+    def test_auth_js_no_catch_all_showlogin(self):
+        """auth.js onAuthStateChange가 SIGNED_OUT/INITIAL_SESSION만 로그인 화면을 표시합니다."""
+        src = pathlib.Path("app/static/auth.js").read_text()
+        # hadOAuthPending 대응 로직이 있어야 함
+        assert "hadOAuthPending" in src
+        assert "isOAuthRelated" in src

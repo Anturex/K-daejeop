@@ -161,6 +161,14 @@ function closeDropdown(e) {
   }
 }
 
+/* ===== OAuth 상태 추적 (모바일/ngrok 인터스티셜 대응) =====
+ * 문제: ngrok 무료 플랜 최초 방문 시 인터스티셜 페이지가 ?code= 파라미터를
+ *       제거한 채 리다이렉트해 PKCE code 교환이 실패함.
+ *       iOS Safari bfcache(뒤로가기 캐시)도 동일 증상을 유발함.
+ * 해결: OAuth 시작 전 sessionStorage에 플래그를 저장해 "code 없이 돌아온" 경우를
+ *       감지하고, 세션을 재확인해 이미 성립됐으면 바로 앱을 표시함. */
+const OAUTH_PENDING_KEY = "k_oauth_pending";
+
 /* ===== 로그인 / 로그아웃 ===== */
 async function handleGoogleLogin() {
   const sb = getSupabase();
@@ -172,12 +180,16 @@ async function handleGoogleLogin() {
   googleLoginBtn.disabled = true;
   googleLoginBtn.classList.add("is-loading");
 
+  // OAuth 시작 플래그 (redirect 후 code 없이 돌아온 경우 감지용)
+  sessionStorage.setItem(OAUTH_PENDING_KEY, "1");
+
   const { error } = await sb.auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo: window.location.origin + "/" },
   });
 
   if (error) {
+    sessionStorage.removeItem(OAUTH_PENDING_KEY);
     console.error("[auth] Google 로그인 실패:", error.message);
     alert("로그인에 실패했습니다: " + error.message);
     googleLoginBtn.disabled = false;
@@ -217,13 +229,30 @@ function init() {
 
   showLoading();
 
-  // OAuth 콜백 감지: Google 로그인 후 Supabase가 ?code= 파라미터와 함께 리다이렉트
-  // INITIAL_SESSION은 code 교환 완료 전에 null session으로 발화하므로 이 경우 로딩 유지
+  // ── OAuth 상태 플래그 읽기 ──
+  // isOAuthCallback: Supabase PKCE 콜백 (?code= 파라미터 존재)
+  // hadOAuthPending: OAuth를 시작했는데 ?code= 없이 돌아온 경우
+  //   (ngrok 인터스티셜이 파라미터를 제거하거나 iOS bfcache로 code가 소실될 때)
   const isOAuthCallback = new URLSearchParams(window.location.search).has("code");
+  const hadOAuthPending = sessionStorage.getItem(OAUTH_PENDING_KEY) === "1";
+  sessionStorage.removeItem(OAUTH_PENDING_KEY); // 플래그 소비
+  const isOAuthRelated = isOAuthCallback || hadOAuthPending;
+
   let authResolved = false;
 
-  // 2FA 등으로 교환이 오래 걸릴 경우 대비 타임아웃 (10초)
-  if (isOAuthCallback) {
+  // ── iOS Safari bfcache 대응 ──
+  // bfcache로 복원된 페이지는 DOMContentLoaded를 재실행하지 않으므로
+  // pageshow 이벤트에서 세션을 재확인해 화면 전환을 보장
+  window.addEventListener("pageshow", (e) => {
+    if (!e.persisted) return;
+    sb.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) showApp(session.user);
+      else showLoginScreen();
+    });
+  });
+
+  // OAuth 관련 상태: code 교환 또는 세션 전파 대기 타임아웃 (10초)
+  if (isOAuthRelated) {
     setTimeout(() => {
       if (!authResolved) {
         authResolved = true;
@@ -232,27 +261,35 @@ function init() {
     }, 10000);
   }
 
+  // ── 인증 상태 변경 핸들러 ──
+  // 주의: catch-all else 대신 명시적 이벤트만 처리해
+  //       TOKEN_REFRESHED 등 일시적 이벤트가 로그인 화면을 잘못 표시하는 것을 방지
   sb.auth.onAuthStateChange((event, session) => {
     if (session?.user) {
+      // 세션 있음 → 앱 표시 (isOAuthRelated 여부와 무관)
       authResolved = true;
       showApp(session.user);
-    } else if (event === "INITIAL_SESSION" && isOAuthCallback && !authResolved) {
-      // code 교환 완료 전 — 로딩 스피너 유지
-    } else {
+    } else if (event === "INITIAL_SESSION" && isOAuthRelated && !authResolved) {
+      // PKCE code 교환 중이거나 hadOAuthPending: 세션 도착 대기
+    } else if (event === "INITIAL_SESSION" || event === "SIGNED_OUT") {
+      // 세션 없음 확정 → 로그인 화면
       authResolved = true;
       showLoginScreen();
     }
+    // 기타 이벤트(TOKEN_REFRESHED, USER_UPDATED 등)에서 세션 없는 경우: 무시
   });
 
+  // ── getSession 폴백 ──
+  // onAuthStateChange보다 먼저 세션 확인이 끝날 수 있으므로 fallback으로 사용
   sb.auth.getSession().then(({ data: { session } }) => {
-    if (authResolved) return; // onAuthStateChange가 이미 처리함
+    if (authResolved) return;
     authResolved = true;
     if (session?.user) {
       showApp(session.user);
-    } else if (!isOAuthCallback) {
+    } else if (!isOAuthRelated) {
       showLoginScreen();
     }
-    // isOAuthCallback + session null: onAuthStateChange(SIGNED_IN) 대기
+    // isOAuthRelated + 세션 없음: onAuthStateChange(SIGNED_IN) 또는 타임아웃 대기
   });
 }
 

@@ -80,7 +80,7 @@ K-daejeop/
 ├── supabase/
 │   └── migrations/
 │       └── 001_reviews_and_profiles.sql  # reviews, user_profiles, storage 스키마
-├── tests/                       # pytest 테스트 (156개)
+├── tests/                       # pytest 테스트 (176개)
 │   ├── __init__.py
 │   ├── conftest.py              # fixtures, mock 환경변수
 │   ├── test_app.py

@@ -722,6 +722,13 @@ body {
   padding-right: 1.75rem; /* 닫기 버튼 영역 확보 */
 }
 
+.iw-card__reviewed {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: -0.125rem;
+}
+
 .iw-card__category {
   display: inline-block;
   font-size: 0.65rem;
