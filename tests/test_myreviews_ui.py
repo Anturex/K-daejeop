@@ -435,3 +435,39 @@ class TestMyReviewsSidePanel:
         assert "touchmove" in src
         assert "touchend" in src
         assert "dragY" in src
+
+    def test_css_pin_name_bar(self):
+        """styles.css에 rv-pin__name 식당명 바와 marquee 애니메이션이 있습니다."""
+        css = pathlib.Path("app/static/styles.css").read_text()
+        assert ".rv-pin__name" in css
+        assert "rv-name-scroll" in css
+        assert "min(0px" in css  # 짧은 이름 고정 로직
+
+    def test_css_pin_short_name_center(self):
+        """styles.css에 rv-pin--short-name 클래스로 짧은 이름 가운데 정렬이 있습니다."""
+        css = pathlib.Path("app/static/styles.css").read_text()
+        assert "rv-pin--short-name" in css
+        assert "text-align: center" in css
+
+    def test_myreviews_js_pin_has_name_bar(self):
+        """myreviews.js buildPin()이 식당명 바를 포함하고 짧은 이름 클래스를 부여합니다."""
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        assert "rv-pin__name" in src
+        assert "rv-pin--short-name" in src
+        assert "place_name" in src
+
+    def test_main_js_food_first_ranking(self):
+        """main.js에 음식점·카페 우선 정렬 함수가 구현돼 있습니다."""
+        src = pathlib.Path("app/static/main.js").read_text()
+        assert "rankFoodFirst" in src
+        assert "FOOD_CATEGORY_CODES" in src
+        assert "FD6" in src
+        assert "CE7" in src
+
+    def test_main_js_mobile_zoom_level(self):
+        """main.js가 모바일에서 더 넓은 초기 줌 레벨을 사용합니다."""
+        src = pathlib.Path("app/static/main.js").read_text()
+        assert "innerWidth" in src
+        assert "DEFAULT_LEVEL" in src
+        # 모바일(640px 이하)에서 더 높은 레벨(줌아웃) 사용
+        assert "640" in src
