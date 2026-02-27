@@ -1763,16 +1763,46 @@ body {
 .rv-pin__photo-wrap {
   background: var(--surface);
   border-radius: 10px;
-  padding: 3px 3px 0;
   overflow: hidden;
+  position: relative;
+}
+
+/* ── 식당명 바 ── */
+.rv-pin__name {
+  overflow: hidden;
+  padding: 5px 5px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rv-pin__name span {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 10.5px;
+  font-weight: 600;
+  font-family: "Inter", "Noto Sans KR", sans-serif;
+  color: var(--text-primary);
+  line-height: 1.2;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: -0.01em;
+}
+
+/* hover 시 긴 이름만 슬라이드 (짧은 이름은 min()으로 0 고정) */
+.rv-pin:hover .rv-pin__name span {
+  animation: rv-name-scroll 2.4s ease-in-out 0.6s infinite alternate;
+}
+
+@keyframes rv-name-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(min(0px, calc(-100% + 64px))); }
 }
 
 .rv-pin__photo {
   width: 68px;
   height: 68px;
   object-fit: cover;
-  border-radius: 7px;
   display: block;
+  margin: 3px 3px 0;
   pointer-events: none;
   transition: transform 0.2s ease;
 }
@@ -2158,9 +2188,6 @@ body {
 }
 
 /* ===== 리뷰 핀: 다중 방문 배지 ===== */
-.rv-pin__photo-wrap {
-  position: relative;
-}
 .rv-pin__multi {
   position: absolute;
   top: -6px;

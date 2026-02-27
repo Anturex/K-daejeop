@@ -449,10 +449,12 @@ function buildCluster(cluster) {
 function buildPin(cluster) {
   const review = cluster.reviews[0]; // 최신 방문 리뷰 (visited_at 내림차순 정렬됨)
   const stars = "★".repeat(review.rating) + "☆".repeat(3 - review.rating);
+  const name = review.place_name || "";
   const el = document.createElement("div");
   el.className = "rv-pin";
   el.innerHTML = `
     <div class="rv-pin__photo-wrap">
+      <div class="rv-pin__name"><span>${escHtml(name)}</span></div>
       <img class="rv-pin__photo" src="${escAttr(review.photo_url)}" alt="" loading="lazy" />
       <div class="rv-pin__rating">${stars}</div>
     </div>
