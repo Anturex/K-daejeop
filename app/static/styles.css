@@ -2651,6 +2651,12 @@ body {
   border-top: 1px solid var(--border);
 }
 
+.ad-slot--modal {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+
 /* 배너 광고 표시 시 지도/패널 하단 여백 확보 */
 body.has-ads .map-shell {
   padding-bottom: 60px;

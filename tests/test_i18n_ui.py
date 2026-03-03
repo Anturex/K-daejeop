@@ -499,6 +499,30 @@ class TestAdContainersHtml:
         r = await client.get("/")
         assert 'src="/static/ads.js' in r.text
 
+    @pytest.mark.asyncio
+    async def test_ad_modal_exists(self, client):
+        r = await client.get("/")
+        assert 'id="ad-modal"' in r.text
+
+    @pytest.mark.asyncio
+    async def test_ad_modal_has_slot_class(self, client):
+        r = await client.get("/")
+        assert "ad-slot--modal" in r.text
+
+    @pytest.mark.asyncio
+    async def test_ad_modal_hidden_by_default(self, client):
+        r = await client.get("/")
+        idx = r.text.index('id="ad-modal"')
+        chunk = r.text[max(0, idx - 100):idx + 30]
+        assert "hidden" in chunk
+
+    @pytest.mark.asyncio
+    async def test_ad_modal_inside_review_modal(self, client):
+        r = await client.get("/")
+        modal_start = r.text.index('id="review-modal"')
+        modal_ad = r.text.index('id="ad-modal"')
+        assert modal_ad > modal_start
+
 
 class TestAdsJsFile:
     """ads.js 파일의 핵심 구조를 검증합니다."""
@@ -576,6 +600,9 @@ class TestAdSlotCSS:
 
     def test_ad_slot_label(self):
         assert ".ad-slot__label" in self.css
+
+    def test_ad_slot_modal(self):
+        assert ".ad-slot--modal" in self.css
 
 
 class TestAdI18nKeys:

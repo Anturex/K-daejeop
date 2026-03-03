@@ -552,6 +552,10 @@ function renderPanel() {
     })
     .join("");
 
+  // 광고 슬롯을 리스트 끝으로 이동 (배너 광고에 가려지지 않도록 스크롤 영역 내 배치)
+  const adPanel = document.getElementById("ad-panel");
+  if (adPanel) listEl.appendChild(adPanel);
+
   // 지역 클릭 → 세부 장소 목록으로 드릴다운
   listEl.querySelectorAll(".mrp-group").forEach((el, i) => {
     el.addEventListener("click", () => {
@@ -615,6 +619,10 @@ function renderPanelLevel1(region, items) {
   `;
 
   document.getElementById("mrp-back-btn")?.addEventListener("click", renderPanel);
+
+  // 광고 슬롯을 리스트 끝으로 이동
+  const adPanel = document.getElementById("ad-panel");
+  if (adPanel) listEl.appendChild(adPanel);
 
   // 장소 클릭 → 지도 이동 + 리뷰 상세 표시
   listEl.querySelectorAll(".mrp-place").forEach((el) => {

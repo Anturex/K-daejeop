@@ -519,3 +519,15 @@ class TestAuthJsMobileOAuth:
         # hadOAuthPending 대응 로직이 있어야 함
         assert "hadOAuthPending" in src
         assert "isOAuthRelated" in src
+
+
+class TestMyReviewsAdSlotReattach:
+    """myreviews.js가 렌더링 후 광고 슬롯을 리스트에 재배치하는지 검증합니다."""
+
+    def test_render_panel_appends_ad_panel(self):
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        assert 'getElementById("ad-panel")' in src
+
+    def test_render_panel_uses_append_child(self):
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        assert "listEl.appendChild(adPanel)" in src
