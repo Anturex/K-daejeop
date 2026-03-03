@@ -30,6 +30,7 @@ const SUPABASE_ANON_KEY =
   document.querySelector('meta[name="supabase-anon-key"]')?.content || "";
 
 let supabaseClient = null;
+let userTier = "free";
 
 function getSupabase() {
   if (supabaseClient) return supabaseClient;
@@ -50,6 +51,7 @@ function getSupabase() {
 
 // 다른 모듈에서 supabase 클라이언트 사용 가능
 window.__getSupabase = getSupabase;
+window.__getUserTier = () => userTier;
 
 /* ===== 화면 전환 ===== */
 function showLoginScreen() {
@@ -93,16 +95,19 @@ async function checkTutorialStatus(user) {
     // user_profiles에서 tutorial_seen 확인
     const { data, error } = await sb
       .from("user_profiles")
-      .select("tutorial_seen")
+      .select("tutorial_seen, tier")
       .eq("user_id", user.id)
       .single();
 
     if (error && error.code === "PGRST116") {
       // 프로필이 없으면 생성 (handle_new_user 트리거 미작동 시 fallback)
       await sb.from("user_profiles").insert({ user_id: user.id });
+      userTier = "free";
       window.dispatchEvent(new CustomEvent("tutorial:show"));
       return;
     }
+
+    userTier = data?.tier || "free";
 
     if (!data?.tutorial_seen) {
       window.dispatchEvent(new CustomEvent("tutorial:show"));
@@ -173,7 +178,7 @@ const OAUTH_PENDING_KEY = "k_oauth_pending";
 async function handleGoogleLogin() {
   const sb = getSupabase();
   if (!sb) {
-    alert("로그인 기능이 설정되지 않았습니다.");
+    alert(window.__i18n?.t("auth.noSetup") ?? "로그인 기능이 설정되지 않았습니다.");
     return;
   }
 
@@ -191,7 +196,7 @@ async function handleGoogleLogin() {
   if (error) {
     sessionStorage.removeItem(OAUTH_PENDING_KEY);
     console.error("[auth] Google 로그인 실패:", error.message);
-    alert("로그인에 실패했습니다: " + error.message);
+    alert(window.__i18n?.tf("auth.loginFailed", error.message) ?? "로그인에 실패했습니다: " + error.message);
     googleLoginBtn.disabled = false;
     googleLoginBtn.classList.remove("is-loading");
   }
@@ -200,6 +205,7 @@ async function handleGoogleLogin() {
 async function handleLogout() {
   const sb = getSupabase();
   if (!sb) return;
+  userTier = "free";
   const { error } = await sb.auth.signOut();
   if (error) console.error("[auth] 로그아웃 실패:", error.message);
 }

@@ -35,7 +35,7 @@
           </svg>
         </div>
         <h1 class="login-card__title">K-daejeop</h1>
-        <p class="login-card__subtitle">나만의 맛집 리뷰를 기록하고,<br />다른 사람의 추천 맛집을 발견하세요</p>
+        <p class="login-card__subtitle" data-i18n-html="login.subtitle">나만의 맛집 리뷰를 기록하고,<br />다른 사람의 추천 맛집을 발견하세요</p>
       </div>
 
       <div class="login-card__features">
@@ -45,7 +45,7 @@
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <span>실시간 장소 검색</span>
+          <span data-i18n="login.feature.search">실시간 장소 검색</span>
         </div>
         <div class="login-card__feature">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -53,7 +53,7 @@
             <polygon
               points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
-          <span>3단계 별점 리뷰 시스템</span>
+          <span data-i18n="login.feature.rating">3단계 별점 리뷰 시스템</span>
         </div>
         <div class="login-card__feature">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -63,7 +63,7 @@
             <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
             <path d="M16 3.13a4 4 0 0 1 0 7.75" />
           </svg>
-          <span>10개 리뷰 → 추천 맛집 해금</span>
+          <span data-i18n="login.feature.unlock">10개 리뷰 → 추천 맛집 해금</span>
         </div>
       </div>
 
@@ -83,11 +83,11 @@
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               fill="#EA4335" />
           </svg>
-          <span>Google 계정으로 시작하기</span>
+          <span data-i18n="login.google">Google 계정으로 시작하기</span>
         </button>
       </div>
 
-      <p class="login-card__footer">
+      <p class="login-card__footer" data-i18n-html="login.footer">
         로그인하면 <a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a>에 동의하게 됩니다.
       </p>
     </div>
@@ -119,7 +119,7 @@
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <input id="search-input" type="text" placeholder="음식점, 카페, 키워드로 검색" autocomplete="off" spellcheck="false" />
+          <input id="search-input" type="text" placeholder="음식점, 카페, 키워드로 검색" data-i18n-placeholder="search.placeholder" autocomplete="off" spellcheck="false" />
           <button id="search-button" type="button" aria-label="검색">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
               stroke-linecap="round" stroke-linejoin="round">
@@ -139,7 +139,7 @@
           stroke-linecap="round" stroke-linejoin="round">
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
         </svg>
-        <span class="my-reviews-toggle__text">내 맛집</span>
+        <span class="my-reviews-toggle__text" data-i18n="myReviews.title">내 맛집</span>
       </button>
 
       <!-- 인증 영역 -->
@@ -165,8 +165,19 @@
                 <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
-              튜토리얼 다시 보기
+              <span data-i18n="menu.tutorial">튜토리얼 다시 보기</span>
             </button>
+            <div id="lang-menu-item" class="user-menu__item user-menu__lang">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              <span data-i18n="menu.language">언어</span>
+              <span id="lang-menu-current" class="user-menu__lang-current"></span>
+            </div>
+            <hr class="user-menu__divider" />
             <button id="logout-btn" class="user-menu__logout" type="button">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
@@ -174,7 +185,7 @@
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-              로그아웃
+              <span data-i18n="menu.logout">로그아웃</span>
             </button>
           </div>
         </div>
@@ -207,6 +218,17 @@
       </div>
     </main>
 
+    <!-- ==================== 하단 배너 광고 (free 유저만) ==================== -->
+    <div class="ad-slot ad-slot--banner" id="ad-banner" hidden>
+      <span class="ad-slot__label" data-i18n="ad.sponsored">광고</span>
+      <ins class="adsbygoogle"
+        style="display:block"
+        data-ad-client="ca-pub-6570449864880886"
+        data-ad-slot="XXXXXXXXXX"
+        data-ad-format="horizontal"
+        data-full-width-responsive="true"></ins>
+    </div>
+
     <!-- 모바일 바텀시트 백드롭 -->
     <div id="panel-backdrop" class="panel-backdrop" hidden></div>
 
@@ -220,7 +242,7 @@
               <polygon
                 points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
-            내 맛집
+            <span data-i18n="myReviews.title">내 맛집</span>
           </div>
           <span id="my-reviews-panel-count" class="my-reviews-panel__count"></span>
           <button id="my-reviews-panel-close" class="my-reviews-panel__close-btn" type="button" aria-label="닫기">
@@ -234,6 +256,15 @@
       <div id="my-reviews-panel-list" class="my-reviews-panel__list">
         <!-- 지역별 그룹 (myreviews.js에서 동적 렌더링) -->
       </div>
+      <!-- 패널 하단 광고 (free 유저만) -->
+      <div class="ad-slot ad-slot--panel" id="ad-panel" hidden>
+        <ins class="adsbygoogle"
+          style="display:block"
+          data-ad-client="ca-pub-6570449864880886"
+          data-ad-slot="XXXXXXXXXX"
+          data-ad-format="horizontal"
+          data-full-width-responsive="true"></ins>
+      </div>
     </aside>
   </div>
 
@@ -241,7 +272,7 @@
   <div id="review-overlay" class="review-overlay" hidden></div>
   <div id="review-modal" class="review-modal" hidden role="dialog" aria-modal="true" aria-label="리뷰 작성">
     <div class="review-modal__header">
-      <h2 class="review-modal__title">리뷰 남기기</h2>
+      <h2 class="review-modal__title" data-i18n="review.title">리뷰 남기기</h2>
       <button id="review-close-btn" class="review-modal__close" type="button" aria-label="닫기">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
           stroke-linecap="round" stroke-linejoin="round">
@@ -270,22 +301,22 @@
 
       <!-- 별점 선택 -->
       <div class="review-section">
-        <label class="review-section__label">별점 <span class="review-section__required">필수</span></label>
+        <label class="review-section__label"><span data-i18n="review.ratingLabel">별점</span> <span class="review-section__required" data-i18n="review.required">필수</span></label>
         <div class="rating-group">
           <button type="button" class="rating-card" data-rating="1">
             <span class="rating-card__stars">⭐</span>
-            <span class="rating-card__title">동네 맛집</span>
-            <span class="rating-card__desc">가볍게 다시 찾을 곳</span>
+            <span class="rating-card__title" data-i18n="review.rating1.title">동네 맛집</span>
+            <span class="rating-card__desc" data-i18n="review.rating1.desc">가볍게 다시 찾을 곳</span>
           </button>
           <button type="button" class="rating-card" data-rating="2">
             <span class="rating-card__stars">⭐⭐</span>
-            <span class="rating-card__title">추천 맛집</span>
-            <span class="rating-card__desc">일부러 찾아갈 맛</span>
+            <span class="rating-card__title" data-i18n="review.rating2.title">추천 맛집</span>
+            <span class="rating-card__desc" data-i18n="review.rating2.desc">일부러 찾아갈 맛</span>
           </button>
           <button type="button" class="rating-card" data-rating="3">
             <span class="rating-card__stars">⭐⭐⭐</span>
-            <span class="rating-card__title">인생 맛집</span>
-            <span class="rating-card__desc">두고두고 생각나는 맛</span>
+            <span class="rating-card__title" data-i18n="review.rating3.title">인생 맛집</span>
+            <span class="rating-card__desc" data-i18n="review.rating3.desc">두고두고 생각나는 맛</span>
           </button>
         </div>
         <input type="hidden" id="review-rating-value" />
@@ -293,7 +324,7 @@
 
       <!-- 사진 업로드 -->
       <div class="review-section">
-        <label class="review-section__label">사진 <span class="review-section__required">필수</span></label>
+        <label class="review-section__label"><span data-i18n="review.photoLabel">사진</span> <span class="review-section__required" data-i18n="review.required">필수</span></label>
         <div id="photo-zone" class="photo-zone">
           <input id="photo-input" type="file" accept="image/*,.heic,.heif" hidden />
           <img id="photo-preview" class="photo-zone__preview" src="" alt="미리보기" hidden />
@@ -304,22 +335,22 @@
               <circle cx="8.5" cy="8.5" r="1.5" />
               <polyline points="21 15 16 10 5 21" />
             </svg>
-            <span>클릭하거나 드래그하여 사진 첨부</span>
-            <span class="photo-zone__hint">JPG, PNG, HEIC (최대 10MB)</span>
+            <span data-i18n="review.photoPrompt">클릭하거나 드래그하여 사진 첨부</span>
+            <span class="photo-zone__hint" data-i18n="review.photoHint">JPG, PNG, HEIC (최대 10MB)</span>
           </div>
         </div>
       </div>
 
       <!-- 리뷰 텍스트 -->
       <div class="review-section">
-        <label class="review-section__label" for="review-text">리뷰</label>
-        <textarea id="review-text" class="review-textarea" rows="3" placeholder="맛, 분위기, 서비스 등 자유롭게 작성해 주세요"></textarea>
+        <label class="review-section__label" for="review-text" data-i18n="review.textLabel">리뷰</label>
+        <textarea id="review-text" class="review-textarea" rows="3" placeholder="맛, 분위기, 서비스 등 자유롭게 작성해 주세요" data-i18n-placeholder="review.textPlaceholder"></textarea>
       </div>
 
       <!-- 방문 날짜 -->
       <div class="review-section">
-        <label class="review-section__label">방문 날짜</label>
-        <p class="review-section__hint">스크롤하여 날짜를 선택하세요 (기본: 오늘)</p>
+        <label class="review-section__label" data-i18n="review.dateLabel">방문 날짜</label>
+        <p class="review-section__hint" data-i18n="review.dateHint">스크롤하여 날짜를 선택하세요 (기본: 오늘)</p>
         <div class="date-picker">
           <div class="date-picker__highlight"></div>
           <div class="date-picker__col">
@@ -339,8 +370,8 @@
     </div>
 
     <div class="review-modal__footer">
-      <button id="review-cancel-btn" class="review-modal__cancel" type="button">취소</button>
-      <button id="review-submit-btn" class="review-modal__submit" type="button">리뷰 저장하기</button>
+      <button id="review-cancel-btn" class="review-modal__cancel" type="button" data-i18n="review.cancel">취소</button>
+      <button id="review-submit-btn" class="review-modal__submit" type="button" data-i18n="review.submit">리뷰 저장하기</button>
     </div>
   </div>
 
@@ -394,10 +425,10 @@
       <p id="tutorial-body" class="tutorial__body"></p>
       <div id="tutorial-dots" class="tutorial__dots"></div>
       <div class="tutorial__actions">
-        <button id="tutorial-prev" class="tutorial__btn tutorial__btn--secondary" type="button">이전</button>
-        <button id="tutorial-next" class="tutorial__btn tutorial__btn--primary" type="button">다음</button>
+        <button id="tutorial-prev" class="tutorial__btn tutorial__btn--secondary" type="button" data-i18n="tutorial.btn.prev">이전</button>
+        <button id="tutorial-next" class="tutorial__btn tutorial__btn--primary" type="button" data-i18n="tutorial.btn.next">다음</button>
       </div>
-      <button id="tutorial-skip" class="tutorial__skip" type="button">건너뛰기</button>
+      <button id="tutorial-skip" class="tutorial__skip" type="button" data-i18n="tutorial.btn.skip">건너뛰기</button>
     </div>
   </div>
 
@@ -407,11 +438,13 @@
   <!-- HEIC → JPEG 변환 (iOS 사진 업로드 지원) -->
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="{{ kakao_sdk_url }}?appkey={{ kakao_js_key }}&autoload=false&libraries=services"></script>
+  <script type="module" src="/static/i18n.js?v={{ v }}"></script>
   <script type="module" src="/static/auth.js?v={{ v }}"></script>
   <script type="module" src="/static/main.js?v={{ v }}"></script>
   <script type="module" src="/static/reviews.js?v={{ v }}"></script>
   <script type="module" src="/static/tutorial.js?v={{ v }}"></script>
   <script type="module" src="/static/myreviews.js?v={{ v }}"></script>
+  <script type="module" src="/static/ads.js?v={{ v }}"></script>
 </body>
 
 </html>

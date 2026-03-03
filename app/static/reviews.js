@@ -78,7 +78,7 @@ async function loadVisitCount(placeId) {
     .eq("user_id", user.id)
     .eq("place_id", placeId);
   if (count > 0 && visitBadgeEl) {
-    visitBadgeEl.textContent = `🍽️ ${count + 1}번째 방문`;
+    visitBadgeEl.textContent = window.__i18n?.tf("review.visitBadge", count + 1) ?? `🍽️ ${count + 1}번째 방문`;
     visitBadgeEl.hidden = false;
   }
 }
@@ -166,16 +166,16 @@ async function processFile(file) {
   // HEIC/HEIF → JPEG 변환 (대부분 브라우저가 HEIC 미지원)
   if (isHeicFile(file)) {
     if (file.size > 10 * 1024 * 1024) {
-      showError("파일 크기는 10MB 이하여야 합니다.");
+      showError(window.__i18n?.t("review.err.fileSize") ?? "파일 크기는 10MB 이하여야 합니다.");
       return;
     }
     if (!window.heic2any) {
-      showError("HEIC 변환 라이브러리를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+      showError(window.__i18n?.t("review.err.heicLib") ?? "HEIC 변환 라이브러리를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
       return;
     }
     const hintEl = photoPrompt.querySelector(".photo-zone__hint");
     const origHint = hintEl?.textContent;
-    if (hintEl) hintEl.textContent = "HEIC 변환 중…";
+    if (hintEl) hintEl.textContent = window.__i18n?.t("review.heicConverting") ?? "HEIC 변환 중…";
     try {
       const result = await window.heic2any({ blob: file, toType: "image/jpeg", quality: 0.85 });
       const blob = Array.isArray(result) ? result[0] : result;
@@ -189,17 +189,17 @@ async function processFile(file) {
     } catch (err) {
       console.error("[reviews] heic2any 변환 실패:", err);
       if (hintEl) hintEl.textContent = origHint;
-      showError("HEIC 변환에 실패했습니다. iPhone에서 직접 올리거나, Mac 미리보기 앱에서 JPG로 내보내기 후 업로드해 주세요.");
+      showError(window.__i18n?.t("review.err.heicFail") ?? "HEIC 변환에 실패했습니다. iPhone에서 직접 올리거나, Mac 미리보기 앱에서 JPG로 내보내기 후 업로드해 주세요.");
     }
     return;
   }
 
   if (!file.type.startsWith("image/")) {
-    showError("이미지 파일만 첨부할 수 있습니다.");
+    showError(window.__i18n?.t("review.err.imageOnly") ?? "이미지 파일만 첨부할 수 있습니다.");
     return;
   }
   if (file.size > 10 * 1024 * 1024) {
-    showError("파일 크기는 10MB 이하여야 합니다.");
+    showError(window.__i18n?.t("review.err.fileSize") ?? "파일 크기는 10MB 이하여야 합니다.");
     return;
   }
   selectedFile = file;
@@ -307,13 +307,13 @@ function rangeArr(start, end) {
   return Array.from({ length: end - start + 1 }, (_, i) => start + i);
 }
 function formatYear(v) {
-  return `${v}년`;
+  return window.__i18n?.tf("date.yearFmt", v) ?? `${v}년`;
 }
 function formatMonth(v) {
-  return `${v}월`;
+  return window.__i18n?.tf("date.monthFmt", v) ?? `${v}월`;
 }
 function formatDay(v) {
-  return `${v}일`;
+  return window.__i18n?.tf("date.dayFmt", v) ?? `${v}일`;
 }
 
 /* ===== 에러 표시 ===== */
@@ -328,15 +328,15 @@ function showError(msg) {
 /* ===== 폼 유효성 ===== */
 function validate() {
   if (!selectedRating) {
-    showError("별점을 선택해 주세요.");
+    showError(window.__i18n?.t("review.err.rating") ?? "별점을 선택해 주세요.");
     return false;
   }
   if (!selectedFile) {
-    showError("사진을 한 장 첨부해 주세요.");
+    showError(window.__i18n?.t("review.err.photo") ?? "사진을 한 장 첨부해 주세요.");
     return false;
   }
   if (!reviewTx.value.trim()) {
-    showError("리뷰를 간략히 작성해 주세요.");
+    showError(window.__i18n?.t("review.err.text") ?? "리뷰를 간략히 작성해 주세요.");
     return false;
   }
   return true;
@@ -349,20 +349,20 @@ async function handleSubmit() {
 
   const sb = window.__getSupabase?.();
   if (!sb) {
-    showError("로그인이 필요합니다.");
+    showError(window.__i18n?.t("review.err.login") ?? "로그인이 필요합니다.");
     return;
   }
 
   isSubmitting = true;
   submitBtn.disabled = true;
-  submitBtn.textContent = "저장 중…";
+  submitBtn.textContent = window.__i18n?.t("review.submitting") ?? "저장 중…";
 
   try {
     // 1) 현재 유저
     const {
       data: { user },
     } = await sb.auth.getUser();
-    if (!user) throw new Error("로그인 세션이 만료되었습니다.");
+    if (!user) throw new Error(window.__i18n?.t("review.err.session") ?? "로그인 세션이 만료되었습니다.");
 
     // 2) 사진 업로드 → Supabase Storage
     const ext = selectedFile.name.split(".").pop() || "jpg";
@@ -371,7 +371,7 @@ async function handleSubmit() {
       .from("review-photos")
       .upload(fileName, selectedFile, { cacheControl: "3600", upsert: false });
 
-    if (uploadErr) throw new Error("사진 업로드 실패: " + uploadErr.message);
+    if (uploadErr) throw new Error(window.__i18n?.tf("review.err.upload", uploadErr.message) ?? "사진 업로드 실패: " + uploadErr.message);
 
     // 공개 URL
     const {
@@ -395,7 +395,7 @@ async function handleSubmit() {
       visited_at: visitedAt,
     });
 
-    if (insertErr) throw new Error("리뷰 저장 실패: " + insertErr.message);
+    if (insertErr) throw new Error(window.__i18n?.tf("review.err.insert", insertErr.message) ?? "리뷰 저장 실패: " + insertErr.message);
 
     // 성공
     closeReviewModal();
@@ -406,11 +406,11 @@ async function handleSubmit() {
     );
   } catch (err) {
     console.error("[reviews]", err);
-    showError(err.message || "리뷰 저장에 실패했습니다.");
+    showError(err.message || (window.__i18n?.t("review.err.generic") ?? "리뷰 저장에 실패했습니다."));
   } finally {
     isSubmitting = false;
     submitBtn.disabled = false;
-    submitBtn.textContent = "리뷰 저장하기";
+    submitBtn.textContent = window.__i18n?.t("review.submit") ?? "리뷰 저장하기";
   }
 }
 
@@ -444,7 +444,7 @@ function initReviews() {
     const toast = document.getElementById("status");
     const text = document.getElementById("status-text");
     if (toast && text) {
-      text.textContent = "리뷰가 저장되었습니다! 🎉";
+      text.textContent = window.__i18n?.t("review.saved") ?? "리뷰가 저장되었습니다! 🎉";
       toast.classList.add("is-visible");
       setTimeout(() => toast.classList.remove("is-visible"), 3000);
     }

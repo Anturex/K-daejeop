@@ -42,7 +42,7 @@ function hideStatus() {
 
 function showNoResults(query) {
   clearTimeout(noResultsTimer);
-  noResultsTextEl.textContent = `"${query}" 검색 결과가 없습니다`;
+  noResultsTextEl.textContent = window.__i18n?.tf("search.noResults", query) ?? `"${query}" 검색 결과가 없습니다`;
   noResultsEl.classList.add("is-visible");
   noResultsTimer = setTimeout(() => {
     noResultsEl.classList.remove("is-visible");
@@ -102,7 +102,10 @@ function buildInfoContent(place, reviewCount = 0) {
   </button>`;
   h += `<div class="iw-card__name">${escapeHtml(name)}</div>`;
   if (reviewCount > 0) {
-    const visitText = reviewCount === 1 ? "내가 리뷰한 곳" : `${reviewCount}번 방문한 곳`;
+    const t = window.__i18n?.t; const tf = window.__i18n?.tf;
+    const visitText = reviewCount === 1
+      ? (t?.("iw.reviewedOnce") ?? "내가 리뷰한 곳")
+      : (tf?.("iw.reviewedMulti", reviewCount) ?? `${reviewCount}번 방문한 곳`);
     h += `<div class="iw-card__reviewed">⭐ ${escapeHtml(visitText)}</div>`;
   }
   if (category) h += `<span class="iw-card__category">${escapeHtml(category)}</span>`;
@@ -113,8 +116,8 @@ function buildInfoContent(place, reviewCount = 0) {
   h += '<div class="iw-card__actions">';
   h += `<button class="iw-card__review-btn" data-place-id="${escapeHtml(pid)}" data-place-name="${escapeHtml(name)}" data-place-address="${escapeHtml(address)}" data-place-category="${escapeHtml(category)}" data-place-x="${escapeHtml(place.x || "")}" data-place-y="${escapeHtml(place.y || "")}">`;
   h += `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
-  h += ` 리뷰 남기기</button>`;
-  if (url) h += `<a class="iw-card__link" href="${escapeHtml(url)}" target="_blank" rel="noopener">상세보기 →</a>`;
+  h += ` ${escapeHtml(window.__i18n?.t("iw.reviewBtn") ?? "리뷰 남기기")}</button>`;
+  if (url) h += `<a class="iw-card__link" href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(window.__i18n?.t("iw.detailLink") ?? "상세보기 →")}</a>`;
   h += "</div>";
 
   h += "</div>";
@@ -203,21 +206,24 @@ function openSuggestions(docs, query) {
   activeIndex = -1;
 
   if (!currentSuggestions.length) {
+    const emptyTitle = window.__i18n?.tf("search.emptyTitle", query) ?? `"${query}" 결과 없음`;
+    const emptySub = window.__i18n?.t("search.emptySub") ?? "다른 키워드를 입력해보세요";
     suggestionsEl.innerHTML = `
       <li class="suggestions__empty">
-        <span class="suggestions__empty-title">"${escapeHtml(query)}" 결과 없음</span>
-        <span class="suggestions__empty-sub">다른 키워드를 입력해보세요</span>
+        <span class="suggestions__empty-title">${escapeHtml(emptyTitle)}</span>
+        <span class="suggestions__empty-sub">${escapeHtml(emptySub)}</span>
       </li>`;
     suggestionsEl.classList.add("is-open");
     return;
   }
 
+  const headerText = window.__i18n?.tf("search.suggestionsHeader", currentSuggestions.length) ?? `추천 장소 ${currentSuggestions.length}건`;
   let html = `
     <li class="suggestions__header">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
-      추천 장소 ${currentSuggestions.length}건
+      ${escapeHtml(headerText)}
     </li>`;
 
   currentSuggestions.forEach((place, i) => {
@@ -289,7 +295,7 @@ async function doSearch(query) {
     // 더 새로운 검색이 시작됐으면 무시
     if (mySeq !== searchSeq) return;
     console.error("[K-daejeop] API error:", err);
-    showStatus("검색 중 오류가 발생했습니다", 3000);
+    showStatus(window.__i18n?.t("search.error") ?? "검색 중 오류가 발생했습니다", 3000);
     return;
   }
 
@@ -369,7 +375,7 @@ async function doSearch(query) {
   }
 
   const placeName = results[0]?.place_name || query;
-  showStatus(`"${placeName}" 근처 ${local.length}개 결과`, 3000);
+  showStatus(window.__i18n?.tf("search.resultsStatus", placeName, local.length) ?? `"${placeName}" 근처 ${local.length}개 결과`, 3000);
 }
 
 /* ===== Autocomplete (debounce) ===== */
@@ -528,7 +534,7 @@ function relayoutMap() {
 
 function boot() {
   if (!window.kakao || !window.kakao.maps) {
-    showStatus("지도 SDK 로딩에 실패했습니다", 0);
+    showStatus(window.__i18n?.t("search.sdkError") ?? "지도 SDK 로딩에 실패했습니다", 0);
     return;
   }
   window.kakao.maps.load(() => {

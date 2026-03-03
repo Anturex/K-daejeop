@@ -63,34 +63,39 @@ app/
 ├── services/
 │   └── kakao.py         # KakaoPlacesClient (httpx 기반)
 ├── static/
-│   ├── auth.js          # Supabase 인증, 화면 전환, 튜토리얼 상태 체크
+│   ├── i18n.js          # 다국어 번역 사전 (ko/en/ja/zh), 언어 선택 컴포넌트
+│   ├── auth.js          # Supabase 인증, 화면 전환, 튜토리얼 상태 체크, tier 조회
 │   ├── main.js          # 지도 초기화, 검색, 자동완성, 마커, 리뷰 버튼
 │   ├── reviews.js       # 리뷰 모달 (별점·사진·날짜·텍스트), Supabase CRUD
 │   ├── myreviews.js     # 내 맛집 클러스터 맵 (클러스터링 + 플라잉 애니메이션 + 사이드 패널)
 │   ├── tutorial.js      # 온보딩 튜토리얼 5단계 카드
-│   └── styles.css       # 디자인 토큰, 로그인, 앱, 리뷰, 튜토리얼 스타일
+│   ├── ads.js           # Google AdSense 광고 (tier 기반 표시/숨김)
+│   └── styles.css       # 디자인 토큰, 로그인, 앱, 리뷰, 튜토리얼, 언어 선택, 광고 스타일
 └── templates/
     └── index.html       # login-screen + app + review-modal + tutorial
 supabase/
 └── migrations/
-    └── 001_reviews_and_profiles.sql  # reviews, user_profiles, storage 스키마
+    ├── 001_reviews_and_profiles.sql  # reviews, user_profiles, storage 스키마
+    └── 002_user_tier.sql             # user_profiles에 tier 컬럼 추가
 ```
 
 ## 모듈 간 통신
 
 ### JS 모듈 공유 패턴
-- `auth.js`: supabase 클라이언트 생성 → `window.__getSupabase()` 노출
+- `auth.js`: supabase 클라이언트 생성 → `window.__getSupabase()` 노출, 유저 등급 → `window.__getUserTier()` 노출
 - `auth.js`: 튜토리얼 저장 → `window.__markTutorialSeen()` 노출
 - `main.js`: 리뷰 모달 열기 → `window.__openReviewModal(place)` 호출
 - `main.js`: 지도 인스턴스 → `window.__getMap()` 노출 (initMap 이후)
 - `main.js`: 검색 마커 제거 → `window.__clearSearchMarkers()` 노출
 - `myreviews.js`: 내 맛집 모드 → `window.__activateMyReviews()` / `window.__deactivateMyReviews()` / `window.__refreshMyReviews()`
 - `myreviews.js`: 사이드 패널 → `showPanel()` / `hidePanel()` / `renderPanel()` / `groupByRegion()` / `extractRegion(address)`
-- 커스텀 이벤트: `app:visible`, `tutorial:show`, `review:saved`
+- `i18n.js`: 번역 API → `window.__i18n = { t, tf, setLang, getLang, applyTranslations }` 노출
+- `ads.js`: `app:visible` 이벤트 수신 → tier 확인 → free면 AdSense 로드 + 광고 슬롯 활성화
+- 커스텀 이벤트: `app:visible`, `tutorial:show`, `review:saved`, `lang:changed`
 
 ### Supabase 테이블 (RLS 적용)
 - `reviews`: 별점(1~3), 사진URL, 리뷰텍스트, 방문일자
-- `user_profiles`: tutorial_seen 플래그, 자동 생성 트리거
+- `user_profiles`: tutorial_seen 플래그, tier 등급('free'/'premium'), 자동 생성 트리거
 - Storage `review-photos`: 유저별 폴더, 공개 읽기
 
 ## 모바일 우선 원칙 (Mobile-First — 항상 적용)
@@ -159,7 +164,7 @@ supabase/
 12. **같은 장소 여러 리뷰**: `place_id`로 중복 제거 후 최신순 정렬. 핀 클릭 시 `showDetail(cluster)`에 전체 리뷰 배열 전달. `detailIdx` 로 현재 인덱스 관리, `review-detail-prev/next` 버튼으로 스와이프. 클러스터 배지는 항상 표시 (`count > MAX_CLUSTER_PHOTOS` 조건 제거).
 13. **인포윈도우 닫기**: `buildInfoContent`에 `.iw-card__close-btn` 추가. 이벤트 위임(`bindEvents`)으로 `infoWindow.close()` 처리.
 14. **Kakao Maps `addListenerOnce` 미존재**: `kakao.maps.event`에는 `addListenerOnce`가 없음. 수동 once 패턴 사용: `addListener` + 콜백 내 `removeListener`. `idle` 미발생 대비 setTimeout 폴백도 추가 (`idleRendered` 플래그로 중복 방지). `main.js`도 동일하게 적용.
-15. **테스트 기준 (176개)**: `test_myreviews_ui.py` 추가. 기능 추가 시 해당 파일에 테스트도 추가.
+15. **테스트 기준 (285개)**: `test_i18n_ui.py` 추가. 기능 추가 시 해당 파일에 테스트도 추가.
 16. **모바일 레이아웃**: `@media (max-width: 640px)`에서 `html { position: fixed }` + `.app { display: flex !important; position: fixed; inset: 0 }`으로 iOS 횡스크롤 완전 차단. `overflow-x: hidden`만으로는 iOS Safari에서 동작 안 함.
 17. **바텀시트 스와이프**: `initPanelSwipe()`가 `.my-reviews-panel__header`에 touch 이벤트 등록. 스와이프 > 120px이면 `hidePanel()`만 호출 (핀 유지). 완전 비활성화는 별 버튼 재클릭. 드래그 중 `panel.style.transition = "none"`, 손 떼면 `""`로 복원.
 18. **음식점 우선 정렬**: `rankFoodFirst(docs)`가 Kakao Places 결과에서 `category_group_code` FD6(음식점)·CE7(카페)를 앞으로 이동. `doSearch`와 자동완성 두 곳에 적용.
@@ -169,7 +174,12 @@ supabase/
 22. **검색 결과 내 리뷰 뱃지**: `fetchMyReviewedIds(placeIds)`가 Supabase에서 현재 유저의 리뷰 `place_id`를 조회. `doSearch` 마커 렌더링 전 호출. 마커 탭 후 인포윈도우 카드에 `.iw-card__reviewed`로 "⭐ 내가 리뷰한 곳" / "⭐ N번 방문한 곳" 표시. 마커 위 오버레이 뱃지는 지도를 가려 제거.
 23. **모바일 OAuth 2회 클릭 문제**: ngrok 무료 플랜 최초 방문 시 인터스티셜 페이지가 `?code=` 파라미터를 제거해 PKCE 교환 실패. iOS Safari bfcache도 동일 증상. 수정: (1) `handleGoogleLogin`에서 `sessionStorage.setItem(OAUTH_PENDING_KEY, "1")` 설정, (2) `init()`에서 `hadOAuthPending` 감지 → 10초 대기 유지, (3) `pageshow` 핸들러로 bfcache 복원 대응, (4) `onAuthStateChange` catch-all else 제거 → `INITIAL_SESSION`/`SIGNED_OUT`만 명시적 처리.
 
+24. **다국어(i18n) 지원**: `i18n.js`에 4개 언어(ko/en/ja/zh) 번역 사전, `t(key)`/`tf(key, ...args)` API, `data-i18n`/`data-i18n-html`/`data-i18n-placeholder` DOM 워커. 언어 선택 pill 버튼(`.lang-selector`)이 로그인 카드와 튜토리얼 카드 상단 우측에 표시. 메인 앱 화면에서는 유저 메뉴 드롭다운 내 언어 항목(`.user-menu__lang`)으로 변경 가능. `localStorage` `k_lang` 키로 영속 저장. `lang:changed` 커스텀 이벤트로 동적 갱신. 스크립트 로드 순서: i18n.js → auth.js → main.js → reviews.js → tutorial.js → myreviews.js → ads.js.
+25. **유저 등급(tier) 시스템**: `user_profiles.tier` 컬럼 (`'free'` 기본, `'premium'` 구독). `auth.js`가 로그인 시 `checkTutorialStatus()`에서 tier도 함께 조회 → `window.__getUserTier()` 노출. 향후 등급별 서비스 차별화 설계 시 참고: 광고 제거(premium), 추천 맛집 조기 해금, 리뷰 통계/분석 기능 등. 마이그레이션: `supabase/migrations/002_user_tier.sql`. 기능 추가 시 `tier` 값에 따른 분기 로직을 고려할 것.
+26. **Google AdSense 광고**: `ads.js`가 `app:visible` 이벤트 후 tier 확인 → free 유저만 AdSense 스크립트 로드 + 광고 슬롯 활성화. 광고 위치: 화면 하단 배너(`#ad-banner`, `.ad-slot--banner`, z-index 8999), 내 맛집 패널 하단(`#ad-panel`, `.ad-slot--panel`). `body.has-ads` 클래스로 지도/패널 하단 여백 확보. AdSense publisher ID는 `ca-pub-XXXXXXXXXXXXXXXX` 플레이스홀더 — 승인 후 교체 필요.
+
 ## 향후 확장 예정
 - 리뷰 10개 달성 시 다른 사용자 추천 맛집 노출 기능
 - 즐겨찾기, 검색 기록 기능
 - 리뷰 목록 / 편집 / 삭제 UI
+- 유저 등급별 서비스 차별화 (premium 구독 → 광고 제거, 추천 맛집 조기 해금, 고급 통계 등)
