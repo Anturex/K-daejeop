@@ -17,7 +17,7 @@ const LANG_SHORT = { ko: "KO", en: "EN", ja: "JA", zh: "ZH" };
 const TRANSLATIONS = {
   ko: {
     // 로그인 화면
-    "login.subtitle": "맛집·카페·관광명소를 기록하고,<br/>리뷰를 쌓아 다른 사람의 추천을 받으세요",
+    "login.subtitle": "내 리뷰를 쌓으면,<br/>나와 취향이 비슷한 사람들의 맛집을 볼 수 있어요",
     "login.feature.search": "음식점·카페·관광명소 실시간 검색",
     "login.feature.rating": "3단계 별점 리뷰 시스템",
     "login.feature.unlock": "리뷰 10개 작성 → 추천 장소 해금",
@@ -126,7 +126,7 @@ const TRANSLATIONS = {
   },
 
   en: {
-    "login.subtitle": "Rate restaurants, cafes & attractions.<br/>Contribute reviews to unlock others' picks",
+    "login.subtitle": "Write reviews and discover<br/>hidden gems from people who share your taste",
     "login.feature.search": "Search restaurants, cafes & attractions",
     "login.feature.rating": "3-tier star rating system",
     "login.feature.unlock": "Write 10 reviews → unlock recommendations",
@@ -224,7 +224,7 @@ const TRANSLATIONS = {
   },
 
   ja: {
-    "login.subtitle": "飲食店・カフェ・観光地を記録して、<br/>レビューを書いて他の人のおすすめを解放",
+    "login.subtitle": "レビューを書くと、<br/>あなたと好みが似た人のおすすめが見られます",
     "login.feature.search": "飲食店・カフェ・観光地をリアルタイム検索",
     "login.feature.rating": "3段階の星評価システム",
     "login.feature.unlock": "レビュー10件投稿 → おすすめ解放",
@@ -322,7 +322,7 @@ const TRANSLATIONS = {
   },
 
   zh: {
-    "login.subtitle": "记录餐厅·咖啡厅·景点，<br/>写评价解锁他人的推荐",
+    "login.subtitle": "写下你的评价，<br/>发现与你口味相似的人推荐的美食",
     "login.feature.search": "实时搜索餐厅·咖啡厅·景点",
     "login.feature.rating": "三星评分系统",
     "login.feature.unlock": "写10条评价 → 解锁推荐",
