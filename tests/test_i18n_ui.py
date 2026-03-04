@@ -667,3 +667,64 @@ class TestAdI18nKeys:
 
     def test_ad_sponsored_zh(self):
         assert "广告" in self.js
+
+
+class TestLegalModalCSS:
+    """이용약관/개인정보처리방침 모달 CSS 검증."""
+
+    @pytest.fixture(autouse=True)
+    def _load(self):
+        self.css = (STATIC / "styles.css").read_text(encoding="utf-8")
+
+    def test_legal_modal_class(self):
+        assert ".legal-modal" in self.css
+
+    def test_legal_modal_overlay(self):
+        assert ".legal-modal__overlay" in self.css
+
+    def test_legal_modal_content(self):
+        assert ".legal-modal__content" in self.css
+
+    def test_legal_modal_close(self):
+        assert ".legal-modal__close" in self.css
+
+    def test_legal_modal_body(self):
+        assert ".legal-modal__body" in self.css
+
+
+class TestLegalModalAuthJs:
+    """auth.js에 약관 모달 로직이 존재하는지 검증."""
+
+    @pytest.fixture(autouse=True)
+    def _load(self):
+        self.js = (STATIC / "auth.js").read_text(encoding="utf-8")
+
+    def test_init_legal_modals_function(self):
+        assert "function initLegalModals()" in self.js
+
+    def test_terms_modal_reference(self):
+        assert "terms-modal" in self.js
+
+    def test_privacy_modal_reference(self):
+        assert "privacy-modal" in self.js
+
+
+class TestLoginFooterLinks:
+    """i18n.js의 login.footer 링크가 #terms/#privacy를 가리키는지 검증."""
+
+    @pytest.fixture(autouse=True)
+    def _load(self):
+        self.js = (STATIC / "i18n.js").read_text(encoding="utf-8")
+
+    def test_ko_terms_link(self):
+        assert '#terms' in self.js
+
+    def test_ko_privacy_link(self):
+        assert '#privacy' in self.js
+
+    def test_no_empty_hash_links(self):
+        """login.footer에 빈 href="#" 링크가 없어야 합니다."""
+        # login.footer 줄만 추출
+        lines = [l for l in self.js.splitlines() if "login.footer" in l]
+        for line in lines:
+            assert 'href="#"' not in line, f"빈 링크 발견: {line.strip()}"

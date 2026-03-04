@@ -126,3 +126,73 @@ async def test_index_static_files_have_cache_buster(client):
     assert re.search(r'styles\.css\?v=\d+', body), "CSS에 캐시 버스터 없음"
     # main.js?v=<숫자>
     assert re.search(r'main\.js\?v=\d+', body), "JS에 캐시 버스터 없음"
+
+
+# ===== 이용약관 / 개인정보처리방침 모달 테스트 =====
+
+
+@pytest.mark.asyncio
+async def test_terms_modal_exists(client):
+    """이용약관 모달 컨테이너가 존재합니다."""
+    r = await client.get("/")
+    assert 'id="terms-modal"' in r.text
+
+
+@pytest.mark.asyncio
+async def test_privacy_modal_exists(client):
+    """개인정보처리방침 모달 컨테이너가 존재합니다."""
+    r = await client.get("/")
+    assert 'id="privacy-modal"' in r.text
+
+
+@pytest.mark.asyncio
+async def test_terms_modal_hidden_by_default(client):
+    """이용약관 모달이 기본적으로 hidden 상태입니다."""
+    r = await client.get("/")
+    idx = r.text.index('id="terms-modal"')
+    # hidden 속성은 같은 태그 내에 존재 (앞뒤 탐색)
+    tag_start = r.text.rfind("<", 0, idx)
+    tag_end = r.text.index(">", idx)
+    tag = r.text[tag_start:tag_end + 1]
+    assert "hidden" in tag
+
+
+@pytest.mark.asyncio
+async def test_privacy_modal_hidden_by_default(client):
+    """개인정보처리방침 모달이 기본적으로 hidden 상태입니다."""
+    r = await client.get("/")
+    idx = r.text.index('id="privacy-modal"')
+    tag_start = r.text.rfind("<", 0, idx)
+    tag_end = r.text.index(">", idx)
+    tag = r.text[tag_start:tag_end + 1]
+    assert "hidden" in tag
+
+
+@pytest.mark.asyncio
+async def test_login_footer_links_to_terms(client):
+    """로그인 footer에서 이용약관 링크가 #terms를 가리킵니다."""
+    r = await client.get("/")
+    assert 'href="#terms"' in r.text
+
+
+@pytest.mark.asyncio
+async def test_login_footer_links_to_privacy(client):
+    """로그인 footer에서 개인정보처리방침 링크가 #privacy를 가리킵니다."""
+    r = await client.get("/")
+    assert 'href="#privacy"' in r.text
+
+
+@pytest.mark.asyncio
+async def test_terms_modal_has_close_button(client):
+    """이용약관 모달에 닫기 버튼이 있습니다."""
+    r = await client.get("/")
+    idx = r.text.index('id="terms-modal"')
+    block = r.text[idx:idx + 500]
+    assert "legal-modal__close" in block
+
+
+@pytest.mark.asyncio
+async def test_terms_modal_content_license(client):
+    """이용약관에 콘텐츠 이용 허락 조항이 포함됩니다."""
+    r = await client.get("/")
+    assert "콘텐츠 이용 허락" in r.text

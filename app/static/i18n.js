@@ -22,7 +22,7 @@ const TRANSLATIONS = {
     "login.feature.rating": "3단계 별점 리뷰 시스템",
     "login.feature.unlock": "리뷰 10개 작성 → 추천 장소 해금",
     "login.google": "Google 계정으로 시작하기",
-    "login.footer": '로그인하면 <a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a>에 동의하게 됩니다.',
+    "login.footer": '로그인하면 <a href="#terms">이용약관</a> 및 <a href="#privacy">개인정보처리방침</a>에 동의하게 됩니다.',
 
     // 튜토리얼
     "tutorial.step1.title": "K-daejeop에 오신 걸 환영해요! 👋",
@@ -131,7 +131,7 @@ const TRANSLATIONS = {
     "login.feature.rating": "3-tier star rating system",
     "login.feature.unlock": "Write 10 reviews → unlock recommendations",
     "login.google": "Continue with Google",
-    "login.footer": 'By signing in, you agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.',
+    "login.footer": 'By signing in, you agree to the <a href="#terms">Terms of Service</a> and <a href="#privacy">Privacy Policy</a>.',
 
     "tutorial.step1.title": "Welcome to K-daejeop! 👋",
     "tutorial.step1.body": "Rate restaurants, cafes & attractions.\nContribute 10 reviews to unlock\nrecommendations from other users.",
@@ -229,7 +229,7 @@ const TRANSLATIONS = {
     "login.feature.rating": "3段階の星評価システム",
     "login.feature.unlock": "レビュー10件投稿 → おすすめ解放",
     "login.google": "Googleアカウントで始める",
-    "login.footer": 'ログインすると<a href="#">利用規約</a>および<a href="#">プライバシーポリシー</a>に同意したことになります。',
+    "login.footer": 'ログインすると<a href="#terms">利用規約</a>および<a href="#privacy">プライバシーポリシー</a>に同意したことになります。',
 
     "tutorial.step1.title": "K-daejeopへようこそ！👋",
     "tutorial.step1.body": "飲食店・カフェ・観光地を記録して、\nレビュー10件投稿で他のユーザーの\nおすすめスポットが解放されます。",
@@ -327,7 +327,7 @@ const TRANSLATIONS = {
     "login.feature.rating": "三星评分系统",
     "login.feature.unlock": "写10条评价 → 解锁推荐",
     "login.google": "使用Google账号登录",
-    "login.footer": '登录即表示您同意<a href="#">服务条款</a>和<a href="#">隐私政策</a>。',
+    "login.footer": '登录即表示您同意<a href="#terms">服务条款</a>和<a href="#privacy">隐私政策</a>。',
 
     "tutorial.step1.title": "欢迎来到K-daejeop！👋",
     "tutorial.step1.body": "记录餐厅·咖啡厅·景点，\n写满10条评价即可解锁\n其他用户的推荐好店。",

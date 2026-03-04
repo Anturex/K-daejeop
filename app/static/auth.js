@@ -210,6 +210,42 @@ async function handleLogout() {
   if (error) console.error("[auth] 로그아웃 실패:", error.message);
 }
 
+/* ===== 이용약관 / 개인정보처리방침 모달 ===== */
+function initLegalModals() {
+  const termsModal = document.getElementById("terms-modal");
+  const privacyModal = document.getElementById("privacy-modal");
+
+  function openModal(modal) {
+    if (modal) modal.hidden = false;
+  }
+  function closeModal(modal) {
+    if (modal) modal.hidden = true;
+  }
+
+  // 로그인 footer 링크 클릭 → 모달 열기
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest('a[href="#terms"], a[href="#privacy"]');
+    if (!a) return;
+    e.preventDefault();
+    if (a.getAttribute("href") === "#terms") openModal(termsModal);
+    else openModal(privacyModal);
+  });
+
+  // 닫기 버튼 + 오버레이 클릭 → 모달 닫기
+  [termsModal, privacyModal].forEach((modal) => {
+    if (!modal) return;
+    modal.querySelector(".legal-modal__close")?.addEventListener("click", () => closeModal(modal));
+    modal.querySelector(".legal-modal__overlay")?.addEventListener("click", () => closeModal(modal));
+  });
+
+  // ESC 키 → 모달 닫기
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (termsModal && !termsModal.hidden) closeModal(termsModal);
+    if (privacyModal && !privacyModal.hidden) closeModal(privacyModal);
+  });
+}
+
 /* ===== 초기화 ===== */
 function init() {
   const sb = getSupabase();
@@ -219,6 +255,9 @@ function init() {
   logoutBtn.addEventListener("click", handleLogout);
   userMenuToggle.addEventListener("click", toggleDropdown);
   document.addEventListener("mousedown", closeDropdown);
+
+  // 이용약관 / 개인정보처리방침 모달
+  initLegalModals();
 
   // 튜토리얼 다시 보기 버튼
   if (tutorialToggleBtn) {

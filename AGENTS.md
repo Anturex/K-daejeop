@@ -166,7 +166,7 @@ supabase/
 12. **같은 장소 여러 리뷰**: `place_id`로 중복 제거 후 최신순 정렬. 핀 클릭 시 `showDetail(cluster)`에 전체 리뷰 배열 전달. `detailIdx` 로 현재 인덱스 관리, `review-detail-prev/next` 버튼으로 스와이프. 클러스터 배지는 항상 표시 (`count > MAX_CLUSTER_PHOTOS` 조건 제거).
 13. **인포윈도우 닫기**: `buildInfoContent`에 `.iw-card__close-btn` 추가. 이벤트 위임(`bindEvents`)으로 `infoWindow.close()` 처리.
 14. **Kakao Maps `addListenerOnce` 미존재**: `kakao.maps.event`에는 `addListenerOnce`가 없음. 수동 once 패턴 사용: `addListener` + 콜백 내 `removeListener`. `idle` 미발생 대비 setTimeout 폴백도 추가 (`idleRendered` 플래그로 중복 방지). `main.js`도 동일하게 적용.
-15. **테스트 기준 (381개)**: PWA + 카테고리 필터 + i18n 관광명소 강조 + 자동완성 버그 수정 + 리뷰 캐시 + 리뷰 모달 safe-area + 검색 센터링(InfoWindow 순서) + iOS 자동확대 방지(검색 input+textarea) + 광고 배너 높이 제한 + 리뷰 삭제 테스트 추가. 기능 추가 시 해당 파일에 테스트도 추가.
+15. **테스트 기준 (400개)**: PWA + 카테고리 필터 + i18n 관광명소 강조 + 자동완성 버그 수정 + 리뷰 캐시 + 리뷰 모달 safe-area + 검색 센터링(InfoWindow 순서) + iOS 자동확대 방지(검색 input+textarea) + 광고 배너 높이 제한 + 리뷰 삭제 + 이용약관/개인정보처리방침 모달 테스트 추가. 기능 추가 시 해당 파일에 테스트도 추가.
 16. **모바일 레이아웃**: `@media (max-width: 640px)`에서 `html { position: fixed }` + `.app { display: flex !important; position: fixed; inset: 0 }`으로 iOS 횡스크롤 완전 차단. `overflow-x: hidden`만으로는 iOS Safari에서 동작 안 함.
 17. **바텀시트 스와이프**: `initPanelSwipe()`가 `.my-reviews-panel__header`에 touch 이벤트 등록. 스와이프 > 120px이면 `hidePanel()`만 호출 (핀 유지). 완전 비활성화는 별 버튼 재클릭. 드래그 중 `panel.style.transition = "none"`, 손 떼면 `""`로 복원.
 18. **음식점 우선 정렬**: `rankFoodFirst(docs)`가 Kakao Places 결과에서 `category_group_code` FD6(음식점)·CE7(카페)를 앞으로 이동. `doSearch`와 자동완성 두 곳에 적용.
@@ -190,6 +190,7 @@ supabase/
 35. **iOS 자동확대 방지**: 모바일(640px 이하)에서 `.search input`과 `.review-textarea`의 `font-size`를 `1rem`(16px)으로 설정. iOS Safari는 `font-size < 16px`인 input/textarea 포커스 시 자동 zoom-in하여 뷰포트 확대 → 이후 열리는 리뷰 모달에 횡스크롤 발생.
 36. **리뷰 모달 safe-area**: 모바일에서 `max-height: calc(100dvh - env(safe-area-inset-top, 0px))`로 Dynamic Island/노치 영역을 피함.
 37. **리뷰 삭제**: 리뷰 상세 패널 하단에 삭제 버튼(`#review-detail-delete`). `myreviews.js`의 `deleteReview()`가 `confirm()` 확인 후 Supabase Storage 사진 삭제 + DB 리뷰 삭제 + 캐시 무효화 + UI 갱신. RLS `reviews_delete_own`/`storage_delete_own` 정책이 보안 담당. i18n 키: `review.delete`, `review.deleteConfirm`, `review.deleted`.
+38. **이용약관/개인정보처리방침**: 로그인 화면 footer 링크(`#terms`, `#privacy`) 클릭 시 `.legal-modal` 모달로 표시. `auth.js`의 `initLegalModals()`가 열기/닫기 관리. z-index 10003 (로그인 화면 10000 위). 콘텐츠 이용 허락 조항(제4조): 사용자 콘텐츠에 대한 비독점적·무상·영구적 이용권 부여. 운영자: 대접주 (hawng0065@naver.com).
 
 ## 향후 확장 예정
 - 리뷰 10개 달성 시 다른 사용자 추천 맛집 노출 기능

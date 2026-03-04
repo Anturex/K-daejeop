@@ -258,6 +258,133 @@ body {
   text-decoration: underline;
 }
 
+/* ===== 이용약관 / 개인정보처리방침 모달 ===== */
+.legal-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10003;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.legal-modal[hidden] {
+  display: none;
+}
+
+.legal-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.legal-modal__content {
+  position: relative;
+  background: var(--surface);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 560px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.legal-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.legal-modal__header h2 {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.legal-modal__close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.legal-modal__close:hover {
+  background: var(--border);
+}
+
+.legal-modal__body {
+  padding: 16px 20px 24px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.legal-modal__body h3 {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 20px 0 8px;
+}
+
+.legal-modal__body h3:first-of-type {
+  margin-top: 8px;
+}
+
+.legal-modal__body p {
+  margin: 0 0 8px;
+}
+
+.legal-modal__body ul {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+
+.legal-modal__body li {
+  margin-bottom: 4px;
+}
+
+.legal-modal__date {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.legal-modal__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin: 8px 0;
+}
+
+.legal-modal__table th,
+.legal-modal__table td {
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.legal-modal__table th {
+  background: var(--surface-hover);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 /* ── Loading Spinner ── */
 .login-loading {
   position: absolute;
