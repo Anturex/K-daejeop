@@ -267,3 +267,30 @@ class TestMigrationFileExists:
         # The guard prevents heic2any being called on already-decoded JPEG
         assert 'file.type.startsWith("image/")' in src
         assert "return false" in src
+
+
+class TestWoodToneDesign:
+    """우드톤 디자인 토큰이 CSS에 적용되었는지 검증합니다."""
+
+    @pytest.fixture(autouse=True)
+    def _load(self):
+        import pathlib
+        self.css = pathlib.Path("app/static/styles.css").read_text()
+
+    def test_warm_bg_color(self):
+        assert "#FAF6F1" in self.css
+
+    def test_warm_accent_color(self):
+        assert "#B5651D" in self.css
+
+    def test_warm_accent_dark(self):
+        assert "#8B4513" in self.css
+
+    def test_noto_serif_kr_in_css(self):
+        assert "Noto Serif KR" in self.css
+
+    def test_no_inter_font(self):
+        assert '"Inter"' not in self.css
+
+    def test_warm_shadow_tones(self):
+        assert "rgba(60, 40, 20," in self.css

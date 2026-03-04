@@ -2,22 +2,22 @@
 :root {
   color-scheme: light;
 
-  /* Palette */
-  --bg: #f8f9fa;
-  --surface: #ffffff;
-  --surface-hover: #f1f3f5;
-  --border: #e9ecef;
-  --border-strong: #dee2e6;
-  --text-primary: #212529;
-  --text-secondary: #495057;
-  --text-tertiary: #868e96;
-  --accent: #228be6;
-  --accent-light: #e7f5ff;
-  --accent-dark: #1971c2;
-  --success: #40c057;
-  --error: #fa5252;
-  --error-light: #fff5f5;
-  --warning: #fd7e14;
+  /* Palette — Warm Wood Tones */
+  --bg: #FAF6F1;
+  --surface: #FFFDF9;
+  --surface-hover: #F3EDE4;
+  --border: #E8DFD3;
+  --border-strong: #D4C8B8;
+  --text-primary: #2C2420;
+  --text-secondary: #5C4F43;
+  --text-tertiary: #9B8E80;
+  --accent: #B5651D;
+  --accent-light: #FDF0E2;
+  --accent-dark: #8B4513;
+  --success: #5D8A3C;
+  --error: #C0392B;
+  --error-light: #FDEDEB;
+  --warning: #D4880F;
 
   /* Spacing */
   --header-height: 64px;
@@ -26,11 +26,11 @@
   --radius-lg: 16px;
   --radius-full: 999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.12);
+  /* Shadows — Warm Brown */
+  --shadow-sm: 0 1px 3px rgba(60, 40, 20, 0.07), 0 1px 2px rgba(60, 40, 20, 0.05);
+  --shadow-md: 0 4px 12px rgba(60, 40, 20, 0.09);
+  --shadow-lg: 0 12px 40px rgba(60, 40, 20, 0.12);
+  --shadow-xl: 0 20px 60px rgba(60, 40, 20, 0.14);
 
   /* Transition */
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
@@ -47,13 +47,22 @@
 
 /* ===== Base ===== */
 body {
-  font-family: "Inter", "Noto Sans KR", -apple-system, BlinkMacSystemFont,
+  font-family: "Noto Sans KR", -apple-system, BlinkMacSystemFont,
     "Segoe UI", system-ui, sans-serif;
   color: var(--text-primary);
   background: var(--bg);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== Serif Display (warm accent typography) ===== */
+.login-card__title,
+.brand__name,
+.review-modal__title,
+.tutorial__title,
+.review-detail__name {
+  font-family: "Noto Serif KR", Georgia, serif;
 }
 
 /* ===== Login Screen ===== */
@@ -87,16 +96,16 @@ body {
   inset: 0;
   z-index: 0;
   background:
-    radial-gradient(ellipse at 20% 50%, rgba(34, 139, 230, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 20%, rgba(64, 192, 87, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 80%, rgba(253, 126, 20, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 50%, rgba(181, 101, 29, 0.10) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(93, 138, 60, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(212, 136, 15, 0.06) 0%, transparent 50%),
     var(--bg);
 }
 
 .login-screen__gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(34, 139, 230, 0.04) 0%, rgba(255, 255, 255, 0) 60%);
+  background: linear-gradient(135deg, rgba(181, 101, 29, 0.04) 0%, rgba(255, 255, 255, 0) 60%);
 }
 
 /* ── Login Card ── */
@@ -134,13 +143,18 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
-  color: #fff;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
   margin-bottom: 1rem;
-  box-shadow: 0 4px 16px rgba(34, 139, 230, 0.3);
+  box-shadow: 0 4px 16px rgba(181, 101, 29, 0.3);
+}
+
+.login-card__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .login-card__title {
@@ -320,9 +334,14 @@ body {
   place-items: center;
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-sm);
-  background: var(--accent);
-  color: #fff;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.brand__icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .brand__name {
@@ -709,7 +728,7 @@ body {
   padding: 0.875rem 1rem;
   width: max-content; /* 콘텐츠 폭에 맞게 자동 수축 */
   max-width: 260px;   /* 상한선 */
-  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-family: "Noto Sans KR", sans-serif;
 }
 
 .iw-card__name {
@@ -956,7 +975,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: 10001;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(44, 36, 32, 0.40);
   backdrop-filter: blur(2px);
   animation: fadeIn 200ms var(--ease);
 }
@@ -1140,7 +1159,7 @@ body {
 .rating-card.is-active {
   border-color: var(--accent);
   background: var(--accent-light);
-  box-shadow: 0 0 0 3px rgba(34, 139, 230, 0.15);
+  box-shadow: 0 0 0 3px rgba(181, 101, 29, 0.15);
 }
 
 .rating-card:active {
@@ -1387,7 +1406,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(44, 36, 32, 0.50);
   backdrop-filter: blur(4px);
   opacity: 0;
   transition: opacity 300ms var(--ease);
@@ -1680,13 +1699,13 @@ body {
   flex-direction: column;
   align-items: center;
   cursor: pointer;
-  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.22));
+  filter: drop-shadow(0 3px 10px rgba(60, 40, 20, 0.22));
   will-change: transform, opacity;
   transition: filter 0.15s ease;
 }
 
 .rv-cluster:hover {
-  filter: drop-shadow(0 5px 16px rgba(0, 0, 0, 0.32));
+  filter: drop-shadow(0 5px 16px rgba(60, 40, 20, 0.32));
 }
 
 .rv-cluster__box {
@@ -1758,13 +1777,13 @@ body {
   flex-direction: column;
   align-items: center;
   cursor: pointer;
-  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.22));
+  filter: drop-shadow(0 3px 10px rgba(60, 40, 20, 0.22));
   will-change: transform, opacity;
   transition: filter 0.15s ease;
 }
 
 .rv-pin:hover {
-  filter: drop-shadow(0 5px 16px rgba(0, 0, 0, 0.32));
+  filter: drop-shadow(0 5px 16px rgba(60, 40, 20, 0.32));
 }
 
 .rv-pin__photo-wrap {
@@ -1793,7 +1812,7 @@ body {
   white-space: nowrap;
   font-size: 10.5px;
   font-weight: 600;
-  font-family: "Inter", "Noto Sans KR", sans-serif;
+  font-family: "Noto Sans KR", sans-serif;
   color: var(--text-primary);
   line-height: 1.2;
   pointer-events: none;
@@ -1847,7 +1866,7 @@ body {
 .review-detail-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(44, 36, 32, 0.40);
   z-index: 10004;
   opacity: 0;
   pointer-events: none;
@@ -1982,7 +2001,7 @@ body {
   bottom: 0;
   width: 300px;
   background: var(--surface);
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
+  box-shadow: -4px 0 24px rgba(60, 40, 20, 0.12);
   z-index: 8990; /* 헤더(9000)보다 아래 */
   display: flex;
   flex-direction: column;
@@ -2297,7 +2316,7 @@ body {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(44, 36, 32, 0.35);
   z-index: 8980;
   animation: backdropIn 0.2s ease;
 }
@@ -2429,7 +2448,7 @@ body {
     max-height: 72dvh;
     transform: translateY(100%);
     border-radius: 1rem 1rem 0 0;
-    box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 -4px 32px rgba(60, 40, 20, 0.18);
   }
   .my-reviews-panel.is-open {
     transform: translateY(0);

@@ -61,6 +61,20 @@ async def test_index_loads_google_fonts(client):
 
 
 @pytest.mark.asyncio
+async def test_index_loads_noto_serif_kr(client):
+    """HTML에 Noto Serif KR 폰트가 로드됩니다."""
+    response = await client.get("/")
+    assert "Noto+Serif+KR" in response.text
+
+
+@pytest.mark.asyncio
+async def test_index_loads_noto_sans_kr(client):
+    """HTML에 Noto Sans KR 폰트가 로드됩니다."""
+    response = await client.get("/")
+    assert "Noto+Sans+KR" in response.text
+
+
+@pytest.mark.asyncio
 async def test_index_contains_search_input(client):
     """HTML에 검색 입력 필드가 포함됩니다."""
     response = await client.get("/")

@@ -14,6 +14,7 @@ FastAPI 백엔드 + Jinja2 SSR + Vanilla JS 프론트엔드 구조.
 - Supabase JS SDK v2 (프론트엔드 인증 + DB + Storage)
 - 카카오맵 JavaScript SDK (지도 렌더링)
 - pytest 8.2 + pytest-asyncio 0.23 (테스트)
+- Noto Serif KR + Noto Sans KR (Google Fonts, 제목 세리프 + 본문 산세리프)
 - uv (패키지 매니저)
 
 ## 아키텍처 핵심 원칙
@@ -164,7 +165,7 @@ supabase/
 12. **같은 장소 여러 리뷰**: `place_id`로 중복 제거 후 최신순 정렬. 핀 클릭 시 `showDetail(cluster)`에 전체 리뷰 배열 전달. `detailIdx` 로 현재 인덱스 관리, `review-detail-prev/next` 버튼으로 스와이프. 클러스터 배지는 항상 표시 (`count > MAX_CLUSTER_PHOTOS` 조건 제거).
 13. **인포윈도우 닫기**: `buildInfoContent`에 `.iw-card__close-btn` 추가. 이벤트 위임(`bindEvents`)으로 `infoWindow.close()` 처리.
 14. **Kakao Maps `addListenerOnce` 미존재**: `kakao.maps.event`에는 `addListenerOnce`가 없음. 수동 once 패턴 사용: `addListener` + 콜백 내 `removeListener`. `idle` 미발생 대비 setTimeout 폴백도 추가 (`idleRendered` 플래그로 중복 방지). `main.js`도 동일하게 적용.
-15. **테스트 기준 (285개)**: `test_i18n_ui.py` 추가. 기능 추가 시 해당 파일에 테스트도 추가.
+15. **테스트 기준 (300개)**: `test_i18n_ui.py` 추가. 기능 추가 시 해당 파일에 테스트도 추가.
 16. **모바일 레이아웃**: `@media (max-width: 640px)`에서 `html { position: fixed }` + `.app { display: flex !important; position: fixed; inset: 0 }`으로 iOS 횡스크롤 완전 차단. `overflow-x: hidden`만으로는 iOS Safari에서 동작 안 함.
 17. **바텀시트 스와이프**: `initPanelSwipe()`가 `.my-reviews-panel__header`에 touch 이벤트 등록. 스와이프 > 120px이면 `hidePanel()`만 호출 (핀 유지). 완전 비활성화는 별 버튼 재클릭. 드래그 중 `panel.style.transition = "none"`, 손 떼면 `""`로 복원.
 18. **음식점 우선 정렬**: `rankFoodFirst(docs)`가 Kakao Places 결과에서 `category_group_code` FD6(음식점)·CE7(카페)를 앞으로 이동. `doSearch`와 자동완성 두 곳에 적용.
@@ -177,6 +178,7 @@ supabase/
 24. **다국어(i18n) 지원**: `i18n.js`에 4개 언어(ko/en/ja/zh) 번역 사전, `t(key)`/`tf(key, ...args)` API, `data-i18n`/`data-i18n-html`/`data-i18n-placeholder` DOM 워커. 언어 선택 pill 버튼(`.lang-selector`)이 로그인 카드와 튜토리얼 카드 상단 우측에 표시. 메인 앱 화면에서는 유저 메뉴 드롭다운 내 언어 항목(`.user-menu__lang`)으로 변경 가능. `localStorage` `k_lang` 키로 영속 저장. `lang:changed` 커스텀 이벤트로 동적 갱신. 스크립트 로드 순서: i18n.js → auth.js → main.js → reviews.js → tutorial.js → myreviews.js → ads.js.
 25. **유저 등급(tier) 시스템**: `user_profiles.tier` 컬럼 (`'free'` 기본, `'premium'` 구독). `auth.js`가 로그인 시 `checkTutorialStatus()`에서 tier도 함께 조회 → `window.__getUserTier()` 노출. 향후 등급별 서비스 차별화 설계 시 참고: 광고 제거(premium), 추천 맛집 조기 해금, 리뷰 통계/분석 기능 등. 마이그레이션: `supabase/migrations/002_user_tier.sql`. 기능 추가 시 `tier` 값에 따른 분기 로직을 고려할 것.
 26. **Google AdSense 광고**: `ads.js`가 `app:visible` 이벤트 후 tier 확인 → free 유저만 AdSense 스크립트 로드 + 광고 슬롯 활성화. 광고 위치: 화면 하단 배너(`#ad-banner`, `.ad-slot--banner`, z-index 8999), 내 맛집 패널 하단(`#ad-panel`, `.ad-slot--panel`). `body.has-ads` 클래스로 지도/패널 하단 여백 확보. AdSense publisher ID는 `ca-pub-XXXXXXXXXXXXXXXX` 플레이스홀더 — 승인 후 교체 필요.
+27. **디자인 팔레트**: 우드톤 (오커 #B5651D 메인 액센트, 한지색 #FAF6F1 배경, 원목색 #8B4513 다크). Noto Serif KR(제목) + Noto Sans KR(본문) 폰트 조합.
 
 ## 향후 확장 예정
 - 리뷰 10개 달성 시 다른 사용자 추천 맛집 노출 기능

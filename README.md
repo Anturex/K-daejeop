@@ -83,7 +83,7 @@ K-daejeop/
 │   └── migrations/
 │       ├── 001_reviews_and_profiles.sql  # reviews, user_profiles, storage 스키마
 │       └── 002_user_tier.sql            # user_profiles에 tier 컬럼 추가
-├── tests/                       # pytest 테스트 (285개)
+├── tests/                       # pytest 테스트 (300개)
 │   ├── __init__.py
 │   ├── conftest.py              # fixtures, mock 환경변수
 │   ├── test_app.py
@@ -303,4 +303,6 @@ uv run pytest tests/ -v
 | 데이터베이스 | Supabase (PostgreSQL + RLS) |
 | 파일 스토리지 | Supabase Storage (review-photos) |
 | 패키지 매니저 | uv |
+| 폰트 | Noto Serif KR + Noto Sans KR (Google Fonts) |
+| 디자인 | 따뜻한 우드톤 팔레트 (warm wood-tone color scheme) |
 | 외부 API | 카카오맵 REST API / JavaScript SDK |
