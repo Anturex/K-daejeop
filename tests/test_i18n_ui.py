@@ -604,6 +604,47 @@ class TestAdSlotCSS:
     def test_ad_slot_modal(self):
         assert ".ad-slot--modal" in self.css
 
+    def test_banner_max_height(self):
+        """배너 광고 높이가 제한되어 있는지 확인"""
+        assert "max-height" in self.css
+        # .ad-slot--banner 블록에 max-height 존재
+        idx = self.css.index(".ad-slot--banner")
+        block = self.css[idx:idx + 300]
+        assert "max-height" in block
+
+    def test_banner_overflow_hidden(self):
+        """배너 광고 overflow가 hidden인지 확인"""
+        idx = self.css.index(".ad-slot--banner")
+        block = self.css[idx:idx + 300]
+        assert "overflow: hidden" in block
+
+
+class TestAdBannerHtmlFormat:
+    """배너 광고 HTML이 고정 크기로 제한되는지 검증합니다."""
+
+    @pytest.fixture(autouse=True)
+    def _load(self):
+        tmpl = STATIC.parent / "templates" / "index.html"
+        self.html = tmpl.read_text(encoding="utf-8")
+
+    def test_banner_format_is_banner(self):
+        """data-ad-format이 banner(고정)인지 확인"""
+        idx = self.html.index('id="ad-banner"')
+        block = self.html[idx:idx + 400]
+        assert 'data-ad-format="banner"' in block
+
+    def test_banner_not_full_width_responsive(self):
+        """data-full-width-responsive가 false인지 확인"""
+        idx = self.html.index('id="ad-banner"')
+        block = self.html[idx:idx + 400]
+        assert 'data-full-width-responsive="false"' in block
+
+    def test_banner_inline_max_height(self):
+        """ins 요소에 inline max-height이 있는지 확인"""
+        idx = self.html.index('id="ad-banner"')
+        block = self.html[idx:idx + 400]
+        assert "max-height:50px" in block
+
 
 class TestAdI18nKeys:
     """i18n.js에 광고 관련 번역 키가 있는지 검증합니다."""

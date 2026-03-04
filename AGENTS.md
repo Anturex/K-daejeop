@@ -166,7 +166,7 @@ supabase/
 12. **같은 장소 여러 리뷰**: `place_id`로 중복 제거 후 최신순 정렬. 핀 클릭 시 `showDetail(cluster)`에 전체 리뷰 배열 전달. `detailIdx` 로 현재 인덱스 관리, `review-detail-prev/next` 버튼으로 스와이프. 클러스터 배지는 항상 표시 (`count > MAX_CLUSTER_PHOTOS` 조건 제거).
 13. **인포윈도우 닫기**: `buildInfoContent`에 `.iw-card__close-btn` 추가. 이벤트 위임(`bindEvents`)으로 `infoWindow.close()` 처리.
 14. **Kakao Maps `addListenerOnce` 미존재**: `kakao.maps.event`에는 `addListenerOnce`가 없음. 수동 once 패턴 사용: `addListener` + 콜백 내 `removeListener`. `idle` 미발생 대비 setTimeout 폴백도 추가 (`idleRendered` 플래그로 중복 방지). `main.js`도 동일하게 적용.
-15. **테스트 기준 (363개)**: PWA + 카테고리 필터 + i18n 관광명소 강조 + 자동완성 버그 수정 + 리뷰 캐시 + 리뷰 모달 safe-area + 검색 센터링(InfoWindow 순서) + iOS 자동확대 방지(검색 input+textarea) 테스트 추가. 기능 추가 시 해당 파일에 테스트도 추가.
+15. **테스트 기준 (368개)**: PWA + 카테고리 필터 + i18n 관광명소 강조 + 자동완성 버그 수정 + 리뷰 캐시 + 리뷰 모달 safe-area + 검색 센터링(InfoWindow 순서) + iOS 자동확대 방지(검색 input+textarea) + 광고 배너 높이 제한 테스트 추가. 기능 추가 시 해당 파일에 테스트도 추가.
 16. **모바일 레이아웃**: `@media (max-width: 640px)`에서 `html { position: fixed }` + `.app { display: flex !important; position: fixed; inset: 0 }`으로 iOS 횡스크롤 완전 차단. `overflow-x: hidden`만으로는 iOS Safari에서 동작 안 함.
 17. **바텀시트 스와이프**: `initPanelSwipe()`가 `.my-reviews-panel__header`에 touch 이벤트 등록. 스와이프 > 120px이면 `hidePanel()`만 호출 (핀 유지). 완전 비활성화는 별 버튼 재클릭. 드래그 중 `panel.style.transition = "none"`, 손 떼면 `""`로 복원.
 18. **음식점 우선 정렬**: `rankFoodFirst(docs)`가 Kakao Places 결과에서 `category_group_code` FD6(음식점)·CE7(카페)를 앞으로 이동. `doSearch`와 자동완성 두 곳에 적용.
