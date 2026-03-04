@@ -100,6 +100,9 @@ const TRANSLATIONS = {
     "review.submitting": "저장 중…",
     "review.visitBadge": "🍽️ {0}번째 방문",
     "review.saved": "리뷰가 저장되었습니다! 🎉",
+    "review.delete": "삭제",
+    "review.deleteConfirm": "이 리뷰를 삭제하시겠습니까?",
+    "review.deleted": "리뷰가 삭제되었습니다",
 
     // 리뷰 에러
     "review.err.rating": "별점을 선택해 주세요.",
@@ -197,6 +200,9 @@ const TRANSLATIONS = {
     "review.submitting": "Saving…",
     "review.visitBadge": "🍽️ Visit #{0}",
     "review.saved": "Review saved! 🎉",
+    "review.delete": "Delete",
+    "review.deleteConfirm": "Delete this review?",
+    "review.deleted": "Review deleted",
 
     "review.err.rating": "Please select a rating.",
     "review.err.photo": "Please attach a photo.",
@@ -292,6 +298,9 @@ const TRANSLATIONS = {
     "review.submitting": "保存中…",
     "review.visitBadge": "🍽️ {0}回目の訪問",
     "review.saved": "レビューを保存しました！🎉",
+    "review.delete": "削除",
+    "review.deleteConfirm": "このレビューを削除しますか？",
+    "review.deleted": "レビューを削除しました",
 
     "review.err.rating": "評価を選択してください。",
     "review.err.photo": "写真を1枚添付してください。",
@@ -387,6 +396,9 @@ const TRANSLATIONS = {
     "review.submitting": "保存中…",
     "review.visitBadge": "🍽️ 第{0}次到访",
     "review.saved": "评价已保存！🎉",
+    "review.delete": "删除",
+    "review.deleteConfirm": "确定删除此评价吗？",
+    "review.deleted": "评价已删除",
 
     "review.err.rating": "请选择评分。",
     "review.err.photo": "请添加一张照片。",

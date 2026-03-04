@@ -2002,6 +2002,32 @@ body {
   word-break: keep-all;
 }
 
+.review-detail__delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 20px;
+  padding: 8px 14px;
+  min-height: 44px;
+  border: 1px solid #C0392B;
+  border-radius: 8px;
+  background: transparent;
+  color: #C0392B;
+  font-size: 13px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.review-detail__delete-btn:hover {
+  background: #C0392B;
+  color: #fff;
+}
+
+.review-detail__delete-btn svg {
+  flex-shrink: 0;
+}
+
 /* ===== 내 맛집 사이드 패널 ===== */
 .my-reviews-panel {
   position: fixed;

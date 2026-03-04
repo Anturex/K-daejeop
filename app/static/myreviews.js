@@ -692,6 +692,38 @@ function hideDetail() {
   detailIdx = 0;
 }
 
+async function deleteReview() {
+  if (!detailCluster) return;
+  const review = detailCluster.reviews[detailIdx];
+  if (!review?.id) return;
+
+  const t = window.__i18n?.t ?? ((k) => k);
+  if (!confirm(t("review.deleteConfirm"))) return;
+
+  const sb = window.__getSupabase?.();
+  if (!sb) return;
+
+  // Storage 사진 삭제
+  if (review.photo_url) {
+    const match = review.photo_url.match(/review-photos\/(.+)$/);
+    if (match) {
+      await sb.storage.from("review-photos").remove([match[1]]).catch(() => {});
+    }
+  }
+
+  // DB 리뷰 삭제
+  const { error } = await sb.from("reviews").delete().eq("id", review.id);
+  if (error) {
+    console.warn("[K-daejeop] deleteReview:", error);
+    return;
+  }
+
+  window.__reviewCache?.invalidate();
+  hideDetail();
+  refresh();
+  showToast(t("review.deleted"), 2500);
+}
+
 /* ===== 지도 범위 맞추기 ===== */
 function fitMapToReviews() {
   const bounds = new kakao.maps.LatLngBounds();
@@ -837,6 +869,11 @@ document.addEventListener("DOMContentLoaded", () => {
     detailIdx = (detailIdx + 1) % detailCluster.reviews.length;
     _renderDetailContent();
   });
+
+  // 리뷰 삭제
+  document
+    .getElementById("review-detail-delete")
+    ?.addEventListener("click", deleteReview);
 
   // 내 맛집 토글 버튼
   const btn = document.getElementById("my-reviews-btn");

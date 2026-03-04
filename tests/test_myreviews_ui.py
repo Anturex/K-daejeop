@@ -913,3 +913,78 @@ class TestReviewCacheIntegration:
     async def test_html_includes_review_cache_script(self, client):
         response = await client.get("/")
         assert "reviewCache.js" in response.text
+
+
+# ===== 리뷰 삭제 기능 테스트 =====
+
+STATIC = pathlib.Path(__file__).resolve().parent.parent / "app" / "static"
+
+
+class TestReviewDeleteButton:
+    """리뷰 삭제 버튼 HTML/CSS/JS 검증."""
+
+    @pytest.mark.asyncio
+    async def test_delete_button_html(self, client):
+        """삭제 버튼이 리뷰 상세 패널에 존재합니다."""
+        r = await client.get("/")
+        assert 'id="review-detail-delete"' in r.text
+
+    @pytest.mark.asyncio
+    async def test_delete_button_i18n_attr(self, client):
+        """삭제 버튼에 data-i18n 속성이 있습니다."""
+        r = await client.get("/")
+        assert 'data-i18n="review.delete"' in r.text
+
+    def test_delete_button_css(self):
+        """삭제 버튼 CSS 스타일이 존재합니다."""
+        css = (STATIC / "styles.css").read_text(encoding="utf-8")
+        assert ".review-detail__delete-btn" in css
+
+    def test_delete_function_in_myreviews(self):
+        """myreviews.js에 deleteReview 함수가 존재합니다."""
+        js = (STATIC / "myreviews.js").read_text(encoding="utf-8")
+        assert "async function deleteReview()" in js
+
+    def test_delete_uses_supabase(self):
+        """삭제 로직이 Supabase delete를 호출합니다."""
+        js = (STATIC / "myreviews.js").read_text(encoding="utf-8")
+        assert '.from("reviews").delete()' in js
+
+    def test_delete_invalidates_cache(self):
+        """삭제 후 리뷰 캐시를 무효화합니다."""
+        js = (STATIC / "myreviews.js").read_text(encoding="utf-8")
+        # deleteReview 함수 내에서 invalidate 호출 확인
+        idx = js.index("async function deleteReview()")
+        block = js[idx:idx + 900]
+        assert "__reviewCache?.invalidate()" in block
+
+    def test_delete_event_listener(self):
+        """삭제 버튼에 이벤트 리스너가 등록됩니다."""
+        js = (STATIC / "myreviews.js").read_text(encoding="utf-8")
+        assert "review-detail-delete" in js
+
+
+class TestReviewDeleteI18n:
+    """리뷰 삭제 i18n 번역 키 검증."""
+
+    @pytest.fixture(autouse=True)
+    def _load(self):
+        self.js = (STATIC / "i18n.js").read_text(encoding="utf-8")
+
+    def test_delete_key_ko(self):
+        assert '"review.delete": "삭제"' in self.js
+
+    def test_delete_key_en(self):
+        assert '"review.delete": "Delete"' in self.js
+
+    def test_delete_key_ja(self):
+        assert '"review.delete": "削除"' in self.js
+
+    def test_delete_key_zh(self):
+        assert '"review.delete": "删除"' in self.js
+
+    def test_delete_confirm_key_ko(self):
+        assert '"review.deleteConfirm"' in self.js
+
+    def test_deleted_key_ko(self):
+        assert '"review.deleted"' in self.js
