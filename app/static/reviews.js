@@ -68,15 +68,7 @@ function openReviewModal(place) {
 }
 
 async function loadVisitCount(placeId) {
-  const sb = window.__getSupabase?.();
-  if (!sb) return;
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return;
-  const { count } = await sb
-    .from("reviews")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .eq("place_id", placeId);
+  const count = await window.__reviewCache?.getVisitCount(placeId) ?? 0;
   if (count > 0 && visitBadgeEl) {
     visitBadgeEl.textContent = window.__i18n?.tf("review.visitBadge", count + 1) ?? `🍽️ ${count + 1}번째 방문`;
     visitBadgeEl.hidden = false;
@@ -397,7 +389,8 @@ async function handleSubmit() {
 
     if (insertErr) throw new Error(window.__i18n?.tf("review.err.insert", insertErr.message) ?? "리뷰 저장 실패: " + insertErr.message);
 
-    // 성공
+    // 성공 — 캐시 무효화 후 모달 닫기
+    window.__reviewCache?.invalidate();
     closeReviewModal();
     window.dispatchEvent(
       new CustomEvent("review:saved", {

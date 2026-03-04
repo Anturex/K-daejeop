@@ -42,6 +42,7 @@ let zoomHandler = null;
 let zoomDebounce = null;
 let detailCluster = null;
 let detailIdx = 0;
+let activeCategory = "all";
 
 /* ===== 유틸 ===== */
 function escAttr(str) {
@@ -52,6 +53,18 @@ function escHtml(str) {
   const d = document.createElement("div");
   d.textContent = String(str ?? "");
   return d.innerHTML;
+}
+
+/* ===== 카테고리 필터 ===== */
+const CATEGORY_MAP = { "음식점": "restaurant", "카페": "cafe", "관광명소": "attraction" };
+
+function classifyCategory(placeCat) {
+  return CATEGORY_MAP[placeCat] || "etc";
+}
+
+function getFilteredReviews() {
+  if (activeCategory === "all") return allReviews;
+  return allReviews.filter((r) => classifyCategory(r.place_category) === activeCategory);
 }
 
 /** "경기도 김포시 운양동 …" → "경기도 김포시" */
@@ -88,27 +101,15 @@ async function activate() {
   myMap = window.__getMap?.();
   if (!myMap) return;
 
-  const sb = window.__getSupabase?.();
-  if (!sb) return;
-
-  const {
-    data: { user },
-  } = await sb.auth.getUser();
-  if (!user) return;
-
   isActive = true;
   initialRenderDone = false;
   showToast("내 맛집 불러오는 중…");
 
-  const { data, error } = await sb
-    .from("reviews")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("visited_at", { ascending: false });
+  const data = await window.__reviewCache?.getMyReviews();
 
   if (!isActive) return; // 로딩 중 비활성화된 경우
 
-  if (error || !data?.length) {
+  if (!data?.length) {
     showToast(data ? "저장된 맛집 리뷰가 없습니다" : "불러오기 실패", 3000);
     isActive = false;
     document.getElementById("my-reviews-btn")?.classList.remove("is-active");
@@ -117,6 +118,7 @@ async function activate() {
 
   allReviews = data;
   showToast(`리뷰 ${allReviews.length}개`, 2500);
+  updateCategoryBadges();
 
   // 사이드 패널 렌더 & 표시
   renderPanel();
@@ -164,6 +166,7 @@ function deactivate() {
   activeClusters.forEach((c) => animateOut(c, null));
   activeClusters = [];
   allReviews = [];
+  resetCategoryFilter();
 
   hidePanel();
   hideDetail();
@@ -172,21 +175,13 @@ function deactivate() {
 /* ===== 리뷰 추가 후 갱신 ===== */
 async function refresh() {
   if (!isActive) return;
-  const sb = window.__getSupabase?.();
-  if (!sb) return;
-  const {
-    data: { user },
-  } = await sb.auth.getUser();
-  if (!user) return;
 
-  const { data, error } = await sb
-    .from("reviews")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("visited_at", { ascending: false });
+  // 캐시를 강제 갱신하여 최신 데이터 가져오기
+  const data = await window.__reviewCache?.getMyReviews(true);
 
-  if (!error && data) {
+  if (data) {
     allReviews = data;
+    updateCategoryBadges();
     renderPanel();
     const old = activeClusters;
     activeClusters = [];
@@ -212,14 +207,15 @@ function getGridDeg(level) {
 }
 
 function computeClusters() {
-  if (!myMap || !allReviews.length) return [];
+  const reviews = getFilteredReviews();
+  if (!myMap || !reviews.length) return [];
   const level = myMap.getLevel();
   const grid = getGridDeg(level);
 
   if (grid === 0) {
     // 가장 확대된 레벨: 개별 핀 (같은 장소 여러 리뷰는 place_id로 합산)
     const placeMap = new Map();
-    for (const r of allReviews) {
+    for (const r of reviews) {
       const lat = parseFloat(r.place_y);
       const lng = parseFloat(r.place_x);
       if (isNaN(lat) || isNaN(lng)) continue;
@@ -240,7 +236,7 @@ function computeClusters() {
 
   // 격자 셀 단위로 그룹화
   const cellMap = new Map();
-  for (const review of allReviews) {
+  for (const review of reviews) {
     const lat = parseFloat(review.place_y);
     const lng = parseFloat(review.place_x);
     if (isNaN(lat) || isNaN(lng)) continue;
@@ -471,6 +467,9 @@ function isMobile() {
 
 function showPanel() {
   document.getElementById("my-reviews-panel")?.classList.add("is-open");
+  // 패널 열릴 때 배너 광고 숨김 (겹침 방지)
+  const banner = document.getElementById("ad-banner");
+  if (banner) banner.hidden = true;
   if (isMobile()) {
     const backdrop = document.getElementById("panel-backdrop");
     if (backdrop) {
@@ -482,6 +481,9 @@ function showPanel() {
 
 function hidePanel() {
   document.getElementById("my-reviews-panel")?.classList.remove("is-open");
+  // 패널 닫힐 때 배너 광고 복원
+  const banner = document.getElementById("ad-banner");
+  if (banner) banner.hidden = false;
   const backdrop = document.getElementById("panel-backdrop");
   if (backdrop) {
     backdrop.classList.remove("is-visible");
@@ -510,13 +512,14 @@ function renderPanel() {
   const listEl = document.getElementById("my-reviews-panel-list");
   if (!listEl) return;
 
+  const filtered = getFilteredReviews();
   // place_id 기준 고유 식당 수 (같은 식당 여러 리뷰는 1개로 카운트)
   const uniquePlaceCount = new Set(
-    allReviews.map((r) => r.place_id || `${r.place_y},${r.place_x}`)
+    filtered.map((r) => r.place_id || `${r.place_y},${r.place_x}`)
   ).size;
   if (countEl) countEl.textContent = `총 ${uniquePlaceCount}곳`;
 
-  const groups = groupByRegion(allReviews);
+  const groups = groupByRegion(filtered);
   listEl.scrollTop = 0;
 
   listEl.innerHTML = groups
@@ -757,9 +760,56 @@ function initPanelSwipe() {
   });
 }
 
+/* ===== 카테고리 필터 UI ===== */
+function updateCategoryBadges() {
+  const counts = { all: 0, restaurant: 0, cafe: 0, attraction: 0, etc: 0 };
+  const seen = new Map();
+  for (const r of allReviews) {
+    const key = r.place_id || `${r.place_y},${r.place_x}`;
+    if (seen.has(key)) continue;
+    seen.set(key, true);
+    counts.all++;
+    counts[classifyCategory(r.place_category)]++;
+  }
+  for (const [cat, n] of Object.entries(counts)) {
+    const el = document.querySelector(`[data-cat-count="${cat}"]`);
+    if (el) el.textContent = n > 0 ? n : "";
+  }
+}
+
+function resetCategoryFilter() {
+  activeCategory = "all";
+  const container = document.getElementById("mrp-filter");
+  if (!container) return;
+  container.querySelectorAll(".mrp-filter__chip").forEach((c) => {
+    c.classList.toggle("is-active", c.dataset.category === "all");
+  });
+}
+
+function initCategoryFilter() {
+  const container = document.getElementById("mrp-filter");
+  if (!container) return;
+  container.addEventListener("click", (e) => {
+    const chip = e.target.closest(".mrp-filter__chip");
+    if (!chip || !isActive) return;
+    const cat = chip.dataset.category;
+    if (cat === activeCategory) return;
+
+    activeCategory = cat;
+    container.querySelectorAll(".mrp-filter__chip").forEach((c) => c.classList.remove("is-active"));
+    chip.classList.add("is-active");
+
+    const old = activeClusters;
+    activeClusters = [];
+    renderClusters(computeClusters(), old);
+    renderPanel();
+  });
+}
+
 /* ===== 이벤트 바인딩 ===== */
 document.addEventListener("DOMContentLoaded", () => {
   initPanelSwipe();
+  initCategoryFilter();
 
   // 백드롭 클릭 → 패널 닫기
   document.getElementById("panel-backdrop")?.addEventListener("click", () => {
@@ -794,8 +844,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   btn.addEventListener("click", () => {
     if (isActive) {
-      btn.classList.remove("is-active");
-      deactivate();
+      const panel = document.getElementById("my-reviews-panel");
+      if (panel && !panel.classList.contains("is-open")) {
+        // 패널만 숨겨진 상태 → 다시 열기 (데이터 재로딩 없이)
+        showPanel();
+      } else {
+        btn.classList.remove("is-active");
+        deactivate();
+      }
     } else {
       btn.classList.add("is-active");
       window.__clearSearchMarkers?.();

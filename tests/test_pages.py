@@ -75,6 +75,38 @@ async def test_index_loads_noto_sans_kr(client):
 
 
 @pytest.mark.asyncio
+async def test_index_has_pwa_manifest(client):
+    """HTML에 PWA manifest 링크가 포함됩니다."""
+    response = await client.get("/")
+    assert 'rel="manifest"' in response.text
+    assert "manifest.json" in response.text
+
+
+@pytest.mark.asyncio
+async def test_index_has_apple_meta_tags(client):
+    """HTML에 iOS PWA 메타 태그가 포함됩니다."""
+    body = (await client.get("/")).text
+    assert 'name="apple-mobile-web-app-capable"' in body
+    assert 'content="yes"' in body
+    assert 'name="apple-mobile-web-app-status-bar-style"' in body
+    assert 'rel="apple-touch-icon"' in body
+
+
+@pytest.mark.asyncio
+async def test_index_has_theme_color(client):
+    """HTML에 theme-color 메타 태그가 포함됩니다."""
+    body = (await client.get("/")).text
+    assert 'name="theme-color"' in body
+
+
+@pytest.mark.asyncio
+async def test_index_has_viewport_fit_cover(client):
+    """viewport 메타에 viewport-fit=cover가 포함됩니다."""
+    body = (await client.get("/")).text
+    assert "viewport-fit=cover" in body
+
+
+@pytest.mark.asyncio
 async def test_index_contains_search_input(client):
     """HTML에 검색 입력 필드가 포함됩니다."""
     response = await client.get("/")

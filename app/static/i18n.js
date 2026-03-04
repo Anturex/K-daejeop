@@ -17,24 +17,24 @@ const LANG_SHORT = { ko: "KO", en: "EN", ja: "JA", zh: "ZH" };
 const TRANSLATIONS = {
   ko: {
     // 로그인 화면
-    "login.subtitle": "나만의 맛집 리뷰를 기록하고,<br/>다른 사람의 추천 맛집을 발견하세요",
-    "login.feature.search": "실시간 장소 검색",
+    "login.subtitle": "맛집·카페·관광명소를 기록하고,<br/>리뷰를 쌓아 다른 사람의 추천을 받으세요",
+    "login.feature.search": "음식점·카페·관광명소 실시간 검색",
     "login.feature.rating": "3단계 별점 리뷰 시스템",
-    "login.feature.unlock": "10개 리뷰 → 추천 맛집 해금",
+    "login.feature.unlock": "리뷰 10개 작성 → 추천 장소 해금",
     "login.google": "Google 계정으로 시작하기",
     "login.footer": '로그인하면 <a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a>에 동의하게 됩니다.',
 
     // 튜토리얼
     "tutorial.step1.title": "K-daejeop에 오신 걸 환영해요! 👋",
-    "tutorial.step1.body": "나만의 맛집 리뷰를 기록하고,\n10개 리뷰를 쌓으면 다른 사람의\n추천 맛집을 볼 수 있어요.",
+    "tutorial.step1.body": "맛집·카페·관광명소를 기록하고,\n리뷰 10개를 쌓으면 다른 사용자의\n추천 장소를 받아볼 수 있어요.",
     "tutorial.step2.title": "장소를 검색하세요 🔍",
-    "tutorial.step2.body": "상단 검색창에 음식점 이름이나\n키워드를 입력하면 실시간으로\n추천 결과가 나타나요.",
+    "tutorial.step2.body": "상단 검색창에 음식점·카페·관광명소\n이름이나 키워드를 입력하면\n실시간으로 추천 결과가 나타나요.",
     "tutorial.step3.title": "별점은 세 단계 ⭐",
     "tutorial.step3.body": "⭐ 동네 맛집 — 가볍게 다시 찾을 곳\n⭐⭐ 추천 맛집 — 일부러 찾아갈 맛\n⭐⭐⭐ 인생 맛집 — 두고두고 생각나는 맛",
     "tutorial.step4.title": "사진 한 장은 필수! 📸",
     "tutorial.step4.body": "리뷰를 남길 때 사진 한 장을\n꼭 첨부해 주세요.\n간단한 리뷰도 함께 적으면\n나중에 기억하기 좋아요.",
-    "tutorial.step5.title": "리뷰 10개 → 추천 맛집 해금 🎉",
-    "tutorial.step5.body": "리뷰를 10개 이상 작성하면\n다른 사용자의 추천 맛집을\n받아볼 수 있게 돼요!\n지금 바로 시작해 볼까요?",
+    "tutorial.step5.title": "리뷰 10개 → 추천 장소 해금 🎉",
+    "tutorial.step5.body": "리뷰를 10개 이상 기여하면\n다른 사용자의 추천 장소를\n받아볼 수 있어요!\n나의 기록이 곧 혜택이 됩니다.",
     "tutorial.btn.next": "다음",
     "tutorial.btn.prev": "이전",
     "tutorial.btn.skip": "건너뛰기",
@@ -45,6 +45,13 @@ const TRANSLATIONS = {
     "menu.logout": "로그아웃",
     "menu.language": "언어",
 
+    // 카테고리 필터
+    "category.all": "전체",
+    "category.restaurant": "식당",
+    "category.cafe": "카페",
+    "category.attraction": "관광명소",
+    "category.etc": "기타",
+
     // 광고
     "ad.sponsored": "광고",
 
@@ -53,7 +60,7 @@ const TRANSLATIONS = {
     "auth.loginFailed": "로그인에 실패했습니다: {0}",
 
     // 검색
-    "search.placeholder": "음식점, 카페, 키워드로 검색",
+    "search.placeholder": "음식점·카페·관광명소 검색",
     "search.noResults": '"{0}" 검색 결과가 없습니다',
     "search.error": "검색 중 오류가 발생했습니다",
     "search.sdkError": "지도 SDK 로딩에 실패했습니다",
@@ -116,23 +123,23 @@ const TRANSLATIONS = {
   },
 
   en: {
-    "login.subtitle": "Record your own restaurant reviews<br/>and discover recommended spots from others",
-    "login.feature.search": "Real-time place search",
+    "login.subtitle": "Rate restaurants, cafes & attractions.<br/>Contribute reviews to unlock others' picks",
+    "login.feature.search": "Search restaurants, cafes & attractions",
     "login.feature.rating": "3-tier star rating system",
-    "login.feature.unlock": "10 reviews → unlock recommendations",
+    "login.feature.unlock": "Write 10 reviews → unlock recommendations",
     "login.google": "Continue with Google",
     "login.footer": 'By signing in, you agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.',
 
     "tutorial.step1.title": "Welcome to K-daejeop! 👋",
-    "tutorial.step1.body": "Record your own restaurant reviews.\nAfter 10 reviews, you can see\nother users' recommendations.",
+    "tutorial.step1.body": "Rate restaurants, cafes & attractions.\nContribute 10 reviews to unlock\nrecommendations from other users.",
     "tutorial.step2.title": "Search for places 🔍",
-    "tutorial.step2.body": "Type a restaurant name or keyword\nin the search bar to get\nreal-time suggestions.",
+    "tutorial.step2.body": "Type a restaurant, cafe, or attraction\nname in the search bar to get\nreal-time suggestions.",
     "tutorial.step3.title": "Three-tier ratings ⭐",
     "tutorial.step3.body": "⭐ Local gem — Worth a casual revisit\n⭐⭐ Recommended — Worth a detour\n⭐⭐⭐ Top-tier — Truly unforgettable",
     "tutorial.step4.title": "A photo is a must! 📸",
     "tutorial.step4.body": "Please attach at least one photo\nwith your review.\nA short note helps you\nremember later.",
-    "tutorial.step5.title": "10 reviews → unlock recs 🎉",
-    "tutorial.step5.body": "Write 10 or more reviews and\nyou'll unlock recommendations\nfrom other users!\nLet's get started!",
+    "tutorial.step5.title": "10 reviews → unlock picks 🎉",
+    "tutorial.step5.body": "Contribute 10 or more reviews\nto unlock recommendations\nfrom other users!\nYour reviews earn you rewards.",
     "tutorial.btn.next": "Next",
     "tutorial.btn.prev": "Back",
     "tutorial.btn.skip": "Skip",
@@ -142,12 +149,18 @@ const TRANSLATIONS = {
     "menu.logout": "Sign out",
     "menu.language": "Language",
 
+    "category.all": "All",
+    "category.restaurant": "Restaurant",
+    "category.cafe": "Cafe",
+    "category.attraction": "Attraction",
+    "category.etc": "Other",
+
     "ad.sponsored": "Sponsored",
 
     "auth.noSetup": "Sign-in is not configured.",
     "auth.loginFailed": "Sign-in failed: {0}",
 
-    "search.placeholder": "Search restaurants, cafes, keywords",
+    "search.placeholder": "Search restaurants, cafes, attractions",
     "search.noResults": 'No results for "{0}"',
     "search.error": "An error occurred while searching",
     "search.sdkError": "Failed to load map SDK",
@@ -205,23 +218,23 @@ const TRANSLATIONS = {
   },
 
   ja: {
-    "login.subtitle": "自分だけのグルメレビューを記録し、<br/>他の人のおすすめ店を発見しましょう",
-    "login.feature.search": "リアルタイム店舗検索",
+    "login.subtitle": "飲食店・カフェ・観光地を記録して、<br/>レビューを書いて他の人のおすすめを解放",
+    "login.feature.search": "飲食店・カフェ・観光地をリアルタイム検索",
     "login.feature.rating": "3段階の星評価システム",
-    "login.feature.unlock": "レビュー10件 → おすすめ解放",
+    "login.feature.unlock": "レビュー10件投稿 → おすすめ解放",
     "login.google": "Googleアカウントで始める",
     "login.footer": 'ログインすると<a href="#">利用規約</a>および<a href="#">プライバシーポリシー</a>に同意したことになります。',
 
     "tutorial.step1.title": "K-daejeopへようこそ！👋",
-    "tutorial.step1.body": "自分だけのグルメレビューを記録し、\n10件のレビューを書くと他の人の\nおすすめ店が見られます。",
+    "tutorial.step1.body": "飲食店・カフェ・観光地を記録して、\nレビュー10件投稿で他のユーザーの\nおすすめスポットが解放されます。",
     "tutorial.step2.title": "お店を検索しよう 🔍",
-    "tutorial.step2.body": "上部の検索バーにお店の名前や\nキーワードを入力すると\nリアルタイムで候補が表示されます。",
+    "tutorial.step2.body": "上部の検索バーに飲食店・カフェ・\n観光地の名前やキーワードを入力すると\nリアルタイムで候補が表示されます。",
     "tutorial.step3.title": "星評価は3段階 ⭐",
     "tutorial.step3.body": "⭐ 近所の名店 — また行きたいお店\n⭐⭐ おすすめ — わざわざ行く価値あり\n⭐⭐⭐ 最高の一店 — 忘れられない味",
     "tutorial.step4.title": "写真は必須！📸",
     "tutorial.step4.body": "レビューには写真を1枚\n必ず添付してください。\n簡単なメモも一緒に書くと\n後で思い出しやすくなります。",
     "tutorial.step5.title": "レビュー10件 → おすすめ解放 🎉",
-    "tutorial.step5.body": "レビューを10件以上書くと\n他のユーザーのおすすめ店を\n見ることができます！\nさっそく始めましょう！",
+    "tutorial.step5.body": "レビューを10件以上投稿すると\n他のユーザーのおすすめスポットが\n解放されます！\nあなたの記録が特典になります。",
     "tutorial.btn.next": "次へ",
     "tutorial.btn.prev": "前へ",
     "tutorial.btn.skip": "スキップ",
@@ -231,12 +244,18 @@ const TRANSLATIONS = {
     "menu.logout": "ログアウト",
     "menu.language": "言語",
 
+    "category.all": "すべて",
+    "category.restaurant": "レストラン",
+    "category.cafe": "カフェ",
+    "category.attraction": "観光地",
+    "category.etc": "その他",
+
     "ad.sponsored": "広告",
 
     "auth.noSetup": "ログイン機能が設定されていません。",
     "auth.loginFailed": "ログインに失敗しました：{0}",
 
-    "search.placeholder": "レストラン、カフェ、キーワードで検索",
+    "search.placeholder": "飲食店・カフェ・観光地を検索",
     "search.noResults": '「{0}」の検索結果がありません',
     "search.error": "検索中にエラーが発生しました",
     "search.sdkError": "地図SDKの読み込みに失敗しました",
@@ -294,23 +313,23 @@ const TRANSLATIONS = {
   },
 
   zh: {
-    "login.subtitle": "记录你的美食评价，<br/>发现他人推荐的好店",
-    "login.feature.search": "实时搜索餐厅",
+    "login.subtitle": "记录餐厅·咖啡厅·景点，<br/>写评价解锁他人的推荐",
+    "login.feature.search": "实时搜索餐厅·咖啡厅·景点",
     "login.feature.rating": "三星评分系统",
-    "login.feature.unlock": "10条评价 → 解锁推荐",
+    "login.feature.unlock": "写10条评价 → 解锁推荐",
     "login.google": "使用Google账号登录",
     "login.footer": '登录即表示您同意<a href="#">服务条款</a>和<a href="#">隐私政策</a>。',
 
     "tutorial.step1.title": "欢迎来到K-daejeop！👋",
-    "tutorial.step1.body": "记录你的美食评价，\n写满10条评价后，\n即可查看他人的推荐餐厅。",
-    "tutorial.step2.title": "搜索餐厅 🔍",
-    "tutorial.step2.body": "在顶部搜索栏输入\n餐厅名称或关键词，\n即可获得实时推荐。",
+    "tutorial.step1.body": "记录餐厅·咖啡厅·景点，\n写满10条评价即可解锁\n其他用户的推荐好店。",
+    "tutorial.step2.title": "搜索地点 🔍",
+    "tutorial.step2.body": "在顶部搜索栏输入餐厅·\n咖啡厅·景点名称或关键词，\n即可获得实时推荐。",
     "tutorial.step3.title": "三星评分 ⭐",
     "tutorial.step3.body": "⭐ 社区美食 — 值得再去\n⭐⭐ 推荐美食 — 值得专程前往\n⭐⭐⭐ 顶级美食 — 终生难忘",
     "tutorial.step4.title": "照片必不可少！📸",
     "tutorial.step4.body": "写评价时请务必\n附上一张照片。\n简短的文字记录\n有助于日后回忆。",
     "tutorial.step5.title": "10条评价 → 解锁推荐 🎉",
-    "tutorial.step5.body": "写满10条以上评价，\n即可查看其他用户的\n推荐餐厅！\n现在就开始吧！",
+    "tutorial.step5.body": "贡献10条以上评价，\n即可解锁其他用户的\n推荐好店！\n你的记录就是你的福利。",
     "tutorial.btn.next": "下一步",
     "tutorial.btn.prev": "上一步",
     "tutorial.btn.skip": "跳过",
@@ -320,12 +339,18 @@ const TRANSLATIONS = {
     "menu.logout": "退出登录",
     "menu.language": "语言",
 
+    "category.all": "全部",
+    "category.restaurant": "餐厅",
+    "category.cafe": "咖啡厅",
+    "category.attraction": "景点",
+    "category.etc": "其他",
+
     "ad.sponsored": "广告",
 
     "auth.noSetup": "登录功能未配置。",
     "auth.loginFailed": "登录失败：{0}",
 
-    "search.placeholder": "搜索餐厅、咖啡厅、关键词",
+    "search.placeholder": "搜索餐厅·咖啡厅·景点",
     "search.noResults": '未找到"{0}"的结果',
     "search.error": "搜索时出现错误",
     "search.sdkError": "地图SDK加载失败",

@@ -83,7 +83,7 @@ K-daejeop/
 │   └── migrations/
 │       ├── 001_reviews_and_profiles.sql  # reviews, user_profiles, storage 스키마
 │       └── 002_user_tier.sql            # user_profiles에 tier 컬럼 추가
-├── tests/                       # pytest 테스트 (300개)
+├── tests/                       # pytest 테스트 (355개)
 │   ├── __init__.py
 │   ├── conftest.py              # fixtures, mock 환경변수
 │   ├── test_app.py

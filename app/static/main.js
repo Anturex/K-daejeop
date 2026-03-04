@@ -59,20 +59,11 @@ function clearMarkers() {
   while (markers.length) markers.pop().setMap(null);
 }
 
-/* ===== 내 리뷰 장소 조회 ===== */
+/* ===== 내 리뷰 장소 조회 (캐시 경유) ===== */
 async function fetchMyReviewedIds(placeIds) {
-  const sb = window.__getSupabase?.();
-  if (!sb || !placeIds.length) return new Map();
+  if (!placeIds.length) return new Map();
   try {
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) return new Map();
-    const { data } = await sb.from("reviews")
-      .select("place_id")
-      .eq("user_id", user.id)
-      .in("place_id", placeIds);
-    const counts = new Map();
-    (data ?? []).forEach((r) => counts.set(r.place_id, (counts.get(r.place_id) ?? 0) + 1));
-    return counts;
+    return await window.__reviewCache?.getReviewedPlaceIds(placeIds) ?? new Map();
   } catch {
     return new Map();
   }
@@ -136,8 +127,10 @@ function renderPlace(place, reviewCount = 0) {
     infoWindow.open(map, marker);
     map.panTo(pos);
   });
-  infoWindow.setContent(content);
-  infoWindow.open(map, marker);
+
+  // InfoWindow는 호출자가 지도 포지셔닝 완료 후 여는 것이 원칙
+  // (auto-pan이 setCenter/setBounds와 충돌하는 것을 방지)
+  return { marker, content, pos };
 }
 
 /* ===== Geo helpers ===== */
@@ -272,7 +265,33 @@ function selectSuggestion(idx) {
   if (!place) return;
   inputEl.value = place.place_name;
   closeSuggestions();
-  doSearch(place.place_name);
+  clearTimeout(debounceTimer);
+  hideNoResults();
+  hideStatus();
+  showSelectedPlace(place);
+}
+
+async function showSelectedPlace(place) {
+  if (!place?.x || !place?.y) return;
+  clearMarkers();
+  infoWindow.close();
+  const reviewedMap = await fetchMyReviewedIds([place.id].filter(Boolean));
+  try {
+    const result = renderPlace(place, reviewedMap.get(place.id) ?? 0);
+    const pos = new kakao.maps.LatLng(place.y, place.x);
+    // setLevel → setCenter 순서: 줌 먼저 적용해야 setCenter 위치가 유지됨
+    // (역순이면 setLevel이 변경 전 센터 기준으로 줌해서 위치가 어긋남)
+    map.setLevel(3);
+    map.setCenter(pos);
+    // setCenter/setLevel 렌더 완료 후 InfoWindow 열기 (auto-pan 충돌 방지)
+    setTimeout(() => {
+      infoWindow.setContent(result.content);
+      infoWindow.open(map, result.marker);
+    }, 100);
+  } catch (e) {
+    console.warn("[K-daejeop] showSelectedPlace:", e);
+  }
+  showStatus(window.__i18n?.tf("search.resultsStatus", place.place_name, 1) ?? `"${place.place_name}" 근처 1개 결과`, 3000);
 }
 
 /* ===== Search (지도 이동) ===== */
@@ -328,50 +347,47 @@ async function doSearch(query) {
   const placeIds = local.map(({ place }) => place.id).filter(Boolean);
   const reviewedMap = await fetchMyReviewedIds(placeIds);
 
-  // 마커 렌더링
-  local.forEach(({ place }) => {
+  // 마커 렌더링 (InfoWindow는 포지셔닝 후 열기)
+  infoWindow.close();
+  let firstResult = null;
+  local.forEach(({ place }, idx) => {
     try {
-      renderPlace(place, reviewedMap.get(place.id) ?? 0);
+      const result = renderPlace(place, reviewedMap.get(place.id) ?? 0);
+      if (idx === 0) firstResult = result;
     } catch (e) {
       console.warn("[K-daejeop] marker render skip:", e);
     }
   });
 
-  // ── 3) 항상 첫 번째 결과를 지도 중심에 고정 ──
+  // ── 3) 첫 번째 결과를 지도 중심에 고정 ──
+  // setBounds는 내부 비동기 애니메이션이 setCenter를 덮어써서 사용하지 않음.
+  // 결과 분포 거리로 줌 레벨을 직접 계산.
   try {
+    let level = 3;
     if (local.length > 1) {
-      const bounds = new kakao.maps.LatLngBounds();
-      local.forEach(({ position }) => bounds.extend(position));
-      map.setBounds(bounds);
-      // setBounds 애니메이션 완료를 idle 이벤트로 감지 후 중심 고정
-      // (첫 검색 시 level 12→5 애니메이션이 100ms 넘어 setTimeout 방식이 실패함)
-      let centerDone = false;
-      const onBoundsIdle = () => {
-        kakao.maps.event.removeListener(map, "idle", onBoundsIdle);
-        if (centerDone) return;
-        centerDone = true;
-        const fitLevel = map.getLevel();
-        map.setCenter(focusPos);
-        map.setLevel(Math.min(fitLevel, 6));
-      };
-      kakao.maps.event.addListener(map, "idle", onBoundsIdle);
-      setTimeout(() => {
-        if (!centerDone) {
-          centerDone = true;
-          kakao.maps.event.removeListener(map, "idle", onBoundsIdle);
-          const fitLevel = map.getLevel();
-          map.setCenter(focusPos);
-          map.setLevel(Math.min(fitLevel, 6));
-        }
-      }, 600);
-    } else {
-      map.setCenter(focusPos);
-      map.setLevel(3);
+      let maxDist = 0;
+      for (const item of local) {
+        const d = distanceKm(focusPos, item.position);
+        if (d > maxDist) maxDist = d;
+      }
+      if (maxDist > 10) level = 7;
+      else if (maxDist > 3) level = 6;
+      else if (maxDist > 1) level = 5;
+      else if (maxDist > 0.5) level = 4;
     }
-
+    // setLevel → setCenter 순서: 줌 먼저 적용해야 setCenter 위치가 유지됨
+    map.setLevel(level);
+    map.setCenter(focusPos);
   } catch (e) {
     console.warn("[K-daejeop] map adjust:", e);
-    // 지도 조작 실패해도 에러 토스트 표시 안 함 (결과는 이미 보임)
+  }
+
+  // InfoWindow는 setCenter/setLevel 렌더 완료 후 열기 (auto-pan 충돌 방지)
+  if (firstResult) {
+    setTimeout(() => {
+      infoWindow.setContent(firstResult.content);
+      infoWindow.open(map, firstResult.marker);
+    }, 100);
   }
 
   const placeName = results[0]?.place_name || query;

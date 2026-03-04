@@ -69,6 +69,7 @@ app/
 │   ├── main.js          # 지도 초기화, 검색, 자동완성, 마커, 리뷰 버튼
 │   ├── reviews.js       # 리뷰 모달 (별점·사진·날짜·텍스트), Supabase CRUD
 │   ├── myreviews.js     # 내 맛집 클러스터 맵 (클러스터링 + 플라잉 애니메이션 + 사이드 패널)
+│   ├── reviewCache.js   # 리뷰 세션 캐시 (DB 호출 최소화, 5분 TTL)
 │   ├── tutorial.js      # 온보딩 튜토리얼 5단계 카드
 │   ├── ads.js           # Google AdSense 광고 (tier 기반 표시/숨김)
 │   └── styles.css       # 디자인 토큰, 로그인, 앱, 리뷰, 튜토리얼, 언어 선택, 광고 스타일
@@ -165,7 +166,7 @@ supabase/
 12. **같은 장소 여러 리뷰**: `place_id`로 중복 제거 후 최신순 정렬. 핀 클릭 시 `showDetail(cluster)`에 전체 리뷰 배열 전달. `detailIdx` 로 현재 인덱스 관리, `review-detail-prev/next` 버튼으로 스와이프. 클러스터 배지는 항상 표시 (`count > MAX_CLUSTER_PHOTOS` 조건 제거).
 13. **인포윈도우 닫기**: `buildInfoContent`에 `.iw-card__close-btn` 추가. 이벤트 위임(`bindEvents`)으로 `infoWindow.close()` 처리.
 14. **Kakao Maps `addListenerOnce` 미존재**: `kakao.maps.event`에는 `addListenerOnce`가 없음. 수동 once 패턴 사용: `addListener` + 콜백 내 `removeListener`. `idle` 미발생 대비 setTimeout 폴백도 추가 (`idleRendered` 플래그로 중복 방지). `main.js`도 동일하게 적용.
-15. **테스트 기준 (300개)**: `test_i18n_ui.py` 추가. 기능 추가 시 해당 파일에 테스트도 추가.
+15. **테스트 기준 (363개)**: PWA + 카테고리 필터 + i18n 관광명소 강조 + 자동완성 버그 수정 + 리뷰 캐시 + 리뷰 모달 safe-area + 검색 센터링(InfoWindow 순서) + iOS 자동확대 방지(검색 input+textarea) 테스트 추가. 기능 추가 시 해당 파일에 테스트도 추가.
 16. **모바일 레이아웃**: `@media (max-width: 640px)`에서 `html { position: fixed }` + `.app { display: flex !important; position: fixed; inset: 0 }`으로 iOS 횡스크롤 완전 차단. `overflow-x: hidden`만으로는 iOS Safari에서 동작 안 함.
 17. **바텀시트 스와이프**: `initPanelSwipe()`가 `.my-reviews-panel__header`에 touch 이벤트 등록. 스와이프 > 120px이면 `hidePanel()`만 호출 (핀 유지). 완전 비활성화는 별 버튼 재클릭. 드래그 중 `panel.style.transition = "none"`, 손 떼면 `""`로 복원.
 18. **음식점 우선 정렬**: `rankFoodFirst(docs)`가 Kakao Places 결과에서 `category_group_code` FD6(음식점)·CE7(카페)를 앞으로 이동. `doSearch`와 자동완성 두 곳에 적용.
@@ -175,10 +176,19 @@ supabase/
 22. **검색 결과 내 리뷰 뱃지**: `fetchMyReviewedIds(placeIds)`가 Supabase에서 현재 유저의 리뷰 `place_id`를 조회. `doSearch` 마커 렌더링 전 호출. 마커 탭 후 인포윈도우 카드에 `.iw-card__reviewed`로 "⭐ 내가 리뷰한 곳" / "⭐ N번 방문한 곳" 표시. 마커 위 오버레이 뱃지는 지도를 가려 제거.
 23. **모바일 OAuth 2회 클릭 문제**: ngrok 무료 플랜 최초 방문 시 인터스티셜 페이지가 `?code=` 파라미터를 제거해 PKCE 교환 실패. iOS Safari bfcache도 동일 증상. 수정: (1) `handleGoogleLogin`에서 `sessionStorage.setItem(OAUTH_PENDING_KEY, "1")` 설정, (2) `init()`에서 `hadOAuthPending` 감지 → 10초 대기 유지, (3) `pageshow` 핸들러로 bfcache 복원 대응, (4) `onAuthStateChange` catch-all else 제거 → `INITIAL_SESSION`/`SIGNED_OUT`만 명시적 처리.
 
-24. **다국어(i18n) 지원**: `i18n.js`에 4개 언어(ko/en/ja/zh) 번역 사전, `t(key)`/`tf(key, ...args)` API, `data-i18n`/`data-i18n-html`/`data-i18n-placeholder` DOM 워커. 언어 선택 pill 버튼(`.lang-selector`)이 로그인 카드와 튜토리얼 카드 상단 우측에 표시. 메인 앱 화면에서는 유저 메뉴 드롭다운 내 언어 항목(`.user-menu__lang`)으로 변경 가능. `localStorage` `k_lang` 키로 영속 저장. `lang:changed` 커스텀 이벤트로 동적 갱신. 스크립트 로드 순서: i18n.js → auth.js → main.js → reviews.js → tutorial.js → myreviews.js → ads.js.
+24. **다국어(i18n) 지원**: `i18n.js`에 4개 언어(ko/en/ja/zh) 번역 사전, `t(key)`/`tf(key, ...args)` API, `data-i18n`/`data-i18n-html`/`data-i18n-placeholder` DOM 워커. 언어 선택 pill 버튼(`.lang-selector`)이 로그인 카드와 튜토리얼 카드 상단 우측에 표시. 메인 앱 화면에서는 유저 메뉴 드롭다운 내 언어 항목(`.user-menu__lang`)으로 변경 가능. `localStorage` `k_lang` 키로 영속 저장. `lang:changed` 커스텀 이벤트로 동적 갱신. 스크립트 로드 순서: i18n.js → auth.js → reviewCache.js → main.js → reviews.js → tutorial.js → myreviews.js → ads.js.
 25. **유저 등급(tier) 시스템**: `user_profiles.tier` 컬럼 (`'free'` 기본, `'premium'` 구독). `auth.js`가 로그인 시 `checkTutorialStatus()`에서 tier도 함께 조회 → `window.__getUserTier()` 노출. 향후 등급별 서비스 차별화 설계 시 참고: 광고 제거(premium), 추천 맛집 조기 해금, 리뷰 통계/분석 기능 등. 마이그레이션: `supabase/migrations/002_user_tier.sql`. 기능 추가 시 `tier` 값에 따른 분기 로직을 고려할 것.
 26. **Google AdSense 광고**: `ads.js`가 `app:visible` 이벤트 후 tier 확인 → free 유저만 AdSense 스크립트 로드 + 광고 슬롯 활성화. 광고 위치: 화면 하단 배너(`#ad-banner`, `.ad-slot--banner`, z-index 8999), 내 맛집 패널 하단(`#ad-panel`, `.ad-slot--panel`). `body.has-ads` 클래스로 지도/패널 하단 여백 확보. AdSense publisher ID는 `ca-pub-XXXXXXXXXXXXXXXX` 플레이스홀더 — 승인 후 교체 필요.
 27. **디자인 팔레트**: 우드톤 (오커 #B5651D 메인 액센트, 한지색 #FAF6F1 배경, 원목색 #8B4513 다크). Noto Serif KR(제목) + Noto Sans KR(본문) 폰트 조합.
+28. **카테고리 필터**: 내 맛집 패널에 카테고리 필터 칩 (전체/식당/카페/관광명소/기타). `CATEGORY_MAP`으로 `place_category` 값("음식점"→restaurant, "카페"→cafe, "관광명소"→attraction, 기타→etc) 매핑. `activeCategory` 상태로 `getFilteredReviews()` → `computeClusters()` + `renderPanel()` 동기화. 칩 클릭 시 지도 핀과 패널 목록 동시 필터링. 비활성화 시 `resetCategoryFilter()`로 "전체"로 복원. `updateCategoryBadges()`로 고유 장소 수 카운트 뱃지 표시.
+29. **PWA (홈화면 앱)**: `manifest.json`(display: standalone) + iOS 메타 태그(`apple-mobile-web-app-capable`, `black-translucent` 상태바). `viewport-fit=cover`로 노치 디바이스 전체 화면 지원. `env(safe-area-inset-bottom)`으로 배너 광고·리뷰 상세 하단 패딩 처리. 아이콘: 192px, 256px, 512px 3종.
+30. **i18n 관광명소·기여 강조**: 4개 언어 모두 로그인 화면·검색 placeholder·튜토리얼에서 "음식점·카페·관광명소" 명시, "리뷰 기여 → 추천 해금" 메시지 강조.
+31. **자동완성 직접 렌더링**: `selectSuggestion()`이 `doSearch()` 대신 `showSelectedPlace(place)`를 호출. 선택한 장소 객체를 그대로 사용해 API 재호출 없이 마커와 인포윈도우를 즉시 표시. 주차장 등 관련 장소로 잘못 이동하는 버그 수정.
+32. **리뷰 모달 모바일 횡스크롤 방지**: 520px 이하에서 `.review-modal` 및 `.review-modal__body`에 `overflow-x: hidden` 적용.
+33. **리뷰 캐시 (`reviewCache.js`)**: 세션 중 내 리뷰를 메모리 캐싱 (5분 TTL). `window.__reviewCache` API — `getMyReviews(forceRefresh?)`, `invalidate()`, `getReviewedPlaceIds(placeIds)`, `getVisitCount(placeId)`. `myreviews.js`(activate/refresh), `main.js`(fetchMyReviewedIds), `reviews.js`(loadVisitCount) 모두 캐시 경유. 리뷰 저장 시 `invalidate()` → 다음 조회에서 DB 재로드. 일반 사용 시 DB 호출 ~15회 → ~2회로 감소.
+34. **검색 지도 센터링 (setBounds 제거)**: `setBounds`는 내부 비동기 애니메이션이 `setCenter`를 덮어쓰는 문제가 있어 완전 제거. 대신 `distanceKm()`로 결과 분포 거리를 측정해 줌 레벨을 직접 계산(`maxDist > 10 → level 7, > 3 → 6, > 1 → 5, > 0.5 → 4, else → 3`). `setCenter(focusPos)` + `setLevel(level)`로 즉시 텔레포트. InfoWindow는 `setTimeout(100ms)` 후 열어 렌더 완료 후 auto-pan 발동. `renderPlace()`에서 InfoWindow 자동 열기도 제거 → `return { marker, content, pos }` 반환.
+35. **iOS 자동확대 방지**: 모바일(640px 이하)에서 `.search input`과 `.review-textarea`의 `font-size`를 `1rem`(16px)으로 설정. iOS Safari는 `font-size < 16px`인 input/textarea 포커스 시 자동 zoom-in하여 뷰포트 확대 → 이후 열리는 리뷰 모달에 횡스크롤 발생.
+36. **리뷰 모달 safe-area**: 모바일에서 `max-height: calc(100dvh - env(safe-area-inset-top, 0px))`로 Dynamic Island/노치 영역을 피함.
 
 ## 향후 확장 예정
 - 리뷰 10개 달성 시 다른 사용자 추천 맛집 노출 기능

@@ -400,13 +400,14 @@ class TestMyReviewsSidePanel:
         src = pathlib.Path("app/static/myreviews.js").read_text()
         assert "rv-pin__multi" not in src
 
-    def test_main_js_search_centering_uses_idle_event(self):
-        """main.js 다중 결과 검색 시 setBounds 완료를 idle 이벤트로 감지합니다."""
+    def test_main_js_search_centering_uses_set_center(self):
+        """main.js 검색 시 setCenter로 직접 센터링합니다 (setBounds 비동기 충돌 방지)."""
         src = pathlib.Path("app/static/main.js").read_text()
-        # idle 이벤트 기반 중심 고정 (첫 검색에서 level 12→5 애니메이션 대응)
-        assert "onBoundsIdle" in src
-        assert "addListener" in src
-        assert "removeListener" in src
+        fn_start = src.index("async function doSearch")
+        fn_end = src.index("/* ===== Autocomplete")
+        fn_body = src[fn_start:fn_end]
+        assert "map.setCenter(focusPos)" in fn_body
+        assert "map.setLevel(level)" in fn_body
 
     def test_css_infowindow_name_word_break(self):
         """styles.css 인포윈도우 가게 이름에 줄바꿈 처리가 있습니다."""
@@ -531,3 +532,384 @@ class TestMyReviewsAdSlotReattach:
     def test_render_panel_uses_append_child(self):
         src = pathlib.Path("app/static/myreviews.js").read_text()
         assert "listEl.appendChild(adPanel)" in src
+
+
+# ===== 카테고리 필터 테스트 =====
+
+
+class TestCategoryFilterHTML:
+    """index.html에 카테고리 필터 칩 UI가 포함되는지 테스트."""
+
+    @pytest.mark.asyncio
+    async def test_filter_container_exists(self, client):
+        """필터 칩 컨테이너가 패널 안에 존재합니다."""
+        response = await client.get("/")
+        assert 'id="mrp-filter"' in response.text
+
+    @pytest.mark.asyncio
+    async def test_filter_has_all_categories(self, client):
+        """전체/식당/카페/관광명소/기타 5개 필터 칩이 존재합니다."""
+        body = (await client.get("/")).text
+        for cat in ("all", "restaurant", "cafe", "attraction", "etc"):
+            assert f'data-category="{cat}"' in body
+
+    @pytest.mark.asyncio
+    async def test_filter_has_count_badges(self, client):
+        """각 카테고리별 카운트 뱃지 요소가 존재합니다."""
+        body = (await client.get("/")).text
+        for cat in ("all", "restaurant", "cafe", "attraction", "etc"):
+            assert f'data-cat-count="{cat}"' in body
+
+    @pytest.mark.asyncio
+    async def test_all_chip_is_active_by_default(self, client):
+        """'전체' 칩이 기본적으로 is-active 클래스를 가집니다."""
+        body = (await client.get("/")).text
+        # 전체 칩은 is-active, 나머지는 아님
+        assert 'mrp-filter__chip is-active" data-category="all"' in body
+
+
+class TestCategoryFilterJS:
+    """myreviews.js 카테고리 필터 로직이 구현되어 있는지 테스트."""
+
+    def test_has_category_map(self):
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        assert "CATEGORY_MAP" in src
+        assert '"음식점"' in src
+        assert '"카페"' in src
+        assert '"관광명소"' in src
+
+    def test_has_classify_category(self):
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        assert "classifyCategory" in src
+
+    def test_has_get_filtered_reviews(self):
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        assert "getFilteredReviews" in src
+
+    def test_has_active_category_state(self):
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        assert "activeCategory" in src
+
+    def test_compute_clusters_uses_filtered(self):
+        """computeClusters가 getFilteredReviews를 사용합니다."""
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        # computeClusters 함수 내에서 allReviews 대신 getFilteredReviews 사용
+        idx = src.index("function computeClusters()")
+        body = src[idx : idx + 300]
+        assert "getFilteredReviews()" in body
+        assert "allReviews" not in body
+
+    def test_render_panel_uses_filtered(self):
+        """renderPanel이 getFilteredReviews를 사용합니다."""
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        idx = src.index("function renderPanel()")
+        body = src[idx : idx + 300]
+        assert "getFilteredReviews()" in body
+
+    def test_has_init_category_filter(self):
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        assert "initCategoryFilter" in src
+
+    def test_has_update_category_badges(self):
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        assert "updateCategoryBadges" in src
+
+    def test_has_reset_category_filter(self):
+        """비활성화 시 카테고리 필터를 초기화합니다."""
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        assert "resetCategoryFilter" in src
+
+    def test_deactivate_resets_filter(self):
+        """deactivate 함수에서 resetCategoryFilter를 호출합니다."""
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        idx = src.index("function deactivate()")
+        body = src[idx : idx + 400]
+        assert "resetCategoryFilter()" in body
+
+
+class TestCategoryFilterCSS:
+    """styles.css에 카테고리 필터 칩 스타일이 있는지 테스트."""
+
+    def test_css_has_filter_container(self):
+        css = pathlib.Path("app/static/styles.css").read_text()
+        assert ".mrp-filter" in css
+
+    def test_css_has_chip_styles(self):
+        css = pathlib.Path("app/static/styles.css").read_text()
+        assert ".mrp-filter__chip" in css
+        assert ".mrp-filter__chip.is-active" in css
+
+    def test_css_has_count_styles(self):
+        css = pathlib.Path("app/static/styles.css").read_text()
+        assert ".mrp-filter__count" in css
+
+
+class TestCategoryFilterI18n:
+    """i18n.js에 카테고리 번역 키가 있는지 테스트."""
+
+    def test_i18n_has_category_keys(self):
+        src = pathlib.Path("app/static/i18n.js").read_text()
+        for key in ("category.all", "category.restaurant", "category.cafe",
+                     "category.attraction", "category.etc"):
+            assert key in src
+
+
+# ===== PWA 테스트 =====
+
+
+class TestPWA:
+    """PWA manifest 및 아이콘 파일이 올바르게 구성되는지 테스트."""
+
+    def test_manifest_file_exists(self):
+        f = pathlib.Path("app/static/manifest.json")
+        assert f.exists()
+
+    def test_manifest_has_standalone_display(self):
+        import json
+        data = json.loads(pathlib.Path("app/static/manifest.json").read_text())
+        assert data["display"] == "standalone"
+
+    def test_manifest_has_icons(self):
+        import json
+        data = json.loads(pathlib.Path("app/static/manifest.json").read_text())
+        sizes = [icon["sizes"] for icon in data["icons"]]
+        assert "192x192" in sizes
+        assert "512x512" in sizes
+
+    def test_pwa_icon_files_exist(self):
+        assert pathlib.Path("app/static/icon-pwa-192.png").exists()
+        assert pathlib.Path("app/static/icon-pwa-512.png").exists()
+
+    def test_css_has_safe_area_inset(self):
+        css = pathlib.Path("app/static/styles.css").read_text()
+        assert "safe-area-inset-bottom" in css
+
+
+# ===== i18n 관광명소 강조 테스트 =====
+
+
+class TestI18nAttractionEmphasis:
+    """i18n 번역에 관광명소·기여→추천 메시지가 포함되는지 테스트."""
+
+    def test_ko_login_subtitle_has_attraction(self):
+        src = pathlib.Path("app/static/i18n.js").read_text()
+        assert "관광명소를 기록하고" in src
+
+    def test_ko_login_feature_search_has_attraction(self):
+        src = pathlib.Path("app/static/i18n.js").read_text()
+        assert "음식점·카페·관광명소 실시간 검색" in src
+
+    def test_ko_search_placeholder_has_attraction(self):
+        src = pathlib.Path("app/static/i18n.js").read_text()
+        assert "음식점·카페·관광명소 검색" in src
+
+    def test_ko_tutorial_step1_has_attraction(self):
+        src = pathlib.Path("app/static/i18n.js").read_text()
+        assert "맛집·카페·관광명소를 기록하고" in src
+
+    def test_ko_tutorial_step5_emphasizes_contribution(self):
+        src = pathlib.Path("app/static/i18n.js").read_text()
+        assert "기여하면" in src
+
+    def test_en_login_has_attractions(self):
+        src = pathlib.Path("app/static/i18n.js").read_text()
+        assert "cafes & attractions" in src
+
+    def test_en_tutorial_step1_has_attractions(self):
+        src = pathlib.Path("app/static/i18n.js").read_text()
+        assert "cafes & attractions" in src
+
+    def test_en_tutorial_step5_emphasizes_contribution(self):
+        src = pathlib.Path("app/static/i18n.js").read_text()
+        assert "Contribute 10" in src
+
+    def test_ja_login_has_attractions(self):
+        src = pathlib.Path("app/static/i18n.js").read_text()
+        assert "観光地を記録" in src
+
+    def test_zh_login_has_attractions(self):
+        src = pathlib.Path("app/static/i18n.js").read_text()
+        assert "景点" in src
+
+    @pytest.mark.asyncio
+    async def test_html_fallback_has_attraction(self, client):
+        response = await client.get("/")
+        assert "관광명소" in response.text
+
+
+# ===== 리뷰 모달 모바일 횡스크롤 수정 테스트 =====
+
+
+class TestReviewModalMobileScroll:
+    """모바일 리뷰 모달에 overflow-x: hidden이 적용되는지 테스트."""
+
+    def test_review_modal_mobile_overflow_x_hidden(self):
+        css = pathlib.Path("app/static/styles.css").read_text()
+        # 모바일 review-modal 블록에 overflow-x: hidden이 존재
+        mobile_section = css[css.index("@media (max-width: 520px)"):]
+        modal_block = mobile_section[mobile_section.index(".review-modal"):mobile_section.index(".review-modal") + 400]
+        assert "overflow-x: hidden" in modal_block
+
+    def test_review_modal_mobile_safe_area_top(self):
+        """모바일 리뷰 모달이 Dynamic Island/노치 영역을 피하는지 확인."""
+        css = pathlib.Path("app/static/styles.css").read_text()
+        mobile_section = css[css.index("@media (max-width: 520px)"):]
+        modal_block = mobile_section[mobile_section.index(".review-modal"):mobile_section.index(".review-modal") + 500]
+        assert "safe-area-inset-top" in modal_block
+        assert "100dvh" in modal_block
+
+    def test_review_textarea_mobile_font_size_16px(self):
+        """iOS Safari 자동 확대 방지: 모바일에서 textarea font-size >= 1rem(16px)."""
+        css = pathlib.Path("app/static/styles.css").read_text()
+        mobile_section = css[css.index("@media (max-width: 520px)"):]
+        assert ".review-textarea" in mobile_section
+        textarea_idx = mobile_section.index(".review-textarea")
+        textarea_block = mobile_section[textarea_idx:textarea_idx + 200]
+        assert "font-size: 1rem" in textarea_block
+
+
+# ===== 검색 센터링 수정 테스트 =====
+
+
+class TestSearchCentering:
+    """검색 시 지도가 첫 결과에 정확히 센터링되는지 테스트."""
+
+    def test_render_place_returns_data(self):
+        """renderPlace가 { marker, content, pos } 을 반환하는지 확인."""
+        src = pathlib.Path("app/static/main.js").read_text()
+        assert "return { marker, content, pos }" in src
+
+    def test_render_place_no_auto_open_infowindow(self):
+        """renderPlace 함수 본문에서 infoWindow.open을 직접 호출하지 않는지 확인."""
+        src = pathlib.Path("app/static/main.js").read_text()
+        fn_start = src.index("function renderPlace")
+        fn_end = src.index("\n/* ", fn_start + 1)
+        fn_body = src[fn_start:fn_end]
+        assert fn_body.count("infoWindow.open") == 1
+
+    def test_no_set_bounds_call_in_do_search(self):
+        """doSearch에서 map.setBounds() 호출이 없는지 확인 (비동기 애니메이션 충돌 방지)."""
+        src = pathlib.Path("app/static/main.js").read_text()
+        fn_start = src.index("async function doSearch")
+        fn_end = src.index("/* ===== Autocomplete")
+        fn_body = src[fn_start:fn_end]
+        assert "map.setBounds(" not in fn_body
+
+    def test_do_search_uses_distance_based_level(self):
+        """doSearch에서 결과 분포 거리 기반으로 줌 레벨을 계산하는지 확인."""
+        src = pathlib.Path("app/static/main.js").read_text()
+        fn_start = src.index("async function doSearch")
+        fn_end = src.index("/* ===== Autocomplete")
+        fn_body = src[fn_start:fn_end]
+        assert "distanceKm(focusPos" in fn_body
+        assert "maxDist" in fn_body
+
+    def test_infowindow_opens_with_delay(self):
+        """InfoWindow가 setTimeout으로 지연 열리는지 확인 (auto-pan 충돌 방지)."""
+        src = pathlib.Path("app/static/main.js").read_text()
+        fn_start = src.index("async function doSearch")
+        fn_end = src.index("/* ===== Autocomplete")
+        fn_body = src[fn_start:fn_end]
+        assert "setTimeout(" in fn_body
+        assert "infoWindow.open" in fn_body
+
+
+# ===== 모바일 검색 input iOS 자동 확대 방지 테스트 =====
+
+
+class TestSearchInputMobileFontSize:
+    """모바일에서 검색 input의 iOS 자동 확대 방지."""
+
+    def test_search_input_mobile_font_size(self):
+        css = pathlib.Path("app/static/styles.css").read_text()
+        mobile_section = css[css.index("@media (max-width: 640px)"):]
+        assert ".search input" in mobile_section
+        input_idx = mobile_section.index(".search input")
+        input_block = mobile_section[input_idx:input_idx + 200]
+        assert "font-size: 1rem" in input_block
+
+
+# ===== 자동완성 주차장 버그 수정 테스트 =====
+
+
+class TestAutocompleteFix:
+    """selectSuggestion이 doSearch 대신 showSelectedPlace를 호출하는지 테스트."""
+
+    def test_select_suggestion_uses_show_selected_place(self):
+        src = pathlib.Path("app/static/main.js").read_text()
+        assert "showSelectedPlace(place)" in src
+
+    def test_show_selected_place_function_exists(self):
+        src = pathlib.Path("app/static/main.js").read_text()
+        assert "async function showSelectedPlace" in src
+
+    def test_select_suggestion_does_not_call_do_search(self):
+        src = pathlib.Path("app/static/main.js").read_text()
+        # selectSuggestion 함수 내에서 doSearch를 호출하지 않아야 함
+        fn_start = src.index("function selectSuggestion")
+        fn_end = src.index("async function showSelectedPlace")
+        fn_body = src[fn_start:fn_end]
+        assert "doSearch" not in fn_body
+
+
+# ===== 리뷰 캐시 모듈 테스트 =====
+
+
+class TestReviewCacheModule:
+    """reviewCache.js 모듈이 올바르게 구성되는지 테스트."""
+
+    def test_review_cache_file_exists(self):
+        assert pathlib.Path("app/static/reviewCache.js").exists()
+
+    def test_review_cache_exposes_global_api(self):
+        src = pathlib.Path("app/static/reviewCache.js").read_text()
+        assert "window.__reviewCache" in src
+
+    def test_review_cache_has_get_my_reviews(self):
+        src = pathlib.Path("app/static/reviewCache.js").read_text()
+        assert "async function getMyReviews" in src
+
+    def test_review_cache_has_invalidate(self):
+        src = pathlib.Path("app/static/reviewCache.js").read_text()
+        assert "function invalidate" in src
+
+    def test_review_cache_has_get_reviewed_place_ids(self):
+        src = pathlib.Path("app/static/reviewCache.js").read_text()
+        assert "async function getReviewedPlaceIds" in src
+
+    def test_review_cache_has_get_visit_count(self):
+        src = pathlib.Path("app/static/reviewCache.js").read_text()
+        assert "async function getVisitCount" in src
+
+    def test_review_cache_has_ttl(self):
+        src = pathlib.Path("app/static/reviewCache.js").read_text()
+        assert "CACHE_TTL" in src
+
+
+class TestReviewCacheIntegration:
+    """다른 모듈이 reviewCache를 올바르게 사용하는지 테스트."""
+
+    def test_myreviews_uses_cache_for_activate(self):
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        assert "__reviewCache?.getMyReviews()" in src
+
+    def test_myreviews_uses_cache_for_refresh(self):
+        src = pathlib.Path("app/static/myreviews.js").read_text()
+        assert "__reviewCache?.getMyReviews(true)" in src
+
+    def test_main_uses_cache_for_reviewed_ids(self):
+        src = pathlib.Path("app/static/main.js").read_text()
+        assert "__reviewCache?.getReviewedPlaceIds" in src
+
+    def test_reviews_uses_cache_for_visit_count(self):
+        src = pathlib.Path("app/static/reviews.js").read_text()
+        assert "__reviewCache?.getVisitCount" in src
+
+    def test_reviews_invalidates_cache_on_save(self):
+        src = pathlib.Path("app/static/reviews.js").read_text()
+        assert "__reviewCache?.invalidate()" in src
+
+    @pytest.mark.asyncio
+    async def test_html_includes_review_cache_script(self, client):
+        response = await client.get("/")
+        assert "reviewCache.js" in response.text

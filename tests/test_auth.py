@@ -209,9 +209,9 @@ class TestSupabaseConfigInPage:
         """로그인 카드에 서비스 주요 기능이 나열됩니다."""
         response = await client.get("/")
         body = response.text
-        assert "실시간 장소 검색" in body
+        assert "관광명소" in body
         assert "별점 리뷰" in body
-        assert "추천 맛집 해금" in body
+        assert "추천 장소 해금" in body
 
     @pytest.mark.asyncio
     async def test_app_hidden_by_default(self, client):

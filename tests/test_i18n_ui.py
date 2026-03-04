@@ -92,13 +92,13 @@ class TestI18nTranslationKeys:
         assert f'"{key}"' in self.js
 
     def test_en_login_subtitle(self):
-        assert "Record your own restaurant reviews" in self.js
+        assert "cafes & attractions" in self.js
 
     def test_ja_login_subtitle(self):
-        assert "自分だけのグルメレビューを記録" in self.js
+        assert "観光地を記録" in self.js
 
     def test_zh_login_subtitle(self):
-        assert "记录你的美食评价" in self.js
+        assert "景点" in self.js
 
 
 # ===== index.html data-i18n 속성 테스트 =====
