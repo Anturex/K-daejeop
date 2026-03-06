@@ -22,6 +22,11 @@ htmlcov/
 .env.*
 !.env.*.example
 
+# ── Frontend ──
+frontend/node_modules/
+frontend/dist/
+app/static/dist/
+
 # ── OS ──
 .DS_Store
 Thumbs.db

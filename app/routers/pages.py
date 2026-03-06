@@ -1,34 +1,41 @@
 from __future__ import annotations
 
-import time
+from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-
-from app.core.config import get_settings
+from fastapi import APIRouter
+from fastapi.responses import FileResponse, HTMLResponse
 
 router = APIRouter(tags=["pages"])
 
-templates = Jinja2Templates(directory="app/templates")
-
-# 서버 시작 시점의 타임스탬프 → 정적 파일 캐시 버스터
-_CACHE_BUSTER = str(int(time.time()))
+# Vite 빌드 결과 경로
+_DIST_DIR = Path(__file__).resolve().parent.parent / "static" / "dist"
 
 
 @router.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    settings = get_settings()
-    if not settings.kakao_js_key:
-        raise HTTPException(status_code=500, detail="KAKAO_JS_KEY is not set")
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-            "kakao_js_key": settings.kakao_js_key,
-            "kakao_sdk_url": settings.kakao_sdk_url,
-            "supabase_url": settings.supabase_url,
-            "supabase_anon_key": settings.supabase_anon_key,
-            "v": _CACHE_BUSTER,
-        },
-    )
+async def index():
+    """SPA 진입점: Vite 빌드 index.html 서빙"""
+    index_html = _DIST_DIR / "index.html"
+    if not index_html.exists():
+        return HTMLResponse(
+            content="<h1>Frontend not built</h1>"
+            "<p>Run <code>cd frontend && npm run build</code></p>",
+            status_code=503,
+        )
+    return FileResponse(index_html, media_type="text/html")
+
+
+@router.get("/{path:path}")
+async def serve_dist_or_spa(path: str):
+    """dist 루트의 정적 파일 서빙 (manifest.json, icons 등).
+    파일이 없으면 SPA fallback으로 index.html 반환."""
+    file = _DIST_DIR / path
+    # 디렉토리 탈출 방지 + 파일 존재 확인
+    if file.resolve().is_relative_to(_DIST_DIR.resolve()) and file.is_file():
+        return FileResponse(file)
+
+    # SPA fallback
+    index_html = _DIST_DIR / "index.html"
+    if index_html.exists():
+        return FileResponse(index_html, media_type="text/html")
+
+    return HTMLResponse(content="Not found", status_code=404)

@@ -35,19 +35,23 @@ class TestCreateApp:
 
 
 class TestStaticFiles:
-    """정적 파일 서빙 테스트."""
+    """정적 파일 서빙 테스트 (Vite 빌드 결과)."""
 
     @pytest.mark.asyncio
-    async def test_css_served(self, client):
-        response = await client.get("/static/styles.css")
-        assert response.status_code == 200
-        assert "text/css" in response.headers["content-type"]
+    async def test_vite_js_bundle_served(self, client):
+        """Vite 빌드된 JS 번들이 /assets/ 경로로 서빙됩니다."""
+        # index.html에서 JS 번들 경로를 추출
+        response = await client.get("/")
+        body = response.text
+        assert "/assets/" in body
+        assert ".js" in body
 
     @pytest.mark.asyncio
-    async def test_js_served(self, client):
-        response = await client.get("/static/main.js")
-        assert response.status_code == 200
-        assert "javascript" in response.headers["content-type"]
+    async def test_vite_css_bundle_served(self, client):
+        """Vite 빌드된 CSS 번들이 /assets/ 경로로 서빙됩니다."""
+        response = await client.get("/")
+        body = response.text
+        assert ".css" in body
 
     @pytest.mark.asyncio
     async def test_nonexistent_static_returns_404(self, client):

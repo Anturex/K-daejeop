@@ -161,70 +161,38 @@ class TestAuthMeEndpoint:
         assert response.status_code == 401
 
 
-# ===== 페이지에 Supabase 설정 주입 테스트 =====
+# ===== React SPA 서빙 테스트 =====
 
 
-class TestSupabaseConfigInPage:
-    """index 페이지에 Supabase 설정이 주입되는지 테스트."""
+class TestReactSPAServing:
+    """React SPA가 올바르게 서빙되는지 테스트.
 
-    @pytest.mark.asyncio
-    async def test_supabase_meta_tags_present(self, client):
-        """HTML에 Supabase URL과 anon key meta 태그가 포함됩니다."""
-        response = await client.get("/")
-        body = response.text
-        assert 'name="supabase-url"' in body
-        assert 'name="supabase-anon-key"' in body
+    Jinja2 SSR → React SPA 전환 후 인증 관련 UI는 클라이언트에서 렌더링됩니다.
+    서버는 React 마운트 포인트(#root)가 포함된 HTML 셸을 서빙합니다.
+    """
 
     @pytest.mark.asyncio
-    async def test_supabase_js_sdk_loaded(self, client):
-        """HTML에 Supabase JS SDK 스크립트가 포함됩니다."""
+    async def test_spa_has_react_root(self, client):
+        """HTML에 React 마운트 포인트(#root)가 존재합니다."""
         response = await client.get("/")
-        assert "supabase" in response.text.lower()
-        assert "supabase.min.js" in response.text
+        assert response.status_code == 200
+        assert 'id="root"' in response.text
 
     @pytest.mark.asyncio
-    async def test_auth_js_loaded(self, client):
-        """HTML에 auth.js 스크립트가 포함됩니다."""
-        response = await client.get("/")
-        assert "auth.js" in response.text
+    async def test_spa_loads_js_bundle(self, client):
+        """HTML에 JS 번들이 로드됩니다."""
+        body = (await client.get("/")).text
+        assert "/assets/" in body
+        assert ".js" in body
 
     @pytest.mark.asyncio
-    async def test_login_screen_present(self, client):
-        """HTML에 전체화면 로그인 스크린이 포함됩니다."""
-        response = await client.get("/")
-        body = response.text
-        assert 'id="login-screen"' in body
-        assert 'class="login-card"' in body
+    async def test_spa_has_html_lang(self, client):
+        """HTML에 lang 속성이 설정됩니다."""
+        body = (await client.get("/")).text
+        assert 'lang="ko"' in body
 
     @pytest.mark.asyncio
-    async def test_google_login_button_present(self, client):
-        """HTML에 Google 로그인 버튼이 포함됩니다."""
-        response = await client.get("/")
-        body = response.text
-        assert 'id="google-login-btn"' in body
-        assert "Google" in body
-
-    @pytest.mark.asyncio
-    async def test_login_card_features_listed(self, client):
-        """로그인 카드에 서비스 주요 기능이 나열됩니다."""
-        response = await client.get("/")
-        body = response.text
-        assert "관광명소" in body
-        assert "별점 리뷰" in body
-        assert "추천 장소 해금" in body
-
-    @pytest.mark.asyncio
-    async def test_app_hidden_by_default(self, client):
-        """앱 영역은 기본적으로 hidden 상태입니다."""
-        response = await client.get("/")
-        body = response.text
-        assert 'id="app"' in body
-        assert 'hidden' in body
-
-    @pytest.mark.asyncio
-    async def test_user_menu_present(self, client):
-        """HTML에 유저 메뉴 영역이 포함됩니다."""
-        response = await client.get("/")
-        body = response.text
-        assert 'id="user-menu"' in body
-        assert 'id="logout-btn"' in body
+    async def test_spa_has_viewport_meta(self, client):
+        """HTML에 viewport 메타 태그가 포함됩니다."""
+        body = (await client.get("/")).text
+        assert "viewport" in body
