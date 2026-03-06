@@ -252,13 +252,21 @@ export function ReviewDetail() {
         )}
 
         {/* Rating & date */}
-        <div className="flex items-center gap-3 px-4 pb-2">
+        <div className="flex flex-wrap items-center gap-3 px-4 pb-2">
           <span className="text-sm font-semibold text-star">
             {RATING_LABELS[review.rating] ?? ''}
           </span>
           {review.visited_at && (
             <span className="text-xs text-text-muted">
               {review.visited_at}
+            </span>
+          )}
+          {review.verified_visit && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
+              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              {t('review.verifiedVisit')}
             </span>
           )}
         </div>

@@ -93,6 +93,10 @@
   "review.err.heicFail": "HEIC转换失败，请先导出为JPG后上传。",
   "review.heicConverting": "正在转换HEIC…",
 
+  "review.gpsChecking": "正在确认位置...",
+  "review.gpsVerified": "已确认实际到访",
+  "review.verifiedVisit": "实际到访",
+
   "date.yearFmt": "{{0}}年",
   "date.monthFmt": "{{0}}月",
   "date.dayFmt": "{{0}}日"

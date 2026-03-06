@@ -93,6 +93,10 @@
   "review.err.heicFail": "HEIC変換に失敗しました。JPGで書き出してからアップロードしてください。",
   "review.heicConverting": "HEIC変換中…",
 
+  "review.gpsChecking": "位置を確認中...",
+  "review.gpsVerified": "実際の訪問確認済み",
+  "review.verifiedVisit": "実際の訪問",
+
   "date.yearFmt": "{{0}}年",
   "date.monthFmt": "{{0}}月",
   "date.dayFmt": "{{0}}日"

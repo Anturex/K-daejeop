@@ -82,6 +82,7 @@ frontend/                         # React SPA
 │   │   └── Ads/                  # AdBanner.tsx
 │   ├── hooks/
 │   │   ├── useAuth.ts            # OAuth + 세션 + bfcache 대응
+│   │   ├── useGeolocation.ts     # 브라우저 GPS 위치 획득 (실제 방문 인증용)
 │   │   └── useReviewedPlaces.ts  # 캐시 기반 리뷰 place_id 조회
 │   ├── services/
 │   │   ├── supabase.ts           # createClient 싱글턴
@@ -92,7 +93,7 @@ frontend/                         # React SPA
 │   │   └── locales/              # ko.json, en.json, ja.json, zh.json
 │   ├── utils/
 │   │   ├── escapeHtml.ts         # XSS 방지 (명령형 DOM용)
-│   │   ├── distance.ts           # Haversine 거리, 줌레벨 계산
+│   │   ├── distance.ts           # Haversine 거리, 줌레벨 계산, isWithinVisitRange
 │   │   └── rankFoodFirst.ts      # FD6/CE7 우선 정렬
 │   └── types/
 │       └── kakao.d.ts            # Kakao Maps TypeScript 선언
@@ -145,7 +146,8 @@ tests/                            # pytest 백엔드 테스트 (65개)
 2. **전체 테스트 실행**:
    - 백엔드: `uv run pytest tests/ -q --ignore=tests/test_supabase_connection.py`
    - 프론트: `cd frontend && npm test`
-3. **문서 업데이트**: `README.md`와 `CLAUDE.md`에 변경 내용 반영
+3. **모바일 우선 확인**: 이 서비스는 모바일에서 주로 사용됨을 명심하고, 모든 UI·기능이 모바일 환경에서 자연스럽게 동작하는지 반드시 검증
+4. **문서 업데이트**: `README.md`와 `CLAUDE.md`에 변경 내용 반영
 
 ## 코딩 규칙
 
@@ -182,7 +184,7 @@ tests/                            # pytest 백엔드 테스트 (65개)
 4. **Vite 빌드**: `frontend/` 에서 `npm run build` → `app/static/dist/`로 출력. FastAPI가 정적 서빙.
 5. **개발 서버**: Vite dev (포트 3000) + FastAPI (포트 5173) 병렬 실행. Vite에서 `/api` → FastAPI 프록시.
 6. **한글 IME**: `SearchBar.tsx`에서 `keyCode === 229` 체크 + `input` 이벤트 기반 자동완성.
-7. **테스트 기준**: 백엔드 65개 (pytest) + 프론트엔드 59개 (Vitest). 기능 추가 시 해당 위치에 테스트도 추가.
+7. **테스트 기준**: 백엔드 65개 (pytest) + 프론트엔드 71개 (Vitest). 기능 추가 시 해당 위치에 테스트도 추가.
 8. **Supabase 직접 접근**: 리뷰 CRUD와 사진 업로드는 프론트엔드에서 Supabase JS SDK로 직접 수행. RLS가 보안 담당.
 9. **myreviews 클러스터링**: `useCluster.ts` 훅의 `computeClusters()` — 지리 격자 기반(`GRID_DEG` 배열). `ClusterMap.tsx`가 명령형으로 CustomOverlay 관리.
 10. **플라잉 애니메이션**: `ClusterMap.tsx`에서 ref 기반 명령형 처리. `requestAnimationFrame` 두 번 감싸기.
@@ -211,9 +213,10 @@ tests/                            # pytest 백엔드 테스트 (65개)
 33. **InfoWindow 버튼**: `.iw-card__actions`에 pill 형태 버튼(`border-radius: 9999px`, `white-space: nowrap`). `flex-wrap: wrap`으로 넘침 시 줄바꿈.
 34. **내 맛집 빈 상태**: 리뷰 0개일 때 패널에 빈 상태 UI 표시 (📍 아이콘 + "아직 리뷰가 없어요" + 안내 문구). `myReviews.emptyTitle`, `myReviews.emptyDesc` i18n 키 4개 언어 지원.
 35. **지도 영역 제한**: `KakaoMap.tsx`에서 `dragend`/`idle` 이벤트로 한국 영역(위도 33.0~38.7, 경도 124.5~132.0) 밖으로 이동 시 자동 복귀. 제주도, 울릉도, 독도 포함.
+36. **실제 방문 인증**: 리뷰 작성 시 `useGeolocation` 훅으로 브라우저 GPS 획득 → `isWithinVisitRange()`로 식당과 200m 이내인지 비교 → `verified_visit` boolean만 DB에 저장 (사용자 좌표는 저장하지 않음). GPS 거부 시 리뷰는 정상 저장되나 뱃지 없음. `ReviewDetail`과 `ClusterMap` 핀에 초록 뱃지 표시.
 
 ## Supabase 테이블 (RLS 적용)
-- `reviews`: 별점(1~3), 사진URL, 리뷰텍스트, 방문일자
+- `reviews`: 별점(1~3), 사진URL, 리뷰텍스트, 방문일자, verified_visit(실제 방문 여부)
 - `user_profiles`: tutorial_seen, tier ('free'/'premium'), 자동 생성 트리거
 - Storage `review-photos`: 유저별 폴더, 공개 읽기
 

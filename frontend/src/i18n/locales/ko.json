@@ -93,6 +93,10 @@
   "review.err.heicFail": "HEIC 변환에 실패했습니다. iPhone에서 직접 올리거나, Mac 미리보기 앱에서 JPG로 내보내기 후 업로드해 주세요.",
   "review.heicConverting": "HEIC 변환 중…",
 
+  "review.gpsChecking": "위치 확인 중...",
+  "review.gpsVerified": "실제 방문 확인됨",
+  "review.verifiedVisit": "실제 방문",
+
   "date.yearFmt": "{{0}}년",
   "date.monthFmt": "{{0}}월",
   "date.dayFmt": "{{0}}일"

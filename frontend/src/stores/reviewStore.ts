@@ -15,6 +15,7 @@ export interface Review {
   rating: number
   review_text: string
   photo_url: string | null
+  verified_visit: boolean
   visited_at: string
   created_at: string
 }
@@ -25,6 +26,7 @@ export function mapRawReview(raw: Record<string, unknown>): Review {
     ...(raw as unknown as Review),
     lat: parseFloat((raw.place_y as string) || '0'),
     lng: parseFloat((raw.place_x as string) || '0'),
+    verified_visit: Boolean(raw.verified_visit),
   }
 }
 

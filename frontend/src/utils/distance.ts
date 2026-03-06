@@ -16,6 +16,18 @@ export function distanceKm(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+/** Check if user is within 200m of a place (for verified visit) */
+const VERIFIED_VISIT_THRESHOLD_KM = 0.2
+
+export function isWithinVisitRange(
+  userLat: number,
+  userLng: number,
+  placeLat: number,
+  placeLng: number,
+): boolean {
+  return distanceKm(userLat, userLng, placeLat, placeLng) <= VERIFIED_VISIT_THRESHOLD_KM
+}
+
 /** Calculate appropriate zoom level based on max distance between results */
 export function zoomLevelForDistance(maxDistKm: number): number {
   if (maxDistKm > 10) return 7

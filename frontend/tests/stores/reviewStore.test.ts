@@ -58,6 +58,45 @@ describe('mapRawReview', () => {
     expect(review.lat).toBe(0)
     expect(review.lng).toBe(0)
   })
+
+  it('includes verified_visit as true when set', () => {
+    const raw = {
+      id: 'r3',
+      user_id: 'u1',
+      place_id: 'p1',
+      place_name: 'Verified',
+      place_address: '',
+      place_category: '',
+      place_x: '127.0',
+      place_y: '37.5',
+      rating: 2,
+      review_text: '',
+      photo_url: null,
+      visited_at: '2024-01-01',
+      created_at: '2024-01-01T00:00:00Z',
+      verified_visit: true,
+    }
+    expect(mapRawReview(raw).verified_visit).toBe(true)
+  })
+
+  it('defaults verified_visit to false when missing', () => {
+    const raw = {
+      id: 'r4',
+      user_id: 'u1',
+      place_id: 'p1',
+      place_name: 'Not verified',
+      place_address: '',
+      place_category: '',
+      place_x: '127.0',
+      place_y: '37.5',
+      rating: 1,
+      review_text: '',
+      photo_url: null,
+      visited_at: '2024-01-01',
+      created_at: '2024-01-01T00:00:00Z',
+    }
+    expect(mapRawReview(raw).verified_visit).toBe(false)
+  })
 })
 
 describe('reviewStore', () => {

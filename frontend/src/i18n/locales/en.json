@@ -93,6 +93,10 @@
   "review.err.heicFail": "HEIC conversion failed. Try exporting as JPG first.",
   "review.heicConverting": "Converting HEIC…",
 
+  "review.gpsChecking": "Checking location...",
+  "review.gpsVerified": "Visit verified",
+  "review.verifiedVisit": "Verified visit",
+
   "date.yearFmt": "{{0}}",
   "date.monthFmt": "{{0}}",
   "date.dayFmt": "{{0}}"

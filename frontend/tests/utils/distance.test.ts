@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { distanceKm, zoomLevelForDistance } from '../../src/utils/distance'
+import { distanceKm, zoomLevelForDistance, isWithinVisitRange } from '../../src/utils/distance'
 
 describe('distanceKm', () => {
   it('returns 0 for same point', () => {
@@ -39,5 +39,25 @@ describe('zoomLevelForDistance', () => {
 
   it('returns 3 for <=0.5 km', () => {
     expect(zoomLevelForDistance(0.3)).toBe(3)
+  })
+})
+
+describe('isWithinVisitRange', () => {
+  it('returns true for same point', () => {
+    expect(isWithinVisitRange(37.5665, 126.978, 37.5665, 126.978)).toBe(true)
+  })
+
+  it('returns true for points within 200m', () => {
+    // ~100m apart
+    expect(isWithinVisitRange(37.5665, 126.978, 37.5674, 126.978)).toBe(true)
+  })
+
+  it('returns false for points beyond 200m', () => {
+    // ~1.1km apart
+    expect(isWithinVisitRange(37.5665, 126.978, 37.576, 126.978)).toBe(false)
+  })
+
+  it('returns false for far away points', () => {
+    expect(isWithinVisitRange(37.5665, 126.978, 35.1796, 129.0756)).toBe(false)
   })
 })

@@ -71,12 +71,12 @@ K-daejeop/
 │   │   │   ├── MyReviews/       # 내 맛집 패널, 클러스터 맵, 카테고리 필터
 │   │   │   ├── Tutorial/        # 온보딩 튜토리얼
 │   │   │   └── Ads/             # 광고 배너
-│   │   ├── hooks/               # useAuth, useReviewedPlaces
+│   │   ├── hooks/               # useAuth, useGeolocation, useReviewedPlaces
 │   │   ├── services/            # supabase, kakao SDK, API 호출
 │   │   ├── i18n/                # react-i18next + 4개 언어 JSON
 │   │   ├── utils/               # escapeHtml, distance, rankFoodFirst
 │   │   └── types/               # Kakao Maps TypeScript 선언
-│   └── tests/                   # Vitest + React Testing Library (59개)
+│   └── tests/                   # Vitest + React Testing Library (71개)
 │       ├── setup.ts
 │       ├── utils/
 │       ├── stores/
@@ -98,7 +98,8 @@ K-daejeop/
 ├── supabase/
 │   └── migrations/
 │       ├── 001_reviews_and_profiles.sql
-│       └── 002_user_tier.sql
+│       ├── 002_user_tier.sql
+│       └── 003_verified_visit.sql
 ├── tests/                       # pytest 백엔드 테스트 (65개)
 │   ├── conftest.py
 │   ├── test_app.py
@@ -138,6 +139,7 @@ K-daejeop/
    - **리뷰** 텍스트 작성 (맛, 분위기, 서비스 등 자유롭게)
    - **방문 날짜** 스크롤 휠로 선택 (기본: 오늘)
 3. "리뷰 저장하기" → Supabase Storage(사진) + Database(리뷰) 저장
+4. GPS로 식당 200m 이내 확인 시 **"실제 방문"** 뱃지 자동 부여
 
 ### 내 맛집 클러스터 맵
 
@@ -220,7 +222,7 @@ cd frontend && npm run build          # → app/static/dist/ 출력
 # 백엔드 (pytest, 65개)
 uv run pytest tests/ -v --ignore=tests/test_supabase_connection.py
 
-# 프론트엔드 (Vitest, 59개)
+# 프론트엔드 (Vitest, 71개)
 cd frontend && npm test
 ```
 

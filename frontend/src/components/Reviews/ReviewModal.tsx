@@ -4,7 +4,9 @@ import { useReviewStore } from '../../stores/reviewStore'
 import { useAuthStore } from '../../stores/authStore'
 import { useUiStore } from '../../stores/uiStore'
 import { useReviewedPlaces } from '../../hooks/useReviewedPlaces'
+import { useGeolocation } from '../../hooks/useGeolocation'
 import { getSupabase } from '../../services/supabase'
+import { isWithinVisitRange } from '../../utils/distance'
 import { RatingSelector } from './RatingSelector'
 import { PhotoUploader } from './PhotoUploader'
 import { DatePicker } from './DatePicker'
@@ -24,6 +26,7 @@ export function ReviewModal() {
   const user = useAuthStore((s) => s.user)
   const showToast = useUiStore((s) => s.showToast)
   const { getVisitCount } = useReviewedPlaces()
+  const { lat: geoLat, lng: geoLng, loading: geoLoading, requestLocation } = useGeolocation()
 
   // Form state
   const [rating, setRating] = useState(0)
@@ -46,8 +49,9 @@ export function ReviewModal() {
       setError(null)
       setIsSubmitting(false)
       setVisitCount(0)
+      requestLocation()
     }
-  }, [modalOpen])
+  }, [modalOpen, requestLocation])
 
   // Load visit count when modal opens for a place
   useEffect(() => {
@@ -157,6 +161,7 @@ export function ReviewModal() {
         review_text: reviewText.trim(),
         photo_url: publicUrl,
         visited_at: visitedAt,
+        verified_visit: isNearby,
       })
 
       if (insertErr) {
@@ -184,6 +189,7 @@ export function ReviewModal() {
     rating,
     reviewText,
     visitedAt,
+    isNearby,
     t,
     handleError,
     invalidateCache,
@@ -192,6 +198,13 @@ export function ReviewModal() {
   ])
 
   if (!modalOpen || !modalPlace) return null
+
+  const placeLat = parseFloat(modalPlace.y || '0')
+  const placeLng = parseFloat(modalPlace.x || '0')
+  const isNearby =
+    geoLat !== null &&
+    geoLng !== null &&
+    isWithinVisitRange(geoLat, geoLng, placeLat, placeLng)
 
   const isValid = rating > 0 && file !== null
 
@@ -293,6 +306,22 @@ export function ReviewModal() {
             </p>
             <DatePicker value={visitedAt} onChange={setVisitedAt} />
           </div>
+
+          {/* GPS verification status */}
+          {geoLoading && (
+            <div className="flex items-center gap-1.5 text-xs text-text-muted">
+              <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+              {t('review.gpsChecking')}
+            </div>
+          )}
+          {!geoLoading && isNearby && (
+            <div className="flex items-center gap-1.5 rounded-lg bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
+              <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              {t('review.gpsVerified')}
+            </div>
+          )}
 
           {/* Error message */}
           {error && (

@@ -80,6 +80,9 @@ function buildPin(cluster: Cluster): HTMLDivElement {
   const review = cluster.reviews[0] // Latest visit (sorted by visited_at desc)
   const stars = '\u2605'.repeat(review.rating) + '\u2606'.repeat(3 - review.rating)
   const name = review.place_name || ''
+  const verifiedHtml = review.verified_visit
+    ? '<div class="rv-pin__verified"></div>'
+    : ''
 
   const el = document.createElement('div')
   el.className = 'rv-pin' + (name.length <= 5 ? ' rv-pin--short-name' : '')
@@ -88,6 +91,7 @@ function buildPin(cluster: Cluster): HTMLDivElement {
       <div class="rv-pin__name"><span>${escHtml(name)}</span></div>
       <img class="rv-pin__photo" src="${escAttr(review.photo_url)}" alt="" loading="lazy" />
       <div class="rv-pin__rating">${stars}</div>
+      ${verifiedHtml}
     </div>
     <div class="rv-pin__tail"></div>
   `
