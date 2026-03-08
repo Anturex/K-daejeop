@@ -11,6 +11,9 @@ router = APIRouter(tags=["pages"])
 _DIST_DIR = Path(__file__).resolve().parent.parent / "static" / "dist"
 
 
+_NO_CACHE = {"Cache-Control": "no-cache, no-store, must-revalidate"}
+
+
 @router.get("/", response_class=HTMLResponse)
 async def index():
     """SPA 진입점: Vite 빌드 index.html 서빙"""
@@ -21,7 +24,7 @@ async def index():
             "<p>Run <code>cd frontend && npm run build</code></p>",
             status_code=503,
         )
-    return FileResponse(index_html, media_type="text/html")
+    return FileResponse(index_html, media_type="text/html", headers=_NO_CACHE)
 
 
 @router.get("/{path:path}")
@@ -36,6 +39,6 @@ async def serve_dist_or_spa(path: str):
     # SPA fallback
     index_html = _DIST_DIR / "index.html"
     if index_html.exists():
-        return FileResponse(index_html, media_type="text/html")
+        return FileResponse(index_html, media_type="text/html", headers=_NO_CACHE)
 
     return HTMLResponse(content="Not found", status_code=404)

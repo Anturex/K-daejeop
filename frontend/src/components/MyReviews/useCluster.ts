@@ -29,14 +29,19 @@ export const GRID_DEG = [
 ]
 
 /* ===== Category classification ===== */
-export const CATEGORY_MAP: Record<string, string> = {
-  '음식점': 'restaurant',
-  '카페': 'cafe',
-  '관광명소': 'attraction',
-}
+const CATEGORY_KEYWORDS: [string, string][] = [
+  ['카페', 'cafe'],
+  ['음식점', 'restaurant'],
+  ['관광명소', 'attraction'],
+  ['관광', 'attraction'],
+]
 
 export function classifyCategory(placeCat: string | undefined | null): string {
-  return CATEGORY_MAP[placeCat ?? ''] ?? 'etc'
+  if (!placeCat) return 'etc'
+  for (const [keyword, cat] of CATEGORY_KEYWORDS) {
+    if (placeCat.includes(keyword)) return cat
+  }
+  return 'etc'
 }
 
 /* ===== Region extraction ===== */
@@ -154,15 +159,36 @@ export function groupByRegion(reviews: Review[]): RegionGroup[] {
     .map(([region, items]) => ({ region, items }))
 }
 
-/* ===== Category-filtered reviews ===== */
+/* ===== Category + Rating filtered reviews ===== */
+/**
+ * Filter reviews by category and rating based on the **latest** review per place.
+ * Returns ALL reviews for matching places (so detail view can show history).
+ * Assumes `allReviews` is sorted by created_at desc (newest first).
+ */
 export function getFilteredReviews(
   allReviews: Review[],
   activeCategory: string,
+  activeRating: string = 'all',
 ): Review[] {
-  if (activeCategory === 'all') return allReviews
-  return allReviews.filter(
-    (r) => classifyCategory(r.place_category) === activeCategory,
-  )
+  if (activeCategory === 'all' && activeRating === 'all') return allReviews
+
+  // Group by place
+  const placeMap = new Map<string, Review[]>()
+  for (const r of allReviews) {
+    const key = r.place_id || `${r.lat},${r.lng}`
+    if (!placeMap.has(key)) placeMap.set(key, [])
+    placeMap.get(key)!.push(r)
+  }
+
+  // Filter places based on latest review, return all reviews for matching places
+  const result: Review[] = []
+  for (const reviews of placeMap.values()) {
+    const latest = reviews[0]
+    if (activeCategory !== 'all' && classifyCategory(latest.place_category) !== activeCategory) continue
+    if (activeRating !== 'all' && latest.rating !== Number(activeRating)) continue
+    result.push(...reviews)
+  }
+  return result
 }
 
 /* ===== Category badge counts ===== */
@@ -191,6 +217,41 @@ export function computeCategoryCounts(allReviews: Review[]): CategoryCounts {
     counts.all++
     const cat = classifyCategory(r.place_category) as keyof CategoryCounts
     if (cat in counts) counts[cat]++
+  }
+
+  return counts
+}
+
+/* ===== Rating badge counts ===== */
+export interface RatingCounts {
+  all: number
+  '0': number
+  '1': number
+  '2': number
+  '3': number
+}
+
+export function computeRatingCounts(
+  allReviews: Review[],
+  activeCategory: string,
+): RatingCounts {
+  const catFiltered =
+    activeCategory === 'all'
+      ? allReviews
+      : allReviews.filter(
+          (r) => classifyCategory(r.place_category) === activeCategory,
+        )
+
+  const counts: RatingCounts = { all: 0, '0': 0, '1': 0, '2': 0, '3': 0 }
+  const seen = new Set<string>()
+
+  for (const r of catFiltered) {
+    const key = r.place_id || `${r.lat},${r.lng}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    counts.all++
+    const rKey = String(r.rating) as keyof RatingCounts
+    if (rKey in counts) counts[rKey]++
   }
 
   return counts

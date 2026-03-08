@@ -12,12 +12,15 @@ import { useUiStore } from '../../stores/uiStore'
 import { useAuthStore } from '../../stores/authStore'
 import { useReviewedPlaces } from '../../hooks/useReviewedPlaces'
 import { CategoryFilter } from './CategoryFilter'
+import { RatingFilter } from './RatingFilter'
 import { ClusterMap } from './ClusterMap'
 import { AdBanner } from '../Ads/AdBanner'
+import { getThumbUrl } from '../../utils/imageUrl'
 import {
   groupByRegion,
   getFilteredReviews,
   computeCategoryCounts,
+  computeRatingCounts,
   uniquePlaceCount,
   type RegionGroup,
 } from './useCluster'
@@ -34,6 +37,7 @@ interface PlaceGroup {
 export function MyReviewsPanel() {
   const { t } = useTranslation()
   const map = useMapStore((s) => s.map)
+  const clearMarkers = useMapStore((s) => s.clearMarkers)
   const { openDetail } = useReviewStore()
   const { showToast, setMyReviewsActive } = useUiStore()
   const tier = useAuthStore((s) => s.tier)
@@ -42,6 +46,7 @@ export function MyReviewsPanel() {
   /* ===== State ===== */
   const [allReviews, setAllReviews] = useState<Review[]>([])
   const [activeCategory, setActiveCategory] = useState('all')
+  const [activeRating, setActiveRating] = useState('all')
   const [panelOpen, setPanelOpen] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -52,8 +57,9 @@ export function MyReviewsPanel() {
   const listRef = useRef<HTMLDivElement>(null)
 
   /* ===== Derived data ===== */
-  const filtered = getFilteredReviews(allReviews, activeCategory)
+  const filtered = getFilteredReviews(allReviews, activeCategory, activeRating)
   const counts = computeCategoryCounts(allReviews)
+  const ratingCounts = computeRatingCounts(allReviews, activeCategory)
   const totalUniquePlaces = uniquePlaceCount(filtered)
   const regionGroups = groupByRegion(filtered)
 
@@ -92,6 +98,11 @@ export function MyReviewsPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /* ===== Clear search markers on mount ===== */
+  useEffect(() => {
+    clearMarkers()
+  }, [clearMarkers])
+
   /* ===== Listen for review:saved to refresh ===== */
   useEffect(() => {
     const handler = async () => {
@@ -106,6 +117,12 @@ export function MyReviewsPanel() {
   /* ===== Category change resets drill-down ===== */
   const handleCategorySelect = useCallback((cat: string) => {
     setActiveCategory(cat)
+    setDrillRegion(null)
+  }, [])
+
+  /* ===== Rating change resets drill-down ===== */
+  const handleRatingSelect = useCallback((rating: string) => {
+    setActiveRating(rating)
     setDrillRegion(null)
   }, [])
 
@@ -217,6 +234,7 @@ export function MyReviewsPanel() {
   useEffect(() => {
     return () => {
       setActiveCategory('all')
+      setActiveRating('all')
     }
   }, [])
 
@@ -228,13 +246,14 @@ export function MyReviewsPanel() {
       <ClusterMap
         allReviews={allReviews}
         activeCategory={activeCategory}
+        activeRating={activeRating}
         isActive={true}
       />
 
       {/* Mobile backdrop */}
       {panelOpen && (
         <div
-          className="fixed inset-0 z-[10001] bg-black/30 backdrop-blur-[2px] transition-opacity sm:hidden"
+          className="fixed inset-0 z-[9000] bg-black/30 backdrop-blur-[2px] transition-opacity sm:hidden"
           onClick={handleBackdropClick}
         />
       )}
@@ -242,7 +261,7 @@ export function MyReviewsPanel() {
       {/* Side panel */}
       <aside
         ref={panelRef}
-        className={`absolute right-0 top-0 z-[9000] flex h-full w-[320px] flex-col bg-surface shadow-xl transition-transform duration-300 ease-out max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:top-auto max-sm:h-[60vh] max-sm:w-full max-sm:rounded-t-2xl ${
+        className={`absolute right-0 top-0 z-[9001] flex h-full w-[320px] flex-col bg-surface shadow-xl transition-transform duration-300 ease-out max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:top-auto max-sm:h-[60vh] max-sm:w-full max-sm:rounded-t-2xl ${
           panelOpen
             ? 'translate-x-0 max-sm:translate-y-0'
             : 'translate-x-full max-sm:translate-x-0 max-sm:translate-y-full'
@@ -297,8 +316,15 @@ export function MyReviewsPanel() {
           onSelect={handleCategorySelect}
         />
 
+        {/* Rating filter chips */}
+        <RatingFilter
+          activeRating={activeRating}
+          counts={ratingCounts}
+          onSelect={handleRatingSelect}
+        />
+
         {/* Scrollable list */}
-        <div ref={listRef} className="flex-1 overflow-y-auto">
+        <div ref={listRef} className="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom,0px)]">
           {allReviews.length === 0 ? (
             /* ===== Empty state ===== */
             <div className="flex flex-col items-center justify-center gap-3 px-6 py-12 text-center">
@@ -367,11 +393,12 @@ function RegionList({ groups, onRegionClick }: RegionListProps) {
               {photos.map((r, i) => (
                 <img
                   key={r.id || i}
-                  src={r.photo_url ?? ''}
+                  src={getThumbUrl(r.photo_url)}
                   alt=""
                   loading="lazy"
                   className="h-10 w-10 rounded-lg border-2 border-surface object-cover shadow-sm"
                   style={{ zIndex: photos.length - i }}
+                  onError={(e) => { const img = e.currentTarget; img.onerror = null; img.src = r.photo_url ?? '' }}
                 />
               ))}
             </div>
@@ -448,8 +475,9 @@ function PlaceList({ region, places, onBack, onPlaceClick }: PlaceListProps) {
         {places.map((pg, i) => {
           const r = pg.latest
           const hasMultiple = pg.reviews.length > 1
-          const stars =
-            '\u2605'.repeat(r.rating) + '\u2606'.repeat(3 - r.rating)
+          const stars = r.rating === 0
+            ? '\u2715'
+            : '\u2605'.repeat(r.rating) + '\u2606'.repeat(3 - r.rating)
 
           return (
             <button
@@ -459,17 +487,18 @@ function PlaceList({ region, places, onBack, onPlaceClick }: PlaceListProps) {
               className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-bg active:bg-border/20"
             >
               <img
-                src={r.photo_url ?? ''}
+                src={getThumbUrl(r.photo_url)}
                 alt=""
                 loading="lazy"
                 className="h-12 w-12 shrink-0 rounded-lg object-cover shadow-sm"
+                onError={(e) => { const img = e.currentTarget; img.onerror = null; img.src = r.photo_url ?? '' }}
               />
 
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="truncate text-sm font-semibold text-dark">
                   {r.place_name || ''}
                 </span>
-                <span className="text-xs text-star">{stars}</span>
+                <span className={`text-xs ${r.rating === 0 ? 'text-danger' : 'text-star'}`}>{stars}</span>
                 {hasMultiple && (
                   <span className="text-[11px] text-text-muted">
                     {pg.reviews.length}

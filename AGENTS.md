@@ -3,7 +3,7 @@
 ## 프로젝트 개요
 카카오맵 API + Supabase를 활용한 한국 지도 기반 **폐쇄형 맛집 리뷰 서비스**.
 **React 19 + TypeScript + Vite 7** 프론트엔드 + **FastAPI** 백엔드 구조.
-사용자가 음식점을 검색하고 별점(1~3)·사진·리뷰를 남기면, 10개 이상 쌓은 뒤 다른 사용자의 추천 맛집을 볼 수 있음.
+사용자가 음식점을 검색하고 별점(0~3)·사진·리뷰를 남기면, 10개 이상 쌓은 뒤 다른 사용자의 추천 맛집을 볼 수 있음.
 
 ## 기술 스택 & 버전
 
@@ -71,7 +71,8 @@ frontend/                         # React SPA
 │   │   ├── authStore.ts          # user, session, tier, isAuthenticated
 │   │   ├── mapStore.ts           # map 인스턴스, searchResults, markers
 │   │   ├── reviewStore.ts        # 리뷰 모달/상세 상태, 캐시 (5분 TTL)
-│   │   └── uiStore.ts            # myReviewsActive, tutorial, toast, userMenu
+│   │   ├── badgeStore.ts         # 뱃지판 목록, 상세, 생성, 공유코드
+│   │   └── uiStore.ts            # myReviewsActive, badgePanelActive, tutorial, toast
 │   ├── components/
 │   │   ├── LoginScreen/          # LoginScreen.tsx, LegalModal.tsx
 │   │   ├── Header/               # Header.tsx, SearchBar.tsx, UserMenu.tsx
@@ -94,10 +95,11 @@ frontend/                         # React SPA
 │   ├── utils/
 │   │   ├── escapeHtml.ts         # XSS 방지 (명령형 DOM용)
 │   │   ├── distance.ts           # Haversine 거리, 줌레벨 계산, isWithinVisitRange
+│   │   ├── imageUrl.ts           # getThumbUrl() 썸네일 URL 변환
 │   │   └── rankFoodFirst.ts      # FD6/CE7 우선 정렬
 │   └── types/
 │       └── kakao.d.ts            # Kakao Maps TypeScript 선언
-└── tests/                        # Vitest 프론트 테스트 (51개)
+└── tests/                        # Vitest 프론트 테스트 (82개)
 
 app/                              # FastAPI 백엔드
 ├── main.py                       # create_app(), /assets 마운트, SPA 서빙
@@ -117,14 +119,15 @@ app/                              # FastAPI 백엔드
 tests/                            # pytest 백엔드 테스트 (65개)
 ```
 
-## 상태 관리 (Zustand 스토어 4개)
+## 상태 관리 (Zustand 스토어 5개)
 
 | 스토어 | 역할 |
 |--------|------|
 | `authStore` | user, session, tier ('free'/'premium'), isAuthenticated, isLoading, tutorialSeen |
 | `mapStore` | 카카오맵 인스턴스, 검색 결과, 마커 배열, clearMarkers() |
 | `reviewStore` | 리뷰 모달 상태, 리뷰 상세 바텀시트 상태, 5분 TTL 캐시 |
-| `uiStore` | myReviewsActive, showTutorial, toast (단일 토스트 + 카운터), userMenuOpen |
+| `uiStore` | myReviewsActive, badgePanelActive, showTutorial, toast, userMenuOpen |
+| `badgeStore` | 뱃지판 목록, 상세, 내 뱃지, 생성/삭제, 공유코드 검색 |
 
 ## 모바일 우선 원칙 (Mobile-First — 항상 적용)
 
@@ -133,7 +136,7 @@ tests/                            # pytest 백엔드 테스트 (65개)
 - 레이아웃: 터치 영역 충분히 확보 (버튼 최소 44px), 손가락으로 조작 가능한 크기
 - 타이포그래피: 작은 화면에서도 읽기 편한 폰트 크기 (최소 14px, input 16px)
 - 스크롤/스와이프: iOS Safari 특성 고려 (`position: fixed` + `inset: 0`으로 횡스크롤 차단)
-- 성능: 모바일 네트워크 기준으로 API 호출 최소화, 이미지 lazy loading
+- 성능: 모바일 네트워크 기준으로 API 호출 최소화, 이미지 lazy loading + 업로드 시 압축 + 썸네일 분리 + 1년 HTTP 캐시
 - 인터랙션: hover보다 touch/tap 기반으로 설계
 
 ## 기능 추가 필수 절차 (매번 반드시 수행)
@@ -184,7 +187,7 @@ tests/                            # pytest 백엔드 테스트 (65개)
 4. **Vite 빌드**: `frontend/` 에서 `npm run build` → `app/static/dist/`로 출력. FastAPI가 정적 서빙.
 5. **개발 서버**: Vite dev (포트 3000) + FastAPI (포트 5173) 병렬 실행. Vite에서 `/api` → FastAPI 프록시.
 6. **한글 IME**: `SearchBar.tsx`에서 `keyCode === 229` 체크 + `input` 이벤트 기반 자동완성.
-7. **테스트 기준**: 백엔드 65개 (pytest) + 프론트엔드 71개 (Vitest). 기능 추가 시 해당 위치에 테스트도 추가.
+7. **테스트 기준**: 백엔드 65개 (pytest) + 프론트엔드 132개 (Vitest). 기능 추가 시 해당 위치에 테스트도 추가.
 8. **Supabase 직접 접근**: 리뷰 CRUD와 사진 업로드는 프론트엔드에서 Supabase JS SDK로 직접 수행. RLS가 보안 담당.
 9. **myreviews 클러스터링**: `useCluster.ts` 훅의 `computeClusters()` — 지리 격자 기반(`GRID_DEG` 배열). `ClusterMap.tsx`가 명령형으로 CustomOverlay 관리.
 10. **플라잉 애니메이션**: `ClusterMap.tsx`에서 ref 기반 명령형 처리. `requestAnimationFrame` 두 번 감싸기.
@@ -214,10 +217,21 @@ tests/                            # pytest 백엔드 테스트 (65개)
 34. **내 맛집 빈 상태**: 리뷰 0개일 때 패널에 빈 상태 UI 표시 (📍 아이콘 + "아직 리뷰가 없어요" + 안내 문구). `myReviews.emptyTitle`, `myReviews.emptyDesc` i18n 키 4개 언어 지원.
 35. **지도 영역 제한**: `KakaoMap.tsx`에서 `dragend`/`idle` 이벤트로 한국 영역(위도 33.0~38.7, 경도 124.5~132.0) 밖으로 이동 시 자동 복귀. 제주도, 울릉도, 독도 포함.
 36. **실제 방문 인증**: 리뷰 작성 시 `useGeolocation` 훅으로 브라우저 GPS 획득 → `isWithinVisitRange()`로 식당과 200m 이내인지 비교 → `verified_visit` boolean만 DB에 저장 (사용자 좌표는 저장하지 않음). GPS 거부 시 리뷰는 정상 저장되나 뱃지 없음. `ReviewDetail`과 `ClusterMap` 핀에 초록 뱃지 표시.
+37. **Kakao SDK 조기 로딩**: `main.tsx`에서 `loadKakaoSdk()` 호출로 auth 완료 전 SDK 다운로드 시작. `index.html`에 `<link rel="preconnect" href="https://dapi.kakao.com">` 추가. Promise 캐시 기반으로 KakaoMap 컴포넌트와 안전하게 공유.
+38. **내 맛집 마커 초기화**: `MyReviewsPanel` 마운트 시 `clearMarkers()` 호출하여 기존 검색 마커/InfoWindow 제거. 클러스터 핀만 표시.
+39. **리뷰 상세 페이지 링크**: `ReviewDetail`에 "상세 페이지 보기" 버튼 → `https://place.map.kakao.com/{place_id}` 새 탭 열기. i18n 4개 언어 지원 (`review.viewDetail`).
+40. **이미지 최적화**: 업로드 전 Canvas API로 압축 (메인: max 1200px/JPEG 80%, 썸네일: max 200px/JPEG 65%). `compressWithThumb()` in `PhotoUploader.tsx`. 썸네일은 `{timestamp}_thumb.jpg`로 별도 저장. `getThumbUrl()` 유틸(`utils/imageUrl.ts`)로 URL 변환. ClusterMap/MyReviewsPanel에서 썸네일 우선 로드 + `onerror` 폴백. `cacheControl: '31536000'` (1년, 불변 파일명).
+
+41. **뱃지 시스템**: `BadgePanel.tsx` — 헤더 '뱃지' 탭으로 별도 패널 열기 (MyReviewsPanel과 상호배타). `badgeStore.ts`에서 상태 관리. DB 테이블 3개: `badge_boards`(뱃지판 정의), `badge_board_places`(장소 목록), `user_badges`(획득 기록). 프리미엄만 뱃지판 생성 가능, 모든 유저 참여 가능. 6자리 공유코드(`share_code`) + `is_public` 공개 목록. 진행도는 유저 reviews 테이블과 대조하여 동적 계산. 마이그레이션: `005_badge_boards.sql`.
+42. **뱃지 컴포넌트 구조**: `BadgePanel.tsx`(메인 패널, 공유코드 입력, 보드 목록, 내 뱃지), `BadgeBoardCard.tsx`(카드+프로그레스바), `BadgeBoardDetail.tsx`(장소 목록+체크+진행도), `BadgeBoardCreate.tsx`(생성 폼, 장소 검색+추가).
+43. **뱃지 패널 상호배타**: `uiStore.ts`에서 `badgePanelActive`와 `myReviewsActive` 상호배타 처리. 하나 열면 다른 하나 자동 닫힘.
 
 ## Supabase 테이블 (RLS 적용)
-- `reviews`: 별점(1~3), 사진URL, 리뷰텍스트, 방문일자, verified_visit(실제 방문 여부)
+- `reviews`: 별점(0~3), 사진URL, 리뷰텍스트, 방문일자, verified_visit(실제 방문 여부)
 - `user_profiles`: tutorial_seen, tier ('free'/'premium'), 자동 생성 트리거
+- `badge_boards`: 뱃지판 정의 (title, description, icon_emoji, is_public, share_code)
+- `badge_board_places`: 뱃지판 장소 목록 (board_id → place_id 매핑)
+- `user_badges`: 뱃지 획득 기록 (user_id + board_id, 완료 시 INSERT)
 - Storage `review-photos`: 유저별 폴더, 공개 읽기
 
 ## 향후 확장 예정

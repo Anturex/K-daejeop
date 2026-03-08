@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useReviewStore } from '../../stores/reviewStore'
+import { useReviewStore, type Review } from '../../stores/reviewStore'
+import { useAuthStore } from '../../stores/authStore'
 import { useUiStore } from '../../stores/uiStore'
 import { getSupabase } from '../../services/supabase'
 
 const RATING_LABELS = [
-  '', // index 0 unused
-  '\u2605 \uB3D9\uB124\uB9DB\uC9D1',   // rating 1
-  '\u2605\u2605 \uCD94\uCC9C\uB9DB\uC9D1', // rating 2
-  '\u2605\u2605\u2605 \uC778\uC0DD\uB9DB\uC9D1', // rating 3
+  '\u2715 \uC7AC\uBC29\uBB38 \uC548 \uD568', // rating 0
+  '\u2605 \uAC00\uBCCD\uAC8C \uAC08 \uACF3',   // rating 1
+  '\u2605\u2605 \uCD94\uCC9C\uD560 \uACF3', // rating 2
+  '\u2605\u2605\u2605 \uAF2D \uAC00\uC57C \uD560 \uACF3', // rating 3
 ]
 
 const SWIPE_THRESHOLD = 120 // px to trigger close
@@ -23,6 +24,7 @@ export function ReviewDetail() {
     setDetailIndex,
     invalidateCache,
   } = useReviewStore()
+  const user = useAuthStore((s) => s.user)
   const showToast = useUiStore((s) => s.showToast)
 
   const [photoFullscreen, setPhotoFullscreen] = useState(false)
@@ -233,6 +235,15 @@ export function ReviewDetail() {
           </button>
         </div>
 
+        {/* Creator label (for reviews from board creator) */}
+        {review.user_id !== user?.id && (
+          <div className="px-4 pb-1">
+            <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">
+              {t('badge.creatorLabel')}
+            </span>
+          </div>
+        )}
+
         {/* Photo */}
         {review.photo_url && (
           <div className="px-4 pb-3">
@@ -253,7 +264,7 @@ export function ReviewDetail() {
 
         {/* Rating & date */}
         <div className="flex flex-wrap items-center gap-3 px-4 pb-2">
-          <span className="text-sm font-semibold text-star">
+          <span className={`text-sm font-semibold ${review.rating === 0 ? 'text-danger' : 'text-star'}`}>
             {RATING_LABELS[review.rating] ?? ''}
           </span>
           {review.visited_at && (
@@ -279,6 +290,9 @@ export function ReviewDetail() {
             </p>
           </div>
         )}
+
+        {/* Rating trend for multiple visits */}
+        {totalReviews > 1 && <RatingTrend reviews={detailReviews} />}
 
         {/* Navigation for multiple reviews of same place */}
         {totalReviews > 1 && (
@@ -329,18 +343,119 @@ export function ReviewDetail() {
           </div>
         )}
 
-        {/* Delete button */}
-        <div className="border-t border-border px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="w-full rounded-xl border border-danger/30 bg-danger/5 px-4 py-2.5 text-sm font-semibold text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
+        {/* Action buttons */}
+        <div className="flex flex-col gap-2 border-t border-border px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+          <a
+            href={`https://place.map.kakao.com/${review.place_id || ''}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-accent/30 bg-accent/5 px-4 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent/10"
           >
-            {t('review.delete')}
-          </button>
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+            {t('review.viewDetail')}
+          </a>
+          {review.user_id === user?.id && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="w-full rounded-xl border border-danger/30 bg-danger/5 px-4 py-2.5 text-sm font-semibold text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
+            >
+              {t('review.delete')}
+            </button>
+          )}
         </div>
       </div>
     </>
+  )
+}
+
+/* ===== Rating trend sub-component ===== */
+const STAR_CHARS: Record<number, string> = {
+  0: '\u2715',
+  1: '\u2605',
+  2: '\u2605\u2605',
+  3: '\u2605\u2605\u2605',
+}
+
+function RatingTrend({ reviews }: { reviews: Review[] }) {
+  const { t } = useTranslation()
+
+  const { avg, sorted, trendIcon } = useMemo(() => {
+    const sum = reviews.reduce((s, r) => s + r.rating, 0)
+    const avg = sum / reviews.length
+
+    // Sort by visited_at ascending (oldest first) for timeline
+    const sorted = [...reviews].sort((a, b) =>
+      (a.visited_at || '').localeCompare(b.visited_at || ''),
+    )
+
+    const first = sorted[0].rating
+    const last = sorted[sorted.length - 1].rating
+    const trendIcon = last > first ? '↗' : last < first ? '↘' : '→'
+
+    return { avg, sorted, trendIcon }
+  }, [reviews])
+
+  return (
+    <div className="mx-4 mb-3 rounded-xl border border-border bg-bg p-3">
+      {/* Header: average + visits + trend */}
+      <div className="mb-2 flex items-center gap-2 text-xs">
+        <span className="font-semibold text-text-primary">
+          {t('review.avgRating')}
+        </span>
+        <span className="text-star">
+          {avg.toFixed(1)}
+        </span>
+        <span className="text-text-muted">·</span>
+        <span className="text-text-muted">
+          {t('review.visits', { 0: reviews.length })}
+        </span>
+        <span className={`ml-auto text-sm ${
+          trendIcon === '↗' ? 'text-green-600' : trendIcon === '↘' ? 'text-danger' : 'text-text-muted'
+        }`}>
+          {trendIcon}
+        </span>
+      </div>
+
+      {/* Timeline */}
+      <div className="space-y-1">
+        {sorted.map((r, i) => {
+          const isFirst = i === 0
+          const isLast = i === sorted.length - 1
+          const date = r.visited_at
+            ? r.visited_at.slice(0, 7).replace('-', '.')
+            : ''
+
+          return (
+            <div
+              key={r.id}
+              className={`flex items-center gap-2 rounded-lg px-2 py-1 text-xs ${
+                isLast ? 'bg-accent/10' : ''
+              }`}
+            >
+              <span className="w-14 shrink-0 text-text-muted">{date}</span>
+              <span className={`${r.rating === 0 ? 'text-danger' : 'text-star'}`}>
+                {STAR_CHARS[r.rating] ?? ''}
+              </span>
+              {isFirst && (
+                <span className="ml-auto text-[10px] text-text-muted">
+                  {t('review.oldest')}
+                </span>
+              )}
+              {isLast && (
+                <span className="ml-auto text-[10px] font-semibold text-accent">
+                  {t('review.newest')}
+                </span>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }

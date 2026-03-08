@@ -57,6 +57,14 @@ describe('Header', () => {
     expect(screen.getByTestId('user-menu')).toBeInTheDocument()
   })
 
+  it('renders brand icon in a circular container', () => {
+    render(<Header />)
+    const img = screen.getByAltText('K-daejeop')
+    const wrapper = img.parentElement
+    expect(wrapper?.className).toContain('rounded-full')
+    expect(wrapper?.className).toContain('overflow-hidden')
+  })
+
   it('has correct z-index class for stacking', () => {
     const { container } = render(<Header />)
     const header = container.querySelector('header')

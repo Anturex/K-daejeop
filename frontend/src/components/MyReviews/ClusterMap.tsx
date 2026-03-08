@@ -9,19 +9,9 @@ import {
   MAX_CLUSTER_PHOTOS,
   useCluster,
 } from './useCluster'
-
-/* ===== HTML helpers (XSS-safe for overlay content) ===== */
-function escAttr(str: string | null | undefined): string {
-  return String(str ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-}
-
-function escHtml(str: string | null | undefined): string {
-  const d = document.createElement('div')
-  d.textContent = String(str ?? '')
-  return d.innerHTML
-}
+import { escapeAttr } from '../../utils/escapeHtml'
+import { getThumbUrl } from '../../utils/imageUrl'
+import { buildReviewPin } from '../../utils/buildReviewPin'
 
 /* ===== Screen pixel helper for flying animation ===== */
 function getScreenPx(
@@ -65,7 +55,7 @@ function buildCluster(cluster: Cluster): HTMLDivElement {
         ${photos
           .map(
             (src) =>
-              `<div class="rv-cluster__cell"><img src="${escAttr(src)}" alt="" loading="lazy" /></div>`,
+              `<div class="rv-cluster__cell"><img src="${escapeAttr(getThumbUrl(src))}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${escapeAttr(src)}'" /></div>`,
           )
           .join('')}
       </div>
@@ -77,37 +67,21 @@ function buildCluster(cluster: Cluster): HTMLDivElement {
 }
 
 function buildPin(cluster: Cluster): HTMLDivElement {
-  const review = cluster.reviews[0] // Latest visit (sorted by visited_at desc)
-  const stars = '\u2605'.repeat(review.rating) + '\u2606'.repeat(3 - review.rating)
-  const name = review.place_name || ''
-  const verifiedHtml = review.verified_visit
-    ? '<div class="rv-pin__verified"></div>'
-    : ''
-
-  const el = document.createElement('div')
-  el.className = 'rv-pin' + (name.length <= 5 ? ' rv-pin--short-name' : '')
-  el.innerHTML = `
-    <div class="rv-pin__photo-wrap">
-      <div class="rv-pin__name"><span>${escHtml(name)}</span></div>
-      <img class="rv-pin__photo" src="${escAttr(review.photo_url)}" alt="" loading="lazy" />
-      <div class="rv-pin__rating">${stars}</div>
-      ${verifiedHtml}
-    </div>
-    <div class="rv-pin__tail"></div>
-  `
-  return el
+  return buildReviewPin(cluster.reviews[0])
 }
 
 /* ===== Props ===== */
 interface ClusterMapProps {
   allReviews: Review[]
   activeCategory: string
+  activeRating: string
   isActive: boolean
 }
 
 export function ClusterMap({
   allReviews,
   activeCategory,
+  activeRating,
   isActive,
 }: ClusterMapProps) {
   const map = useMapStore((s) => s.map)
@@ -123,11 +97,13 @@ export function ClusterMap({
   // Stable refs for values used inside imperative callbacks
   const allReviewsRef = useRef(allReviews)
   const activeCategoryRef = useRef(activeCategory)
+  const activeRatingRef = useRef(activeRating)
   const isActiveRef = useRef(isActive)
   const mapRef = useRef(map)
 
   allReviewsRef.current = allReviews
   activeCategoryRef.current = activeCategory
+  activeRatingRef.current = activeRating
   isActiveRef.current = isActive
   mapRef.current = map
 
@@ -289,7 +265,7 @@ export function ClusterMap({
     [animateTransition, openDetail, setActiveClusters],
   )
 
-  /* ===== Recompute on category change ===== */
+  /* ===== Recompute on filter change ===== */
   const recomputeAndRender = useCallback(() => {
     const currentMap = mapRef.current
     if (!currentMap || !isActiveRef.current) return
@@ -297,6 +273,7 @@ export function ClusterMap({
     const filtered = getFilteredReviews(
       allReviewsRef.current,
       activeCategoryRef.current,
+      activeRatingRef.current,
     )
     const old = getActiveClusters()
     setActiveClusters([])
@@ -346,6 +323,7 @@ export function ClusterMap({
       const filtered = getFilteredReviews(
         allReviewsRef.current,
         activeCategoryRef.current,
+        activeRatingRef.current,
       )
       renderClusters(computeClusters(filtered, currentMap), null)
     }
@@ -363,6 +341,7 @@ export function ClusterMap({
       const filtered = getFilteredReviews(
         allReviewsRef.current,
         activeCategoryRef.current,
+        activeRatingRef.current,
       )
       renderClusters(computeClusters(filtered, currentMap), null)
     }, 1500)
@@ -376,6 +355,7 @@ export function ClusterMap({
         const filtered = getFilteredReviews(
           allReviewsRef.current,
           activeCategoryRef.current,
+          activeRatingRef.current,
         )
         const old = getActiveClusters()
         setActiveClusters([])
@@ -405,23 +385,26 @@ export function ClusterMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, map])
 
-  /* ===== Re-render on category or reviews change ===== */
+  /* ===== Re-render on filter or reviews change ===== */
   const prevCategoryRef = useRef(activeCategory)
+  const prevRatingRef = useRef(activeRating)
   const prevReviewsLenRef = useRef(allReviews.length)
 
   useEffect(() => {
     if (!isActive || !map || !initialRenderDoneRef.current) return
 
     const categoryChanged = prevCategoryRef.current !== activeCategory
+    const ratingChanged = prevRatingRef.current !== activeRating
     const reviewsChanged = prevReviewsLenRef.current !== allReviews.length
 
     prevCategoryRef.current = activeCategory
+    prevRatingRef.current = activeRating
     prevReviewsLenRef.current = allReviews.length
 
-    if (categoryChanged || reviewsChanged) {
+    if (categoryChanged || ratingChanged || reviewsChanged) {
       recomputeAndRender()
     }
-  }, [isActive, map, activeCategory, allReviews, recomputeAndRender])
+  }, [isActive, map, activeCategory, activeRating, allReviews, recomputeAndRender])
 
   // This component manages overlays imperatively; it renders nothing to React DOM
   return null

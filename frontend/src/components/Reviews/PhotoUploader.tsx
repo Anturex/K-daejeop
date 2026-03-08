@@ -4,11 +4,69 @@ import { useTranslation } from 'react-i18next'
 interface PhotoUploaderProps {
   file: File | null
   previewUrl: string | null
-  onFileSelect: (file: File, previewUrl: string) => void
+  onFileSelect: (file: File, previewUrl: string, thumbFile?: File) => void
   onError: (message: string) => void
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+
+const MAIN_MAX_DIM = 1200
+const MAIN_QUALITY = 0.8
+const THUMB_MAX_DIM = 200
+const THUMB_QUALITY = 0.65
+
+/** Resize an image file via Canvas, returning a compressed JPEG Blob. */
+function resizeImage(
+  file: File,
+  maxDim: number,
+  quality: number,
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      let { width, height } = img
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width)
+          width = maxDim
+        } else {
+          width = Math.round((width * maxDim) / height)
+          height = maxDim
+        }
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, width, height)
+      canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error('Canvas toBlob failed'))),
+        'image/jpeg',
+        quality,
+      )
+      URL.revokeObjectURL(img.src)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src)
+      reject(new Error('Image load failed'))
+    }
+    img.src = URL.createObjectURL(file)
+  })
+}
+
+/** Compress image and generate thumbnail. Returns [mainFile, thumbFile]. */
+export async function compressWithThumb(
+  file: File,
+): Promise<[File, File]> {
+  const baseName = file.name.replace(/\.[^.]+$/, '')
+  const [mainBlob, thumbBlob] = await Promise.all([
+    resizeImage(file, MAIN_MAX_DIM, MAIN_QUALITY),
+    resizeImage(file, THUMB_MAX_DIM, THUMB_QUALITY),
+  ])
+  const mainFile = new File([mainBlob], `${baseName}.jpg`, { type: 'image/jpeg' })
+  const thumbFile = new File([thumbBlob], `${baseName}_thumb.jpg`, { type: 'image/jpeg' })
+  return [mainFile, thumbFile]
+}
 
 /**
  * Detect HEIC/HEIF files.
@@ -111,13 +169,24 @@ export function PhotoUploader({
         return
       }
 
-      // Read as data URL for preview
-      const reader = new FileReader()
-      reader.onload = (ev) => {
-        const url = ev.target?.result as string
-        onFileSelect(file, url)
+      // Compress + generate thumbnail, then read as data URL for preview
+      try {
+        const [mainFile, thumbFile] = await compressWithThumb(file)
+        const reader = new FileReader()
+        reader.onload = (ev) => {
+          const url = ev.target?.result as string
+          onFileSelect(mainFile, url, thumbFile)
+        }
+        reader.readAsDataURL(mainFile)
+      } catch {
+        // Fallback: use original if compression fails
+        const reader = new FileReader()
+        reader.onload = (ev) => {
+          const url = ev.target?.result as string
+          onFileSelect(file, url)
+        }
+        reader.readAsDataURL(file)
       }
-      reader.readAsDataURL(file)
     },
     [onFileSelect, onError, t],
   )

@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { searchPlaces, type PlaceResult } from '../../services/api'
 import { useMapStore } from '../../stores/mapStore'
 import { useReviewStore } from '../../stores/reviewStore'
+import { useBadgeStore } from '../../stores/badgeStore'
 import { rankFoodFirst } from '../../utils/rankFoodFirst'
 import { distanceKm, zoomLevelForDistance } from '../../utils/distance'
 import { escapeHtml } from '../../utils/escapeHtml'
 import { useReviewedPlaces } from '../../hooks/useReviewedPlaces'
+
 
 const DEBOUNCE_MS = 200
 const SUGGESTIONS_LIMIT = 8
@@ -17,13 +19,16 @@ export function SearchBar() {
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<PlaceResult[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [noResults, setNoResults] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const searchSeqRef = useRef(0)
   const inputRef = useRef<HTMLInputElement>(null)
-  const { map, setSearchResults, clearMarkers, setMarkers } = useMapStore()
+  const { map, setSearchResults, clearMarkers, setMarkers, addInfoWindow } = useMapStore()
   const { openModal } = useReviewStore()
+  const openAddToBoard = useBadgeStore((s) => s.openAddToBoard)
   const { getReviewedPlaceIds } = useReviewedPlaces()
+
 
   const doSearch = useCallback(
     async (q: string) => {
@@ -42,7 +47,13 @@ export function SearchBar() {
         if (seq !== searchSeqRef.current) return
 
         const docs = rankFoodFirst(res.documents).slice(0, MAX_LOCAL_RESULTS)
-        if (docs.length === 0) return
+        if (docs.length === 0) {
+          setSuggestions([])
+          setNoResults(true)
+          setShowSuggestions(true)
+          return
+        }
+        setNoResults(false)
 
         setSearchResults(docs)
 
@@ -73,6 +84,7 @@ export function SearchBar() {
 
         // Create markers
         const infoWindow = new kakao.maps.InfoWindow({ zIndex: 3 })
+        addInfoWindow(infoWindow)
         const newMarkers: kakao.maps.Marker[] = []
 
         docs.forEach((doc) => {
@@ -95,7 +107,7 @@ export function SearchBar() {
           kakao.maps.event.addListener(marker, 'click', () => {
             infoWindow.setContent(content)
             infoWindow.open(map, marker)
-            bindInfoEvents(infoWindow, doc, openModal)
+            bindInfoEvents(infoWindow, doc, openModal, openAddToBoard)
           })
 
           newMarkers.push(marker)
@@ -117,7 +129,7 @@ export function SearchBar() {
             const firstContent = buildInfoContent(firstDoc, firstReviewedHtml, t)
             infoWindow.setContent(firstContent)
             infoWindow.open(map, newMarkers[0]!)
-            bindInfoEvents(infoWindow, firstDoc, openModal)
+            bindInfoEvents(infoWindow, firstDoc, openModal, openAddToBoard)
           }, 100)
         }
       } catch (err) {
@@ -126,7 +138,7 @@ export function SearchBar() {
 
       setShowSuggestions(false)
     },
-    [map, clearMarkers, setSearchResults, setMarkers, openModal, t, getReviewedPlaceIds],
+    [map, clearMarkers, setSearchResults, setMarkers, openModal, openAddToBoard, t, getReviewedPlaceIds, addInfoWindow],
   )
 
   const fetchSuggestions = useCallback(
@@ -140,7 +152,13 @@ export function SearchBar() {
         const res = await searchPlaces(q)
         const docs = rankFoodFirst(res.documents).slice(0, SUGGESTIONS_LIMIT)
         setSuggestions(docs)
-        setShowSuggestions(docs.length > 0)
+        if (docs.length > 0) {
+          setNoResults(false)
+          setShowSuggestions(true)
+        } else {
+          setNoResults(true)
+          setShowSuggestions(true)
+        }
         setActiveIndex(-1)
       } catch {
         setSuggestions([])
@@ -152,6 +170,7 @@ export function SearchBar() {
   const handleInput = useCallback(
     (value: string) => {
       setQuery(value)
+      setNoResults(false)
       if (debounceRef.current) clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(() => fetchSuggestions(value), DEBOUNCE_MS)
     },
@@ -163,6 +182,7 @@ export function SearchBar() {
       setQuery(place.place_name)
       setShowSuggestions(false)
       setSuggestions([])
+      inputRef.current?.blur()
 
       if (!map) return
 
@@ -173,22 +193,30 @@ export function SearchBar() {
         parseFloat(place.y),
         parseFloat(place.x),
       )
-      map.setCenter(pos)
-      map.setLevel(3)
 
-      const marker = new kakao.maps.Marker({ position: pos, map })
-      setMarkers([marker])
-
-      const infoWindow = new kakao.maps.InfoWindow({ zIndex: 3 })
-      const content = buildInfoContent(place, '', t)
-
+      // Wait for keyboard dismiss + viewport stabilization, then relayout + center
       setTimeout(() => {
-        infoWindow.setContent(content)
-        infoWindow.open(map, marker)
-        bindInfoEvents(infoWindow, place, openModal)
-      }, 100)
+        map.relayout()
+        map.setCenter(pos)
+        map.setLevel(3)
+
+        const marker = new kakao.maps.Marker({ position: pos, map })
+        setMarkers([marker])
+
+        const infoWindow = new kakao.maps.InfoWindow({ zIndex: 3 })
+        addInfoWindow(infoWindow)
+        const content = buildInfoContent(place, '', t)
+
+        setTimeout(() => {
+          infoWindow.setContent(content)
+          infoWindow.open(map, marker)
+          bindInfoEvents(infoWindow, place, openModal, openAddToBoard)
+          // Re-center after InfoWindow auto-pan
+          map.setCenter(pos)
+        }, 100)
+      }, 350)
     },
-    [map, clearMarkers, setSearchResults, setMarkers, openModal, t],
+    [map, clearMarkers, setSearchResults, setMarkers, addInfoWindow, openModal, openAddToBoard, t],
   )
 
   const handleKeyDown = useCallback(
@@ -236,7 +264,7 @@ export function SearchBar() {
           value={query}
           onChange={(e) => handleInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+          onFocus={() => (suggestions.length > 0 || noResults) && setShowSuggestions(true)}
           placeholder={t('search.placeholder')}
           className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none max-sm:text-base"
         />
@@ -261,31 +289,38 @@ export function SearchBar() {
       </div>
 
       {/* Autocomplete suggestions */}
-      {showSuggestions && suggestions.length > 0 && (
+      {showSuggestions && (suggestions.length > 0 || noResults) && (
         <ul
           className="absolute left-0 right-0 top-full z-[9999] mt-1 max-h-80 overflow-y-auto rounded-lg bg-surface shadow-lg ring-1 ring-border"
           role="listbox"
         >
-          {suggestions.map((place, i) => (
-            <li
-              key={place.id}
-              role="option"
-              aria-selected={i === activeIndex}
-              className={`cursor-pointer px-3 py-2.5 text-sm transition-colors ${
-                i === activeIndex ? 'bg-accent/10 text-accent' : 'text-text-primary hover:bg-bg'
-              }`}
-              onMouseEnter={() => setActiveIndex(i)}
-              onClick={() => selectSuggestion(place)}
-            >
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{place.place_name}</span>
-                <CategoryTag code={place.category_group_code} />
-              </div>
-              <div className="text-xs text-text-muted">
-                {place.address_name}
-              </div>
+          {noResults && suggestions.length === 0 ? (
+            <li className="px-3 py-4 text-center text-sm text-text-muted">
+              <div className="font-medium">{t('search.emptyTitle', { 0: query.trim() })}</div>
+              <div className="mt-1 text-xs">{t('search.emptySub')}</div>
             </li>
-          ))}
+          ) : (
+            suggestions.map((place, i) => (
+              <li
+                key={place.id}
+                role="option"
+                aria-selected={i === activeIndex}
+                className={`cursor-pointer px-3 py-2.5 text-sm transition-colors ${
+                  i === activeIndex ? 'bg-accent/10 text-accent' : 'text-text-primary hover:bg-bg'
+                }`}
+                onMouseEnter={() => setActiveIndex(i)}
+                onClick={() => selectSuggestion(place)}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{place.place_name}</span>
+                  <CategoryTag code={place.category_group_code} />
+                </div>
+                <div className="text-xs text-text-muted">
+                  {place.address_name}
+                </div>
+              </li>
+            ))
+          )}
         </ul>
       )}
     </div>
@@ -316,16 +351,21 @@ function buildInfoContent(
   t: (key: string) => string,
 ): string {
   const detailUrl = doc.place_url || `https://place.map.kakao.com/${doc.id}`
+  // Truncate long category for InfoWindow (e.g. "음식점 > 카페 > 커피전문점 > 스타벅스")
+  const shortCategory = doc.category_name.length > 20
+    ? doc.category_name.slice(0, 20) + '…'
+    : doc.category_name
   return `
-    <div class="iw-card">
+    <div class="iw-card" style="width:260px;max-width:260px;overflow:hidden;box-sizing:border-box;">
       <button class="iw-card__close-btn" data-action="close">&times;</button>
       <div class="iw-card__name">${escapeHtml(doc.place_name)}</div>
-      <div class="iw-card__category">${escapeHtml(doc.category_name)}</div>
+      <div class="iw-card__category">${escapeHtml(shortCategory)}</div>
       <div class="iw-card__address">${escapeHtml(doc.address_name)}</div>
       ${reviewedHtml}
       <div class="iw-card__actions">
         <a class="iw-card__link" href="${escapeHtml(detailUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(t('iw.detailLink'))}</a>
         <button class="iw-card__btn" data-action="review">${escapeHtml(t('iw.reviewBtn'))}</button>
+        <button class="iw-card__btn--secondary" data-action="addToBoard">${escapeHtml(t('iw.addToBoard'))}</button>
       </div>
     </div>
   `
@@ -336,6 +376,7 @@ function bindInfoEvents(
   infoWindow: kakao.maps.InfoWindow,
   doc: PlaceResult,
   openModal: (place: PlaceResult) => void,
+  openAddToBoard: (place: PlaceResult) => void,
 ) {
   setTimeout(() => {
     // Find the latest .iw-card in DOM (Kakao renders InfoWindow content)
@@ -347,10 +388,8 @@ function bindInfoEvents(
         .closest('[data-action]')
         ?.getAttribute('data-action')
       if (action === 'close') infoWindow.close()
-      if (action === 'review') {
-        infoWindow.close()
-        openModal(doc)
-      }
+      if (action === 'review') openModal(doc)
+      if (action === 'addToBoard') openAddToBoard(doc)
     })
   }, 80)
 }

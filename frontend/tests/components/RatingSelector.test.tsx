@@ -11,24 +11,33 @@ vi.mock('react-i18next', () => ({
 }))
 
 describe('RatingSelector', () => {
-  it('renders 3 rating buttons', () => {
-    render(<RatingSelector value={0} onChange={() => {}} />)
+  it('renders 4 rating buttons', () => {
+    render(<RatingSelector value={null} onChange={() => {}} />)
     const buttons = screen.getAllByRole('button')
-    expect(buttons).toHaveLength(3)
+    expect(buttons).toHaveLength(4)
   })
 
   it('calls onChange when rating clicked', () => {
     const onChange = vi.fn()
-    render(<RatingSelector value={0} onChange={onChange} />)
+    render(<RatingSelector value={null} onChange={onChange} />)
     const buttons = screen.getAllByRole('button')
-    fireEvent.click(buttons[1]!)
+    fireEvent.click(buttons[2]!)
     expect(onChange).toHaveBeenCalledWith(2)
   })
 
-  it('displays star characters', () => {
+  it('calls onChange with 0 when first button clicked', () => {
+    const onChange = vi.fn()
+    render(<RatingSelector value={null} onChange={onChange} />)
+    const buttons = screen.getAllByRole('button')
+    fireEvent.click(buttons[0]!)
+    expect(onChange).toHaveBeenCalledWith(0)
+  })
+
+  it('displays star characters and cross mark', () => {
     const { container } = render(
       <RatingSelector value={2} onChange={() => {}} />,
     )
+    expect(container.textContent).toContain('\u2715')
     expect(container.textContent).toContain('\u2605')
     expect(container.textContent).toContain('\u2605\u2605')
     expect(container.textContent).toContain('\u2605\u2605\u2605')

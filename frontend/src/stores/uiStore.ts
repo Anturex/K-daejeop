@@ -10,6 +10,10 @@ interface UiState {
   myReviewsActive: boolean
   setMyReviewsActive: (active: boolean) => void
 
+  // Badge panel
+  badgePanelActive: boolean
+  setBadgePanelActive: (active: boolean) => void
+
   // Tutorial
   showTutorial: boolean
   setShowTutorial: (show: boolean) => void
@@ -28,7 +32,12 @@ let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 export const useUiStore = create<UiState>((set) => ({
   myReviewsActive: false,
-  setMyReviewsActive: (active) => set({ myReviewsActive: active }),
+  setMyReviewsActive: (active) =>
+    set({ myReviewsActive: active, ...(active ? { badgePanelActive: false } : {}) }),
+
+  badgePanelActive: false,
+  setBadgePanelActive: (active) =>
+    set({ badgePanelActive: active, ...(active ? { myReviewsActive: false } : {}) }),
 
   showTutorial: false,
   setShowTutorial: (show) => set({ showTutorial: show }),

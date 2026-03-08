@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useReviewStore } from '../../stores/reviewStore'
 import { useAuthStore } from '../../stores/authStore'
@@ -28,9 +28,12 @@ export function ReviewModal() {
   const { getVisitCount } = useReviewedPlaces()
   const { lat: geoLat, lng: geoLng, loading: geoLoading, requestLocation } = useGeolocation()
 
+  const scrollRef = useRef<HTMLDivElement>(null)
+
   // Form state
-  const [rating, setRating] = useState(0)
+  const [rating, setRating] = useState<number | null>(null)
   const [file, setFile] = useState<File | null>(null)
+  const [thumbFile, setThumbFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [reviewText, setReviewText] = useState('')
   const [visitedAt, setVisitedAt] = useState(todayStr())
@@ -41,8 +44,9 @@ export function ReviewModal() {
   // Reset form when modal opens/closes
   useEffect(() => {
     if (modalOpen) {
-      setRating(0)
+      setRating(null)
       setFile(null)
+      setThumbFile(null)
       setPreviewUrl(null)
       setReviewText('')
       setVisitedAt(todayStr())
@@ -85,19 +89,21 @@ export function ReviewModal() {
     }
   }, [modalOpen])
 
-  const handleFileSelect = useCallback((f: File, url: string) => {
+  const handleFileSelect = useCallback((f: File, url: string, thumb?: File) => {
     setFile(f)
+    setThumbFile(thumb ?? null)
     setPreviewUrl(url)
     setError(null)
   }, [])
 
   const handleError = useCallback((msg: string) => {
     setError(msg)
-    setTimeout(() => setError(null), 4000)
+    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    setTimeout(() => setError(null), 6000)
   }, [])
 
   const validate = useCallback((): boolean => {
-    if (!rating) {
+    if (rating === null) {
       handleError(t('review.err.rating'))
       return false
     }
@@ -132,15 +138,24 @@ export function ReviewModal() {
       } = await sb.auth.getUser()
       if (!currentUser) throw new Error(t('review.err.session'))
 
-      // 2) Upload photo to Supabase Storage
-      const ext = file!.name.split('.').pop() || 'jpg'
-      const fileName = `${currentUser.id}/${Date.now()}.${ext}`
+      // 2) Upload photo to Supabase Storage (1-year cache, immutable filenames)
+      const ts = Date.now()
+      const mainName = `${currentUser.id}/${ts}.jpg`
       const { data: uploadData, error: uploadErr } = await sb.storage
         .from('review-photos')
-        .upload(fileName, file!, { cacheControl: '3600', upsert: false })
+        .upload(mainName, file!, { cacheControl: '31536000', upsert: false })
 
       if (uploadErr) {
         throw new Error(t('review.err.upload', { 0: uploadErr.message }))
+      }
+
+      // Upload thumbnail alongside main image (best-effort)
+      if (thumbFile) {
+        const thumbName = `${currentUser.id}/${ts}_thumb.jpg`
+        await sb.storage
+          .from('review-photos')
+          .upload(thumbName, thumbFile, { cacheControl: '31536000', upsert: false })
+          .catch(() => {/* thumbnail upload failure is non-critical */})
       }
 
       // Get public URL
@@ -148,7 +163,15 @@ export function ReviewModal() {
         data: { publicUrl },
       } = sb.storage.from('review-photos').getPublicUrl(uploadData.path)
 
-      // 3) Insert review into DB
+      // 3) Compute visit verification
+      const placeLat = parseFloat(modalPlace.y || '0')
+      const placeLng = parseFloat(modalPlace.x || '0')
+      const nearby =
+        geoLat !== null &&
+        geoLng !== null &&
+        isWithinVisitRange(geoLat, geoLng, placeLat, placeLng)
+
+      // 4) Insert review into DB
       const { error: insertErr } = await sb.from('reviews').insert({
         user_id: currentUser.id,
         place_id: modalPlace.id,
@@ -157,19 +180,20 @@ export function ReviewModal() {
         place_category: modalPlace.category_name || '',
         place_x: modalPlace.x || '',
         place_y: modalPlace.y || '',
-        rating,
+        rating: rating!,
         review_text: reviewText.trim(),
         photo_url: publicUrl,
         visited_at: visitedAt,
-        verified_visit: isNearby,
+        verified_visit: nearby,
       })
 
       if (insertErr) {
         throw new Error(t('review.err.insert', { 0: insertErr.message }))
       }
 
-      // Success: invalidate cache, show toast, close modal
+      // Success: invalidate cache, notify listeners, show toast, close modal
       invalidateCache()
+      window.dispatchEvent(new CustomEvent('review:saved'))
       closeModal()
       showToast(t('review.saved'))
     } catch (err) {
@@ -177,6 +201,7 @@ export function ReviewModal() {
       const message =
         err instanceof Error ? err.message : t('review.err.generic')
       handleError(message)
+      showToast(message, 5000)
     } finally {
       setIsSubmitting(false)
     }
@@ -186,10 +211,12 @@ export function ReviewModal() {
     modalPlace,
     user,
     file,
+    thumbFile,
     rating,
     reviewText,
     visitedAt,
-    isNearby,
+    geoLat,
+    geoLng,
     t,
     handleError,
     invalidateCache,
@@ -206,8 +233,6 @@ export function ReviewModal() {
     geoLng !== null &&
     isWithinVisitRange(geoLat, geoLng, placeLat, placeLng)
 
-  const isValid = rating > 0 && file !== null
-
   return (
     <>
       {/* Overlay */}
@@ -218,7 +243,7 @@ export function ReviewModal() {
       />
 
       {/* Modal */}
-      <div className="fixed inset-x-0 bottom-0 z-[10002] max-h-[calc(100dvh-env(safe-area-inset-top,0px))] animate-slide-up overflow-y-auto rounded-t-2xl bg-surface shadow-2xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:max-h-[90vh] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl">
+      <div ref={scrollRef} className="fixed inset-x-0 bottom-0 z-[10002] max-h-[calc(100dvh-env(safe-area-inset-top,0px))] animate-slide-up overflow-y-auto rounded-t-2xl bg-surface shadow-2xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:max-h-[90vh] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl">
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface px-4 py-3">
           <h2 className="font-serif text-lg font-semibold text-text-primary">
@@ -238,6 +263,13 @@ export function ReviewModal() {
 
         {/* Body */}
         <div className="space-y-5 overflow-x-hidden p-4">
+          {/* Error message — top of form for visibility */}
+          {error && (
+            <div className="rounded-lg bg-danger/10 px-3 py-2 text-sm font-medium text-danger">
+              {error}
+            </div>
+          )}
+
           {/* Place info */}
           <div>
             <h3 className="font-serif text-base font-semibold text-text-primary">
@@ -323,16 +355,11 @@ export function ReviewModal() {
             </div>
           )}
 
-          {/* Error message */}
-          {error && (
-            <div className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
-              {error}
-            </div>
-          )}
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 flex gap-3 border-t border-border bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+        <div className="sticky bottom-0 border-t border-border bg-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+          <div className="flex gap-3">
           <button
             type="button"
             onClick={closeModal}
@@ -343,11 +370,12 @@ export function ReviewModal() {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!isValid || isSubmitting}
+            disabled={isSubmitting}
             className="flex-1 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? t('review.submitting') : t('review.submit')}
           </button>
+          </div>
         </div>
       </div>
     </>
