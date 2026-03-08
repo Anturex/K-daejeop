@@ -78,7 +78,8 @@ frontend/                         # React SPA
 │   │   ├── Header/               # Header.tsx, SearchBar.tsx, UserMenu.tsx
 │   │   ├── Map/                  # KakaoMap.tsx (ref 기반)
 │   │   ├── Reviews/              # ReviewModal, RatingSelector, PhotoUploader, DatePicker, ReviewDetail
-│   │   ├── MyReviews/            # MyReviewsPanel, ClusterMap, CategoryFilter, useCluster
+│   │   ├── MyReviews/            # MyReviewsPanel, ClusterMap, CategoryFilter, RatingFilter, useCluster
+│   │   ├── Badges/               # BadgePanel, BadgeBoardCard, BadgeBoardCreate, BadgeBoardDetail, AddToBoardModal, PublishModal
 │   │   ├── Tutorial/             # TutorialOverlay.tsx
 │   │   └── Ads/                  # AdBanner.tsx
 │   ├── hooks/
@@ -96,10 +97,11 @@ frontend/                         # React SPA
 │   │   ├── escapeHtml.ts         # XSS 방지 (명령형 DOM용)
 │   │   ├── distance.ts           # Haversine 거리, 줌레벨 계산, isWithinVisitRange
 │   │   ├── imageUrl.ts           # getThumbUrl() 썸네일 URL 변환
+│   │   ├── buildReviewPin.ts     # 리뷰 핀 DOM 요소 생성 (ClusterMap용)
 │   │   └── rankFoodFirst.ts      # FD6/CE7 우선 정렬
 │   └── types/
 │       └── kakao.d.ts            # Kakao Maps TypeScript 선언
-└── tests/                        # Vitest 프론트 테스트 (82개)
+└── tests/                        # Vitest 프론트 테스트 (184개)
 
 app/                              # FastAPI 백엔드
 ├── main.py                       # create_app(), /assets 마운트, SPA 서빙
@@ -127,7 +129,7 @@ tests/                            # pytest 백엔드 테스트 (65개)
 | `mapStore` | 카카오맵 인스턴스, 검색 결과, 마커 배열, clearMarkers() |
 | `reviewStore` | 리뷰 모달 상태, 리뷰 상세 바텀시트 상태, 5분 TTL 캐시 |
 | `uiStore` | myReviewsActive, badgePanelActive, showTutorial, toast, userMenuOpen |
-| `badgeStore` | 뱃지판 목록, 상세, 내 뱃지, 생성/삭제, 공유코드 검색 |
+| `badgeStore` | 뱃지판 CRUD, 공유코드 검색, 배포/저장, 배포자 리뷰, 진행도 계산 |
 
 ## 모바일 우선 원칙 (Mobile-First — 항상 적용)
 
@@ -187,7 +189,7 @@ tests/                            # pytest 백엔드 테스트 (65개)
 4. **Vite 빌드**: `frontend/` 에서 `npm run build` → `app/static/dist/`로 출력. FastAPI가 정적 서빙.
 5. **개발 서버**: Vite dev (포트 3000) + FastAPI (포트 5173) 병렬 실행. Vite에서 `/api` → FastAPI 프록시.
 6. **한글 IME**: `SearchBar.tsx`에서 `keyCode === 229` 체크 + `input` 이벤트 기반 자동완성.
-7. **테스트 기준**: 백엔드 65개 (pytest) + 프론트엔드 132개 (Vitest). 기능 추가 시 해당 위치에 테스트도 추가.
+7. **테스트 기준**: 백엔드 65개 (pytest) + 프론트엔드 184개 (Vitest). 기능 추가 시 해당 위치에 테스트도 추가.
 8. **Supabase 직접 접근**: 리뷰 CRUD와 사진 업로드는 프론트엔드에서 Supabase JS SDK로 직접 수행. RLS가 보안 담당.
 9. **myreviews 클러스터링**: `useCluster.ts` 훅의 `computeClusters()` — 지리 격자 기반(`GRID_DEG` 배열). `ClusterMap.tsx`가 명령형으로 CustomOverlay 관리.
 10. **플라잉 애니메이션**: `ClusterMap.tsx`에서 ref 기반 명령형 처리. `requestAnimationFrame` 두 번 감싸기.
@@ -222,16 +224,23 @@ tests/                            # pytest 백엔드 테스트 (65개)
 39. **리뷰 상세 페이지 링크**: `ReviewDetail`에 "상세 페이지 보기" 버튼 → `https://place.map.kakao.com/{place_id}` 새 탭 열기. i18n 4개 언어 지원 (`review.viewDetail`).
 40. **이미지 최적화**: 업로드 전 Canvas API로 압축 (메인: max 1200px/JPEG 80%, 썸네일: max 200px/JPEG 65%). `compressWithThumb()` in `PhotoUploader.tsx`. 썸네일은 `{timestamp}_thumb.jpg`로 별도 저장. `getThumbUrl()` 유틸(`utils/imageUrl.ts`)로 URL 변환. ClusterMap/MyReviewsPanel에서 썸네일 우선 로드 + `onerror` 폴백. `cacheControl: '31536000'` (1년, 불변 파일명).
 
-41. **뱃지 시스템**: `BadgePanel.tsx` — 헤더 '뱃지' 탭으로 별도 패널 열기 (MyReviewsPanel과 상호배타). `badgeStore.ts`에서 상태 관리. DB 테이블 3개: `badge_boards`(뱃지판 정의), `badge_board_places`(장소 목록), `user_badges`(획득 기록). 프리미엄만 뱃지판 생성 가능, 모든 유저 참여 가능. 6자리 공유코드(`share_code`) + `is_public` 공개 목록. 진행도는 유저 reviews 테이블과 대조하여 동적 계산. 마이그레이션: `005_badge_boards.sql`.
-42. **뱃지 컴포넌트 구조**: `BadgePanel.tsx`(메인 패널, 공유코드 입력, 보드 목록, 내 뱃지), `BadgeBoardCard.tsx`(카드+프로그레스바), `BadgeBoardDetail.tsx`(장소 목록+체크+진행도), `BadgeBoardCreate.tsx`(생성 폼, 장소 검색+추가).
+41. **뱃지 시스템**: `BadgePanel.tsx` — 헤더 '뱃지' 탭으로 별도 패널 열기 (MyReviewsPanel과 상호배타). `badgeStore.ts`에서 상태 관리. DB 테이블 3개: `badge_boards`(뱃지판 정의), `badge_board_places`(장소 목록), `user_badges`(획득 기록). 프리미엄만 뱃지판 생성 가능, 모든 유저 참여 가능. 6자리 공유코드(`share_code`) + `is_public` 공개 목록. 진행도는 유저 reviews 테이블과 대조하여 동적 계산. 마이그레이션: `005_badge_boards.sql`, `006_badge_board_sharing.sql`, `007_fetch_creator_reviews_rpc.sql`.
+42. **뱃지 컴포넌트 구조**: `BadgePanel.tsx`(메인 패널, 공유코드 입력, 내 뱃지판/둘러보기 2탭, 내 뱃지), `BadgeBoardCard.tsx`(카드+프로그레스바), `BadgeBoardDetail.tsx`(장소 목록+체크+진행도+수정모드+배포), `BadgeBoardCreate.tsx`(생성 폼, 장소 검색+추가), `AddToBoardModal.tsx`(검색결과→뱃지판 추가), `PublishModal.tsx`(배포 확인 모달).
 43. **뱃지 패널 상호배타**: `uiStore.ts`에서 `badgePanelActive`와 `myReviewsActive` 상호배타 처리. 하나 열면 다른 하나 자동 닫힘.
+44. **뱃지판 공유/저장**: 공유코드(6자리) 또는 공개 목록(둘러보기)으로 다른 유저의 뱃지판 발견. "내 뱃지판에 추가"로 저장 (Supabase RPC `copy_badge_board` — SECURITY DEFINER로 RLS 우회). 저장된 보드는 `source_board_id`/`source_creator_id`로 원본 추적. 저장 보드는 둘러보기 목록에서 숨김.
+45. **뱃지판 배포**: 프리미엄 회원만 가능 (`tier !== 'premium'` 시 toast 안내). 모든 장소 방문 완료(100%) 필수. 배포 시 `is_public = true` + `share_code` 생성. 한 번 배포하면 수정 불가. `PublishModal.tsx`에서 확인.
+46. **뱃지판 수정 모드**: 미배포 원본 보드만 수정 가능 (편집 버튼 표시 조건: `isOriginalCreator && !is_public && !isSavedBoard`). 수정 모드에서 장소 삭제 + 장소 검색/추가 (디바운스 300ms, `searchPlaces()` API). `addPlaceToBoard()` 호출 시 `boardPlaces` 상태도 즉시 갱신.
+47. **배포자 리뷰 분리**: 저장 보드에서 장소 클릭 → 내 리뷰만 표시 (RatingTrend도 내 기록만). 배포자 리뷰는 장소 행의 "배포자 리뷰" 버튼으로 별도 접근. `fetchCreatorReviews()` — Supabase RPC `fetch_creator_reviews`로 원본 배포자의 리뷰 조회.
+48. **뱃지판 생성 검색 자동스크롤**: `BadgeBoardCreate.tsx`에서 검색 결과 나타날 때 `scrollIntoView({ behavior: 'smooth', block: 'start' })`. 모바일에서 검색 결과가 스크롤 아래에 숨기는 문제 해결.
+49. **review:saved 이벤트**: `ReviewModal`에서 리뷰 저장 후 `CustomEvent('review:saved')` 발행 → `BadgeBoardDetail`이 `refreshBoardPlaces()` 호출하여 진행도 실시간 반영.
 
 ## Supabase 테이블 (RLS 적용)
 - `reviews`: 별점(0~3), 사진URL, 리뷰텍스트, 방문일자, verified_visit(실제 방문 여부)
 - `user_profiles`: tutorial_seen, tier ('free'/'premium'), 자동 생성 트리거
-- `badge_boards`: 뱃지판 정의 (title, description, icon_emoji, is_public, share_code)
-- `badge_board_places`: 뱃지판 장소 목록 (board_id → place_id 매핑)
+- `badge_boards`: 뱃지판 정의 (title, description, icon_emoji, is_public, share_code, creator_id, source_board_id, source_creator_id)
+- `badge_board_places`: 뱃지판 장소 목록 (board_id → place_id 매핑, place_name/address/category/x/y 캐시)
 - `user_badges`: 뱃지 획득 기록 (user_id + board_id, 완료 시 INSERT)
+- RPC 함수: `copy_badge_board` (SECURITY DEFINER, 보드 복사), `fetch_creator_reviews` (배포자 리뷰 조회)
 - Storage `review-photos`: 유저별 폴더, 공개 읽기
 
 ## 향후 확장 예정

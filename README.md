@@ -1,7 +1,7 @@
 # K-daejeop
 
 카카오맵 API + Supabase를 활용한 한국 지도 기반 **폐쇄형 맛집 리뷰 서비스**.
-사용자가 음식점을 검색하고 별점(1~3)·사진·리뷰를 남기면, 10개 이상 쌓은 뒤 다른 사용자의 추천 맛집을 볼 수 있습니다.
+사용자가 음식점을 검색하고 별점(0~3)·사진·리뷰를 남기면, 10개 이상 쌓은 뒤 다른 사용자의 추천 맛집을 볼 수 있습니다.
 
 ## 아키텍처 개요
 
@@ -62,21 +62,22 @@ K-daejeop/
 │   │   ├── App.tsx              # 인증 분기 (LoginScreen | AppLayout)
 │   │   ├── index.css            # Tailwind CSS v4 테마 + 커스텀 스타일
 │   │   ├── env.ts               # 환경 변수 래퍼
-│   │   ├── stores/              # Zustand 스토어 (auth, map, review, ui)
+│   │   ├── stores/              # Zustand 스토어 (auth, map, review, ui, badge)
 │   │   ├── components/          # React 컴포넌트
 │   │   │   ├── LoginScreen/     # 로그인 화면 + 이용약관 모달
 │   │   │   ├── Header/          # 헤더, 검색바, 유저 메뉴
 │   │   │   ├── Map/             # 카카오맵 (ref 기반)
 │   │   │   ├── Reviews/         # 리뷰 모달, 별점, 사진, 날짜
-│   │   │   ├── MyReviews/       # 내 맛집 패널, 클러스터 맵, 카테고리 필터
+│   │   │   ├── MyReviews/       # 내 맛집 패널, 클러스터 맵, 카테고리/별점 필터
+│   │   │   ├── Badges/          # 뱃지판 패널, 생성/상세/카드, 배포/공유
 │   │   │   ├── Tutorial/        # 온보딩 튜토리얼
 │   │   │   └── Ads/             # 광고 배너
 │   │   ├── hooks/               # useAuth, useGeolocation, useReviewedPlaces
 │   │   ├── services/            # supabase, kakao SDK, API 호출
 │   │   ├── i18n/                # react-i18next + 4개 언어 JSON
-│   │   ├── utils/               # escapeHtml, distance, rankFoodFirst
+│   │   ├── utils/               # escapeHtml, distance, rankFoodFirst, imageUrl, buildReviewPin
 │   │   └── types/               # Kakao Maps TypeScript 선언
-│   └── tests/                   # Vitest + React Testing Library (71개)
+│   └── tests/                   # Vitest + React Testing Library (184개)
 │       ├── setup.ts
 │       ├── utils/
 │       ├── stores/
@@ -99,7 +100,11 @@ K-daejeop/
 │   └── migrations/
 │       ├── 001_reviews_and_profiles.sql
 │       ├── 002_user_tier.sql
-│       └── 003_verified_visit.sql
+│       ├── 003_verified_visit.sql
+│       ├── 004_review_photo_thumb.sql
+│       ├── 005_badge_boards.sql
+│       ├── 006_badge_board_sharing.sql
+│       └── 007_fetch_creator_reviews_rpc.sql
 ├── tests/                       # pytest 백엔드 테스트 (65개)
 │   ├── conftest.py
 │   ├── test_app.py
@@ -122,19 +127,20 @@ K-daejeop/
 
 ## 핵심 기능
 
-### 리뷰 시스템 (별점 3단계)
+### 리뷰 시스템 (별점 4단계)
 
 | 별점 | 의미 | 설명 |
 |------|------|------|
-| ⭐ | 동네 맛집 | 괜찮아서 동네에서 갈만한 곳 |
-| ⭐⭐ | 추천 맛집 | 여기 가면 이거 먹으라고 추천할 정도 |
-| ⭐⭐⭐ | 인생 맛집 | 정말정말 맛있었던 최고의 맛집 |
+| ✕ | 재방문 안 함 | 다시는 재방문 하지 않을 곳 |
+| ⭐ | 가볍게 갈 곳 | 동네에서 가볍게 방문할만 한 곳 |
+| ⭐⭐ | 추천할 곳 | 누군가 오면 추천해줄 수 있는 곳 |
+| ⭐⭐⭐ | 꼭 가야 할 곳 | 반드시 가야 한다고 말할 수 있는 곳 |
 
 ### 리뷰 작성 흐름
 
 1. 장소 검색 → 마커 클릭 → 인포윈도우의 **"리뷰 남기기"** 버튼
 2. 리뷰 모달에서:
-   - **별점** 선택 (1~3, 필수)
+   - **별점** 선택 (0~3, 필수)
    - **사진** 1장 첨부 (필수, 드래그앤드롭 또는 클릭)
    - **리뷰** 텍스트 작성 (맛, 분위기, 서비스 등 자유롭게)
    - **방문 날짜** 스크롤 휠로 선택 (기본: 오늘)
@@ -149,6 +155,16 @@ K-daejeop/
 - **줌 레벨에 따라 자동 클러스터링**: 플라잉 애니메이션으로 뭉치고 흩어짐
 - **사이드 패널 드릴다운**: 지역 → 장소 → 리뷰 상세
 - **카테고리 필터**: 전체/식당/카페/관광명소/기타
+
+### 뱃지판 시스템
+
+- **뱃지판 만들기**: 여러 장소를 묶어 뱃지판 생성 (프리미엄만 생성 가능)
+- **장소 탐방**: 뱃지판의 장소를 방문하고 리뷰를 남기면 진행도 증가
+- **뱃지 획득**: 모든 장소 방문 완료 시 뱃지 자동 획득
+- **배포 & 공유**: 프리미엄 회원이 모든 장소 방문 후 배포 → 6자리 공유코드 생성, 공개 목록에 노출
+- **뱃지판 저장**: 다른 유저의 공개 뱃지판을 내 뱃지판에 추가
+- **배포자 리뷰**: 저장된 뱃지판에서 배포자의 리뷰를 별도로 확인 가능
+- **수정 모드**: 미배포 보드에서 장소 추가/삭제 (검색으로 장소 추가)
 
 ### 다국어 지원 (i18n)
 
@@ -222,7 +238,7 @@ cd frontend && npm run build          # → app/static/dist/ 출력
 # 백엔드 (pytest, 65개)
 uv run pytest tests/ -v --ignore=tests/test_supabase_connection.py
 
-# 프론트엔드 (Vitest, 71개)
+# 프론트엔드 (Vitest, 184개)
 cd frontend && npm test
 ```
 
