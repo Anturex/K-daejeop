@@ -9,6 +9,7 @@ declare namespace kakao.maps {
     getLevel(): number
     setBounds(bounds: LatLngBounds, paddingTop?: number, paddingRight?: number, paddingBottom?: number, paddingLeft?: number): void
     relayout(): void
+    setDraggable(draggable: boolean): void
     getProjection(): MapProjection
   }
 

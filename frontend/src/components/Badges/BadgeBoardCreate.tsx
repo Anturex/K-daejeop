@@ -25,7 +25,7 @@ export function BadgeBoardCreate() {
   const [error, setError] = useState('')
 
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
-  const searchAreaRef = useRef<HTMLDivElement>(null)
+  const searchAreaRef = useRef<HTMLLabelElement>(null)
 
   // Auto-scroll to search area when results appear
   useEffect(() => {

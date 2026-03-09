@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useMapStore } from '../stores/mapStore'
 import { useReviewStore, type Review } from '../stores/reviewStore'
-import { useBadgeStore, type BadgeBoardPlace } from '../stores/badgeStore'
+import { useBadgeStore } from '../stores/badgeStore'
 import { buildReviewPin, buildUnreviewedPin } from '../utils/buildReviewPin'
 import { escapeHtml, escapeAttr } from '../utils/escapeHtml'
 import type { PlaceResult } from '../services/api'
