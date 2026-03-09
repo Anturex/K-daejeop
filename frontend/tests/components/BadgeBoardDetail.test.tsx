@@ -14,6 +14,9 @@ vi.mock('react-i18next', () => ({
         'badge.copyCode': '공유 코드 복사',
         'badge.deleteConfirm': '삭제하시겠습니까?',
         'badge.deleted': '삭제됨',
+        'badge.removeFromList': '목록에서 제거',
+        'badge.removeConfirm': '내 목록에서 제거하시겠습니까?',
+        'badge.removed': '목록에서 제거되었습니다',
         'badge.earned': '뱃지 획득!',
         'badge.publish': '배포하기',
         'badge.published': '배포 완료!',
@@ -28,6 +31,8 @@ vi.mock('react-i18next', () => ({
         'badge.boardDesc': '설명',
         'badge.err.places': '장소를 최소 2개 추가해 주세요',
         'badge.publishPremiumOnly': '프리미엄 회원만 배포할 수 있습니다',
+        'badge.publishMonthlyLimit': '한 달에 1회만 배포할 수 있습니다',
+        'badge.publishError': '배포 중 오류가 발생했습니다',
         'badge.creatorReview': '배포자 리뷰',
         'badge.addPlace': '장소 추가',
         'badge.searchPlace': '장소 검색',
@@ -131,6 +136,7 @@ function makeBoard(overrides: Record<string, unknown> = {}) {
     place_count: 3,
     source_board_id: null,
     source_creator_id: null,
+    published_at: null,
     ...overrides,
   }
 }
@@ -228,6 +234,17 @@ describe('BadgeBoardDetail', () => {
     mockStoreData.selectedBoard = makeBoard({ creator_id: 'u2' })
     render(<BadgeBoardDetail />)
     expect(screen.getByText('삭제')).toBeInTheDocument()
+  })
+
+  it('shows remove button for saved board', () => {
+    mockStoreData.selectedBoard = makeBoard({
+      creator_id: 'u2',
+      source_board_id: 'orig1',
+      source_creator_id: 'other-user',
+    })
+    render(<BadgeBoardDetail />)
+    expect(screen.getByText('목록에서 제거')).toBeInTheDocument()
+    expect(screen.queryByText('삭제')).not.toBeInTheDocument()
   })
 
   // Publish button
@@ -399,5 +416,21 @@ describe('BadgeBoardDetail', () => {
     mockStoreData.selectedBoard = makeBoard({ creator_id: 'u2' })
     render(<BadgeBoardDetail />)
     expect(screen.queryByText('배포자 리뷰')).not.toBeInTheDocument()
+  })
+
+  // Monthly publish limit
+  it('blocks publish when monthly limit reached', () => {
+    mockTier = 'premium'
+    mockStoreData.selectedBoard = makeBoard({ creator_id: 'u2', is_public: false })
+    mockStoreData.boardPlaces = makePlaces().map((p) => ({ ...p, reviewed: true }))
+    // A board was already published recently
+    mockStoreData.boards = [
+      makeBoard({ id: 'b-recent', creator_id: 'u2', published_at: new Date().toISOString(), source_board_id: null }),
+    ]
+    const { container } = render(<BadgeBoardDetail />)
+    const publishBtn = screen.getByText('배포하기')
+    fireEvent.click(publishBtn)
+    // publishBoard should NOT be called (monthly limit)
+    expect(mockPublishBoard).not.toHaveBeenCalled()
   })
 })

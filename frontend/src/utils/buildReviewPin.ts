@@ -29,3 +29,27 @@ export function buildReviewPin(review: Review): HTMLDivElement {
   `
   return el
 }
+
+/**
+ * Build an unreviewed place pin for badge board map display.
+ * Shows place name + dashed placeholder + "미방문" label.
+ */
+export function buildUnreviewedPin(placeName: string, label: string): HTMLDivElement {
+  const name = placeName || ''
+  const el = document.createElement('div')
+  el.className = 'rv-pin rv-pin--unreviewed' + (name.length <= 5 ? ' rv-pin--short-name' : '')
+  el.innerHTML = `
+    <div class="rv-pin__photo-wrap">
+      <div class="rv-pin__name"><span>${escapeHtml(name)}</span></div>
+      <div class="rv-pin__placeholder">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+      </div>
+      <div class="rv-pin__unvisited-label">${escapeHtml(label)}</div>
+    </div>
+    <div class="rv-pin__tail rv-pin__tail--muted"></div>
+  `
+  return el
+}

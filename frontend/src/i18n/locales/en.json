@@ -138,6 +138,9 @@
   "badge.delete": "Delete",
   "badge.deleteConfirm": "Delete this badge board?",
   "badge.deleted": "Badge board deleted",
+  "badge.removeFromList": "Remove",
+  "badge.removeConfirm": "Remove this board from your list?",
+  "badge.removed": "Removed from your list",
   "badge.saved": "Badge board created!",
   "badge.err.title": "Please enter a title",
   "badge.err.places": "Add at least 2 places",
@@ -168,5 +171,17 @@
   "badge.editSaved": "Changes saved",
   "badge.publishWarning": "Once published, the board cannot be edited. Please publish carefully.",
   "badge.publishPremiumOnly": "Only premium members can publish",
-  "badge.creatorReview": "Creator's review"
+  "badge.publishMonthlyLimit": "You can only publish once per month",
+  "badge.publishError": "Failed to publish",
+  "badge.creatorReview": "Creator's review",
+  "badge.unvisited": "Not visited",
+  "badge.hideBoard": "Not interested",
+  "badge.hiddenToast": "This board will no longer appear",
+
+  "changelog.title": "New: Badge Boards",
+  "changelog.close": "Got it",
+  "changelog.badgeIntro": "Badge Boards are here! Create your own restaurant lists and track your visit progress.",
+  "changelog.badgePersonal": "Badge boards are personal — build your own list of places you want to visit.",
+  "changelog.badgeShare": "Share your badge board with friends using a share code.",
+  "changelog.badgePublish": "Publish your board to make it visible to everyone. Publishing is premium-only and limited to once per month."
 }

@@ -138,6 +138,9 @@
   "badge.delete": "삭제",
   "badge.deleteConfirm": "이 뱃지판을 삭제하시겠습니까?",
   "badge.deleted": "뱃지판이 삭제되었습니다",
+  "badge.removeFromList": "목록에서 제거",
+  "badge.removeConfirm": "이 뱃지판을 내 목록에서 제거하시겠습니까?",
+  "badge.removed": "목록에서 제거되었습니다",
   "badge.saved": "뱃지판이 생성되었습니다!",
   "badge.err.title": "제목을 입력해 주세요",
   "badge.err.places": "장소를 최소 2개 추가해 주세요",
@@ -168,5 +171,17 @@
   "badge.editSaved": "수정이 저장되었습니다",
   "badge.publishWarning": "한 번 배포하면 수정할 수 없습니다. 신중하게 배포해 주세요.",
   "badge.publishPremiumOnly": "프리미엄 회원만 배포할 수 있습니다",
-  "badge.creatorReview": "배포자 리뷰"
+  "badge.publishMonthlyLimit": "한 달에 1회만 배포할 수 있습니다",
+  "badge.publishError": "배포 중 오류가 발생했습니다",
+  "badge.creatorReview": "배포자 리뷰",
+  "badge.unvisited": "미방문",
+  "badge.hideBoard": "추천받지 않음",
+  "badge.hiddenToast": "이 뱃지판이 더 이상 표시되지 않습니다",
+
+  "changelog.title": "새로운 기능: 뱃지판",
+  "changelog.close": "확인",
+  "changelog.badgeIntro": "뱃지판이 추가되었습니다! 나만의 맛집 리스트를 만들고 방문 진행도를 관리하세요.",
+  "changelog.badgePersonal": "뱃지판은 나 혼자만 만들어서 사용할 수 있어요. 가고 싶은 곳을 모아보세요.",
+  "changelog.badgeShare": "공유코드를 통해 친구에게 내 뱃지판을 공유할 수 있어요.",
+  "changelog.badgePublish": "배포하기를 통해 모든 유저에게 공개할 수 있어요. 배포는 프리미엄 회원 전용이며 한 달에 한 번만 가능합니다."
 }

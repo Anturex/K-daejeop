@@ -21,6 +21,7 @@ const SWIPE_DISMISS_THRESHOLD = 120
 export function BadgePanel() {
   const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)
+  const badgePanelActive = useUiStore((s) => s.badgePanelActive)
   const { setBadgePanelActive } = useUiStore()
   const showToast = useUiStore((s) => s.showToast)
   const { getMyReviews } = useReviewedPlaces()
@@ -74,6 +75,20 @@ export function BadgePanel() {
     load()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /* ===== Re-open panel when badge tab is tapped while pins are active ===== */
+  useEffect(() => {
+    if (badgePanelActive && !panelOpen) {
+      setPanelOpen(true)
+    }
+  }, [badgePanelActive]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ===== Hide panel when place is clicked in board detail ===== */
+  useEffect(() => {
+    const handler = () => setPanelOpen(false)
+    window.addEventListener('badge:hide-panel', handler)
+    return () => window.removeEventListener('badge:hide-panel', handler)
   }, [])
 
   /* ===== Compute progress for all boards when boards/reviews change ===== */
@@ -157,33 +172,19 @@ export function BadgePanel() {
     }
   }, [codePreview, user, boards, saveBoard, showToast, t, fetchBoards])
 
-  /* ===== Save public board ===== */
-  const handleSavePublicBoard = useCallback(
-    async (board: BadgeBoard) => {
-      if (!user) return
-      const sb = getSupabase()
-      const { data: places } = await sb
-        .from('badge_board_places')
-        .select('*')
-        .eq('board_id', board.id)
-        .order('sort_order')
-      if (!places) return
-      const saved = await saveBoard(user.id, board, places)
-      if (saved) {
-        showToast(t('badge.boardSaved'), 3000)
-        await fetchBoards()
-      }
-    },
-    [user, saveBoard, showToast, t, fetchBoards],
-  )
-
   /* ===== Panel close ===== */
   const handleClose = useCallback(() => {
     setPanelOpen(false)
   }, [])
 
   const handleBackdropClick = useCallback(() => {
-    setBadgePanelActive(false)
+    const { selectedBoard: sb } = useBadgeStore.getState()
+    if (sb) {
+      // Board selected → only hide panel, keep pins on map
+      setPanelOpen(false)
+    } else {
+      setBadgePanelActive(false)
+    }
   }, [setBadgePanelActive])
 
   /* ===== Swipe to dismiss ===== */
@@ -219,17 +220,26 @@ export function BadgePanel() {
       panelRef.current.style.transition = ''
     }
     if (swipeDragY.current > SWIPE_DISMISS_THRESHOLD) {
-      setPanelOpen(false)
-      setTimeout(() => setBadgePanelActive(false), 300)
+      const { selectedBoard: sb } = useBadgeStore.getState()
+      if (sb) {
+        // Board selected → only hide panel, keep pins on map
+        setPanelOpen(false)
+      } else {
+        setPanelOpen(false)
+        setTimeout(() => setBadgePanelActive(false), 300)
+      }
     } else if (panelRef.current) {
       panelRef.current.style.transform = ''
     }
   }, [setBadgePanelActive])
 
-  /* ===== Transition end: close panel if not open ===== */
+  /* ===== Transition end: close panel if not open (and no board pins active) ===== */
   const handleTransitionEnd = useCallback(() => {
     if (!panelOpen) {
-      setBadgePanelActive(false)
+      const { selectedBoard: sb } = useBadgeStore.getState()
+      if (!sb) {
+        setBadgePanelActive(false)
+      }
     }
   }, [panelOpen, setBadgePanelActive])
 
@@ -238,8 +248,11 @@ export function BadgePanel() {
   const savedBoardIds = new Set(
     boards.filter((b) => b.source_board_id).map((b) => b.source_board_id!),
   )
+  const hiddenBoardIds = new Set<string>(
+    JSON.parse(localStorage.getItem('k_hidden_boards') || '[]'),
+  )
   const publicBoards = boards.filter(
-    (b) => b.creator_id !== user?.id && !savedBoardIds.has(b.id),
+    (b) => b.creator_id !== user?.id && !savedBoardIds.has(b.id) && !hiddenBoardIds.has(b.id),
   )
   const defaultProgress = { reviewed: 0, total: 0, percent: 0 }
 
@@ -471,21 +484,13 @@ export function BadgePanel() {
                   {!publicCollapsed && (
                     <div className="space-y-2">
                       {publicBoards.map((board) => (
-                        <div key={board.id}>
-                          <BadgeBoardCard
-                            board={board}
-                            progress={progressMap.get(board.id) ?? defaultProgress}
-                            completed={myBadges.includes(board.id)}
-                            onClick={() => handleBoardClick(board)}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleSavePublicBoard(board)}
-                            className="mt-1 w-full text-center text-[10px] font-semibold text-accent transition-colors hover:text-accent-dark"
-                          >
-                            {t('badge.addToMyBoards')}
-                          </button>
-                        </div>
+                        <BadgeBoardCard
+                          key={board.id}
+                          board={board}
+                          progress={progressMap.get(board.id) ?? defaultProgress}
+                          completed={myBadges.includes(board.id)}
+                          onClick={() => handleBoardClick(board)}
+                        />
                       ))}
                     </div>
                   )}

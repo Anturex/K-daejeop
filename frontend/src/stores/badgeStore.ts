@@ -17,6 +17,7 @@ export interface BadgeBoard {
   place_count: number
   source_board_id: string | null
   source_creator_id: string | null
+  published_at: string | null
 }
 
 export interface CodeSearchResult {
@@ -81,8 +82,10 @@ interface BadgeState {
   // Board detail
   selectedBoard: BadgeBoard | null
   boardPlaces: BadgeBoardPlace[]
+  boardPinsActive: boolean
   selectBoard: (board: BadgeBoard, reviewedPlaceIds: Set<string>) => Promise<void>
   closeBoard: () => void
+  setBoardPinsActive: (v: boolean) => void
 
   // My badges (completed board IDs)
   myBadges: string[]
@@ -124,7 +127,7 @@ interface BadgeState {
   addPlaceToBoard: (boardId: string, place: PlaceResult) => Promise<boolean>
 
   // Publish board (make public, optionally update description)
-  publishBoard: (boardId: string, description?: string) => Promise<boolean>
+  publishBoard: (boardId: string, description?: string) => Promise<'ok' | 'monthly_limit' | 'incomplete' | 'error'>
 
   // Edit board (title/description/emoji)
   updateBoard: (boardId: string, fields: { title?: string; description?: string; icon_emoji?: string }) => Promise<boolean>
@@ -190,6 +193,7 @@ export const useBadgeStore = create<BadgeState>((set, get) => ({
 
   selectedBoard: null,
   boardPlaces: [],
+  boardPinsActive: false,
 
   selectBoard: async (board, reviewedPlaceIds) => {
     const sb = getSupabase()
@@ -205,10 +209,12 @@ export const useBadgeStore = create<BadgeState>((set, get) => ({
     }
 
     const places = markReviewedPlaces(data ?? [], reviewedPlaceIds)
-    set({ selectedBoard: board, boardPlaces: places })
+    set({ selectedBoard: board, boardPlaces: places, boardPinsActive: true })
   },
 
-  closeBoard: () => set({ selectedBoard: null, boardPlaces: [], creatorReviews: [] }),
+  closeBoard: () => set({ selectedBoard: null, boardPlaces: [], creatorReviews: [], boardPinsActive: false }),
+
+  setBoardPinsActive: (v) => set({ boardPinsActive: v }),
 
   myBadges: [],
 
@@ -448,12 +454,21 @@ export const useBadgeStore = create<BadgeState>((set, get) => ({
 
   publishBoard: async (boardId, description) => {
     // Require all places reviewed before publishing
-    const { boardPlaces } = get()
+    const { boardPlaces, boards } = get()
     const progress = computeProgress(boardPlaces)
-    if (progress.percent < 100) return false
+    if (progress.percent < 100) return 'incomplete'
+
+    // Monthly limit: max 1 publish per 30 days (own boards only)
+    const now = new Date()
+    const ago30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    const recentPublishes = boards.filter(
+      (b) => b.published_at && new Date(b.published_at) > ago30d && !b.source_board_id,
+    )
+    if (recentPublishes.length >= 1) return 'monthly_limit'
 
     const sb = getSupabase()
-    const updatePayload: Record<string, unknown> = { is_public: true }
+    const publishedAt = now.toISOString()
+    const updatePayload: Record<string, unknown> = { is_public: true, published_at: publishedAt }
     if (description !== undefined) {
       updatePayload.description = description
     }
@@ -465,10 +480,10 @@ export const useBadgeStore = create<BadgeState>((set, get) => ({
 
     if (error) {
       console.error('[badge] publishBoard error:', error)
-      return false
+      return 'error'
     }
 
-    const patch: Partial<BadgeBoard> = { is_public: true }
+    const patch: Partial<BadgeBoard> = { is_public: true, published_at: publishedAt }
     if (description !== undefined) patch.description = description
 
     set((s) => ({
@@ -480,7 +495,7 @@ export const useBadgeStore = create<BadgeState>((set, get) => ({
           ? { ...s.selectedBoard, ...patch }
           : s.selectedBoard,
     }))
-    return true
+    return 'ok'
   },
 
   creatorReviews: [],

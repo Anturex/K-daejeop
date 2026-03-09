@@ -138,6 +138,9 @@
   "badge.delete": "删除",
   "badge.deleteConfirm": "确定要删除这个徽章板吗?",
   "badge.deleted": "徽章板已删除",
+  "badge.removeFromList": "从列表移除",
+  "badge.removeConfirm": "确定从列表中移除此徽章板？",
+  "badge.removed": "已从列表中移除",
   "badge.saved": "徽章板创建成功!",
   "badge.err.title": "请输入标题",
   "badge.err.places": "请至少添加2个地点",
@@ -168,5 +171,17 @@
   "badge.editSaved": "修改已保存",
   "badge.publishWarning": "发布后将无法编辑，请谨慎发布。",
   "badge.publishPremiumOnly": "仅限高级会员发布",
-  "badge.creatorReview": "发布者评价"
+  "badge.publishMonthlyLimit": "每月只能发布一次",
+  "badge.publishError": "发布时出错",
+  "badge.creatorReview": "发布者评价",
+  "badge.unvisited": "未访问",
+  "badge.hideBoard": "不感兴趣",
+  "badge.hiddenToast": "此徽章板将不再显示",
+
+  "changelog.title": "新功能：徽章板",
+  "changelog.close": "知道了",
+  "changelog.badgeIntro": "徽章板来了！创建你自己的美食清单，追踪访问进度。",
+  "changelog.badgePersonal": "徽章板是个人专属的，收集你想去的地方吧。",
+  "changelog.badgeShare": "通过分享码可以与朋友分享你的徽章板。",
+  "changelog.badgePublish": "通过发布功能可以向所有用户公开。发布仅限高级会员，每月限一次。"
 }

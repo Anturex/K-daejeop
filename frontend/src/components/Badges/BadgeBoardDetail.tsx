@@ -2,14 +2,12 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useBadgeStore, computeProgress } from '../../stores/badgeStore'
 import type { BadgeBoardPlace } from '../../stores/badgeStore'
-import type { Review } from '../../stores/reviewStore'
 import { useMapStore } from '../../stores/mapStore'
 import { useAuthStore } from '../../stores/authStore'
 import { useUiStore } from '../../stores/uiStore'
 import { useReviewStore } from '../../stores/reviewStore'
 import { getSupabase } from '../../services/supabase'
 import { searchPlaces, type PlaceResult } from '../../services/api'
-import { buildReviewPin } from '../../utils/buildReviewPin'
 import { PublishModal } from './PublishModal'
 
 const EMOJI_OPTIONS = ['🏆', '🍜', '🍣', '☕', '🏔️', '🌊', '🎯', '🗺️', '🎪', '🍕', '🍺', '🌸']
@@ -51,7 +49,6 @@ export function BadgeBoardDetail() {
   const [editSearchResults, setEditSearchResults] = useState<PlaceResult[]>([])
   const [editSearching, setEditSearching] = useState(false)
 
-  const pinOverlayRef = useRef<kakao.maps.CustomOverlay | null>(null)
   const editDebounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const progress = computeProgress(boardPlaces)
@@ -80,13 +77,6 @@ export function BadgeBoardDetail() {
     handleCheckCompletion()
   }
 
-  const clearPinOverlay = useCallback(() => {
-    if (pinOverlayRef.current) {
-      pinOverlayRef.current.setMap(null)
-      pinOverlayRef.current = null
-    }
-  }, [])
-
   const handlePlaceClick = useCallback(
     (place: BadgeBoardPlace) => {
       if (!map) return
@@ -94,65 +84,21 @@ export function BadgeBoardDetail() {
       const lng = parseFloat(place.place_x)
       if (isNaN(lat) || isNaN(lng)) return
 
-      clearPinOverlay()
+      // Hide panel so user can see the map
+      window.dispatchEvent(new Event('badge:hide-panel'))
+
       map.setCenter(new kakao.maps.LatLng(lat, lng))
       map.setLevel(3)
 
-      // Determine reviews to show
-      let placeReviews: Review[] = []
-
-      if (isSavedBoard) {
-        // Saved board: show only user's own reviews (creator reviews accessible via separate button)
-        placeReviews = (cachedReviews ?? []).filter((r) => r.place_id === place.place_id)
-      } else if (isOriginalCreator) {
-        // Own board: show user's reviews
-        placeReviews = place.reviewed
-          ? (cachedReviews ?? []).filter((r) => r.place_id === place.place_id)
-          : []
-      } else {
-        // Other's public board: show creator's reviews
-        placeReviews = creatorReviews.filter((r) => r.place_id === place.place_id)
-      }
-
-      if (placeReviews.length > 0) {
-        const pinEl = buildReviewPin(placeReviews[0])
-
-        // Add creator label when viewing creator reviews (opened via "배포자 리뷰" button)
-        if (placeReviews[0].user_id !== user?.id) {
-          const label = document.createElement('div')
-          label.className = 'rv-pin__creator-label'
-          label.textContent = t('badge.creatorLabel')
-          pinEl.prepend(label)
-        }
-
-        const overlay = new kakao.maps.CustomOverlay({
-          position: new kakao.maps.LatLng(lat, lng),
-          content: pinEl,
-          zIndex: 5,
-          yAnchor: 1.0,
-        })
-
-        // Pop-in animation
-        pinEl.style.opacity = '0'
-        pinEl.style.transform = 'scale(0.4)'
-        overlay.setMap(map)
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() => {
-            pinEl.style.transition =
-              'opacity 280ms ease, transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1)'
-            pinEl.style.opacity = '1'
-            pinEl.style.transform = 'scale(1)'
-          }),
-        )
-
-        pinEl.addEventListener('click', () => {
+      // Open review detail if place has reviews
+      if (place.reviewed) {
+        const placeReviews = (cachedReviews ?? []).filter((r) => r.place_id === place.place_id)
+        if (placeReviews.length > 0) {
           openDetail(placeReviews, 0)
-        })
-
-        pinOverlayRef.current = overlay
+        }
       }
     },
-    [map, cachedReviews, creatorReviews, isOriginalCreator, isSavedBoard, user, clearPinOverlay, openDetail, t],
+    [map, cachedReviews, openDetail],
   )
 
   // Fetch creator reviews when viewing someone else's public board OR saved board
@@ -162,15 +108,6 @@ export function BadgeBoardDetail() {
       fetchCreatorReviews(selectedBoard.id)
     }
   }, [selectedBoard, isCreator, isSavedBoard, fetchCreatorReviews])
-
-  // Cleanup pin overlay on unmount
-  useEffect(() => {
-    return () => {
-      if (pinOverlayRef.current) {
-        pinOverlayRef.current.setMap(null)
-      }
-    }
-  }, [])
 
   // Listen for review:saved event → refresh board places reviewed status
   useEffect(() => {
@@ -198,12 +135,14 @@ export function BadgeBoardDetail() {
 
   const handleDelete = useCallback(async () => {
     if (!selectedBoard) return
-    if (!window.confirm(t('badge.deleteConfirm'))) return
+    const confirmMsg = isSavedBoard ? t('badge.removeConfirm') : t('badge.deleteConfirm')
+    if (!window.confirm(confirmMsg)) return
     const ok = await deleteBoard(selectedBoard.id)
     if (ok) {
-      showToast(t('badge.deleted'), 2500)
+      showToast(isSavedBoard ? t('badge.removed') : t('badge.deleted'), 2500)
+      closeBoard()
     }
-  }, [selectedBoard, deleteBoard, showToast, t])
+  }, [selectedBoard, isSavedBoard, deleteBoard, closeBoard, showToast, t])
 
   const handlePublish = useCallback(() => {
     if (!selectedBoard) return
@@ -215,15 +154,31 @@ export function BadgeBoardDetail() {
       showToast(t('badge.publishRequireAll'), 3000)
       return
     }
+    // Monthly limit: check locally before opening modal
+    const now = new Date()
+    const ago30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    const recentPublishes = boards.filter(
+      (b) => b.published_at && new Date(b.published_at) > ago30d && !b.source_board_id,
+    )
+    if (recentPublishes.length >= 1) {
+      showToast(t('badge.publishMonthlyLimit'), 3000)
+      return
+    }
     setPublishModalOpen(true)
-  }, [selectedBoard, tier, progress.percent, showToast, t])
+  }, [selectedBoard, tier, progress.percent, boards, showToast, t])
 
   const handlePublishConfirm = useCallback(
     async (description: string) => {
       if (!selectedBoard) return
-      const ok = await publishBoard(selectedBoard.id, description)
-      if (ok) {
+      const result = await publishBoard(selectedBoard.id, description)
+      if (result === 'ok') {
         showToast(t('badge.published'), 3000)
+      } else if (result === 'monthly_limit') {
+        showToast(t('badge.publishMonthlyLimit'), 3000)
+      } else if (result === 'incomplete') {
+        showToast(t('badge.publishRequireAll'), 3000)
+      } else if (result === 'error') {
+        showToast(t('badge.publishError'), 3000)
       }
       setPublishModalOpen(false)
     },
@@ -238,6 +193,30 @@ export function BadgeBoardDetail() {
       await fetchBoards()
     }
   }, [selectedBoard, user, boardPlaces, saveBoard, showToast, t, fetchBoards])
+
+  const handleUnsaveBoard = useCallback(async () => {
+    if (!selectedBoard) return
+    if (!window.confirm(t('badge.removeConfirm'))) return
+    const savedCopy = boards.find((b) => b.source_board_id === selectedBoard.id)
+    if (!savedCopy) return
+    const ok = await deleteBoard(savedCopy.id)
+    if (ok) {
+      showToast(t('badge.removed'), 2500)
+      await fetchBoards()
+    }
+  }, [selectedBoard, boards, deleteBoard, showToast, t, fetchBoards])
+
+  const handleHideBoard = useCallback(() => {
+    if (!selectedBoard) return
+    const key = 'k_hidden_boards'
+    const hidden: string[] = JSON.parse(localStorage.getItem(key) || '[]')
+    if (!hidden.includes(selectedBoard.id)) {
+      hidden.push(selectedBoard.id)
+      localStorage.setItem(key, JSON.stringify(hidden))
+    }
+    closeBoard()
+    showToast(t('badge.hiddenToast'), 2500)
+  }, [selectedBoard, closeBoard, showToast, t])
 
   // Edit mode handlers
   const handleStartEdit = useCallback(() => {
@@ -373,7 +352,7 @@ export function BadgeBoardDetail() {
             onClick={handleDelete}
             className="rounded-full px-2 py-1 text-xs text-danger transition-colors hover:bg-danger/10"
           >
-            {t('badge.delete')}
+            {isSavedBoard ? t('badge.removeFromList') : t('badge.delete')}
           </button>
         )}
       </div>
@@ -573,19 +552,32 @@ export function BadgeBoardDetail() {
 
         {/* Add to my boards (non-creator viewing) */}
         {!editMode && !isCreator && !isSavedBoard && (
-          <div className="mt-4">
+          <div className="mt-4 space-y-2">
             {alreadySaved ? (
-              <div className="text-center text-xs text-text-muted">
-                {t('badge.alreadySaved')}
-              </div>
-            ) : (
               <button
                 type="button"
-                onClick={handleSaveBoard}
-                className="w-full rounded-xl bg-accent py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-dark"
+                onClick={handleUnsaveBoard}
+                className="w-full rounded-xl border border-danger/30 py-2.5 text-sm font-semibold text-danger transition-colors hover:bg-danger/10"
               >
-                {t('badge.addToMyBoards')}
+                {t('badge.removeFromList')}
               </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleSaveBoard}
+                  className="w-full rounded-xl bg-accent py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-dark"
+                >
+                  {t('badge.addToMyBoards')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleHideBoard}
+                  className="w-full rounded-xl py-2 text-xs text-text-muted transition-colors hover:bg-bg"
+                >
+                  {t('badge.hideBoard')}
+                </button>
+              </>
             )}
           </div>
         )}
