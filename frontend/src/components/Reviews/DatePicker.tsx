@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface DatePickerProps {
@@ -35,18 +35,14 @@ function Wheel({
   const isUserScrolling = useRef(false)
 
   // Scroll to selected value on mount or when values/selected change
-  useEffect(() => {
+  // useLayoutEffect runs before paint, preventing CSS snap from overriding position
+  useLayoutEffect(() => {
     const container = containerRef.current
     if (!container) return
 
     const idx = values.indexOf(selected)
-    if (idx >= 0) {
-      // Directly set scrollTop without smooth behavior to avoid fighting with user scroll
-      requestAnimationFrame(() => {
-        if (!isUserScrolling.current) {
-          container.scrollTop = idx * ITEM_HEIGHT
-        }
-      })
+    if (idx >= 0 && !isUserScrolling.current) {
+      container.scrollTop = idx * ITEM_HEIGHT
     }
   }, [values, selected])
 
@@ -59,12 +55,9 @@ function Wheel({
     if (snapTimerRef.current) clearTimeout(snapTimerRef.current)
     snapTimerRef.current = setTimeout(() => {
       const idx = Math.round(container.scrollTop / ITEM_HEIGHT)
-      container.scrollTo({ top: idx * ITEM_HEIGHT, behavior: 'smooth' })
-
-      // Report selected value (skip padding items)
-      const valueIdx = idx
-      if (valueIdx >= 0 && valueIdx < values.length) {
-        onSelect(values[valueIdx])
+      // CSS scroll-snap handles alignment — just report the selected value
+      if (idx >= 0 && idx < values.length) {
+        onSelect(values[idx])
       }
 
       // Allow programmatic scroll again after snap settles
@@ -93,6 +86,7 @@ function Wheel({
         style={{
           height: (PADDING_ITEMS * 2 + 1) * ITEM_HEIGHT,
           scrollSnapType: 'y mandatory',
+          scrollPaddingTop: PADDING_ITEMS * ITEM_HEIGHT,
         }}
       >
         {/* Top padding */}
