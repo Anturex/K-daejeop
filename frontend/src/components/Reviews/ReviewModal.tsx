@@ -4,6 +4,7 @@ import { useReviewStore } from '../../stores/reviewStore'
 import { useAuthStore } from '../../stores/authStore'
 import { useUiStore } from '../../stores/uiStore'
 import { useReviewedPlaces } from '../../hooks/useReviewedPlaces'
+import { useMapStore } from '../../stores/mapStore'
 import { useGeolocation } from '../../hooks/useGeolocation'
 import { getSupabase } from '../../services/supabase'
 import { isWithinVisitRange } from '../../utils/distance'
@@ -27,6 +28,7 @@ export function ReviewModal() {
   const showToast = useUiStore((s) => s.showToast)
   const { getVisitCount } = useReviewedPlaces()
   const { lat: geoLat, lng: geoLng, loading: geoLoading, requestLocation } = useGeolocation()
+  const clearMarkers = useMapStore((s) => s.clearMarkers)
 
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -191,9 +193,10 @@ export function ReviewModal() {
         throw new Error(t('review.err.insert', { 0: insertErr.message }))
       }
 
-      // Success: invalidate cache, notify listeners, show toast, close modal
+      // Success: invalidate cache, notify listeners, clear search markers, close modal
       invalidateCache()
       window.dispatchEvent(new CustomEvent('review:saved'))
+      clearMarkers()
       closeModal()
       showToast(t('review.saved'))
     } catch (err) {
@@ -220,6 +223,7 @@ export function ReviewModal() {
     t,
     handleError,
     invalidateCache,
+    clearMarkers,
     closeModal,
     showToast,
   ])
