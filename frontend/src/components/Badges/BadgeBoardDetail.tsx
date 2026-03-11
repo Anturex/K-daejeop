@@ -141,8 +141,9 @@ export function BadgeBoardDetail() {
     if (ok) {
       showToast(isSavedBoard ? t('badge.removed') : t('badge.deleted'), 2500)
       closeBoard()
+      await fetchBoards()
     }
-  }, [selectedBoard, isSavedBoard, deleteBoard, closeBoard, showToast, t])
+  }, [selectedBoard, isSavedBoard, deleteBoard, closeBoard, showToast, t, fetchBoards])
 
   const handlePublish = useCallback(() => {
     if (!selectedBoard) return

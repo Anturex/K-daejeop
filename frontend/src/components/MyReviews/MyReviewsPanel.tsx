@@ -103,7 +103,7 @@ export function MyReviewsPanel() {
     clearMarkers()
   }, [clearMarkers])
 
-  /* ===== Listen for review:saved to refresh ===== */
+  /* ===== Listen for review:saved / review:deleted to refresh ===== */
   useEffect(() => {
     const handler = async () => {
       const data = await getMyReviews(true)
@@ -111,7 +111,11 @@ export function MyReviewsPanel() {
     }
 
     window.addEventListener('review:saved', handler)
-    return () => window.removeEventListener('review:saved', handler)
+    window.addEventListener('review:deleted', handler)
+    return () => {
+      window.removeEventListener('review:saved', handler)
+      window.removeEventListener('review:deleted', handler)
+    }
   }, [getMyReviews])
 
   /* ===== Category change resets drill-down ===== */

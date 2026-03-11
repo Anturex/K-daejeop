@@ -120,6 +120,7 @@ export function ReviewDetail() {
       }
 
       invalidateCache()
+      window.dispatchEvent(new CustomEvent('review:deleted'))
       closeDetail()
       showToast(t('review.deleted'))
     } finally {

@@ -147,8 +147,8 @@ export function DatePicker({ value, onChange }: DatePickerProps) {
   const [month, setMonth] = useState(parsedM || today.getMonth() + 1)
   const [day, setDay] = useState(parsedD || today.getDate())
 
-  // Year range: 2 years back to current year
-  const years = rangeArr(currentYear - 2, currentYear)
+  // Year range: 10 years back to current year
+  const years = rangeArr(currentYear - 10, currentYear)
   const months = rangeArr(1, 12)
   const maxDay = daysInMonth(year, month)
   const days = rangeArr(1, maxDay)
