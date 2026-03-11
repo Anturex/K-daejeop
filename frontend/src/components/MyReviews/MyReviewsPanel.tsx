@@ -3,6 +3,7 @@ import {
   useEffect,
   useRef,
   useCallback,
+  useMemo,
   type TouchEvent as ReactTouchEvent,
 } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -52,16 +53,49 @@ export function MyReviewsPanel() {
 
   // Drill-down: null = Level 0 (regions), string = Level 1 (region name)
   const [drillRegion, setDrillRegion] = useState<string | null>(null)
-  const [drillPlaces, setDrillPlaces] = useState<PlaceGroup[]>([])
 
   const listRef = useRef<HTMLDivElement>(null)
 
-  /* ===== Derived data ===== */
-  const filtered = getFilteredReviews(allReviews, activeCategory, activeRating)
-  const counts = computeCategoryCounts(allReviews)
-  const ratingCounts = computeRatingCounts(allReviews, activeCategory)
-  const totalUniquePlaces = uniquePlaceCount(filtered)
-  const regionGroups = groupByRegion(filtered)
+  /* ===== Derived data (memoized so drillPlaces auto-updates on allReviews change) ===== */
+  const filtered = useMemo(
+    () => getFilteredReviews(allReviews, activeCategory, activeRating),
+    [allReviews, activeCategory, activeRating],
+  )
+  const counts = useMemo(() => computeCategoryCounts(allReviews), [allReviews])
+  const ratingCounts = useMemo(
+    () => computeRatingCounts(allReviews, activeCategory),
+    [allReviews, activeCategory],
+  )
+  const totalUniquePlaces = useMemo(() => uniquePlaceCount(filtered), [filtered])
+  const regionGroups = useMemo(() => groupByRegion(filtered), [filtered])
+
+  /* ===== Drill-down places derived from regionGroups (not independent state) ===== */
+  const drillPlaces = useMemo((): PlaceGroup[] => {
+    if (drillRegion === null) return []
+    const group = regionGroups.find((g) => g.region === drillRegion)
+    if (!group) return []
+
+    const placeMap = new Map<string, Review[]>()
+    for (const r of group.items) {
+      const key = r.place_id || r.place_name || `${r.lat},${r.lng}`
+      if (!placeMap.has(key)) placeMap.set(key, [])
+      placeMap.get(key)!.push(r)
+    }
+
+    return Array.from(placeMap.values()).map((revs) => {
+      const sorted = revs.sort((a, b) =>
+        (b.visited_at || '').localeCompare(a.visited_at || ''),
+      )
+      return { reviews: sorted, latest: sorted[0] }
+    })
+  }, [drillRegion, regionGroups])
+
+  /* ===== Auto-reset drill-down when region becomes empty ===== */
+  useEffect(() => {
+    if (drillRegion !== null && drillPlaces.length === 0) {
+      setDrillRegion(null)
+    }
+  }, [drillRegion, drillPlaces.length])
 
   /* ===== Load reviews on mount ===== */
   useEffect(() => {
@@ -133,26 +167,7 @@ export function MyReviewsPanel() {
   /* ===== Drill-down into region ===== */
   const handleRegionClick = useCallback(
     (group: RegionGroup) => {
-      // Group items by place_id, sort each by visited_at desc
-      const placeMap = new Map<string, Review[]>()
-      for (const r of group.items) {
-        const key = r.place_id || r.place_name || `${r.lat},${r.lng}`
-        if (!placeMap.has(key)) placeMap.set(key, [])
-        placeMap.get(key)!.push(r)
-      }
-
-      const places: PlaceGroup[] = Array.from(placeMap.values()).map(
-        (revs) => {
-          const sorted = revs.sort((a, b) =>
-            (b.visited_at || '').localeCompare(a.visited_at || ''),
-          )
-          return { reviews: sorted, latest: sorted[0] }
-        },
-      )
-
       setDrillRegion(group.region)
-      setDrillPlaces(places)
-
       if (listRef.current) listRef.current.scrollTop = 0
     },
     [],
