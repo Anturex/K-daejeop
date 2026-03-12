@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -8,12 +9,22 @@ from fastapi.staticfiles import StaticFiles
 from app.core.config import get_settings
 from app.routers import auth, health, pages, places
 
+
+class HealthCheckFilter(logging.Filter):
+    """Filter out /api/health requests from access logs."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "/api/health" not in record.getMessage()
+
 _DIST_DIR = Path(__file__).resolve().parent / "static" / "dist"
 
 
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title=settings.app_name)
+
+    # Suppress /api/health from access logs (keep-alive polling noise)
+    logging.getLogger("uvicorn.access").addFilter(HealthCheckFilter())
 
     # API 라우터 (SPA 라우터보다 먼저 등록)
     app.include_router(health.router)

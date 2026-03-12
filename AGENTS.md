@@ -189,7 +189,7 @@ tests/                            # pytest 백엔드 테스트 (65개)
 4. **Vite 빌드**: `frontend/` 에서 `npm run build` → `app/static/dist/`로 출력. FastAPI가 정적 서빙.
 5. **개발 서버**: Vite dev (포트 3000) + FastAPI (포트 5173) 병렬 실행. Vite에서 `/api` → FastAPI 프록시.
 6. **한글 IME**: `SearchBar.tsx`에서 `keyCode === 229` 체크 + `input` 이벤트 기반 자동완성.
-7. **테스트 기준**: 백엔드 65개 (pytest) + 프론트엔드 184개 (Vitest). 기능 추가 시 해당 위치에 테스트도 추가.
+7. **테스트 기준**: 백엔드 69개 (pytest) + 프론트엔드 201개 (Vitest). 기능 추가 시 해당 위치에 테스트도 추가.
 8. **Supabase 직접 접근**: 리뷰 CRUD와 사진 업로드는 프론트엔드에서 Supabase JS SDK로 직접 수행. RLS가 보안 담당.
 9. **myreviews 클러스터링**: `useCluster.ts` 훅의 `computeClusters()` — 지리 격자 기반(`GRID_DEG` 배열). `ClusterMap.tsx`가 명령형으로 CustomOverlay 관리.
 10. **플라잉 애니메이션**: `ClusterMap.tsx`에서 ref 기반 명령형 처리. `requestAnimationFrame` 두 번 감싸기.
@@ -227,6 +227,7 @@ tests/                            # pytest 백엔드 테스트 (65개)
 41. **뱃지 시스템**: `BadgePanel.tsx` — 헤더 '뱃지' 탭으로 별도 패널 열기 (MyReviewsPanel과 상호배타). `badgeStore.ts`에서 상태 관리. DB 테이블 3개: `badge_boards`(뱃지판 정의), `badge_board_places`(장소 목록), `user_badges`(획득 기록). 프리미엄만 뱃지판 생성 가능, 모든 유저 참여 가능. 6자리 공유코드(`share_code`) + `is_public` 공개 목록. 진행도는 유저 reviews 테이블과 대조하여 동적 계산. 마이그레이션: `005_badge_boards.sql`, `006_badge_board_sharing.sql`, `007_fetch_creator_reviews_rpc.sql`.
 42. **뱃지 컴포넌트 구조**: `BadgePanel.tsx`(메인 패널, 공유코드 입력, 내 뱃지판/둘러보기 2탭, 내 뱃지), `BadgeBoardCard.tsx`(카드+프로그레스바), `BadgeBoardDetail.tsx`(장소 목록+체크+진행도+수정모드+배포), `BadgeBoardCreate.tsx`(생성 폼, 장소 검색+추가), `AddToBoardModal.tsx`(검색결과→뱃지판 추가), `PublishModal.tsx`(배포 확인 모달).
 43. **뱃지 패널 상호배타**: `uiStore.ts`에서 `badgePanelActive`와 `myReviewsActive` 상호배타 처리. 하나 열면 다른 하나 자동 닫힘.
+44. **Render Keep-Alive**: `keepAlive.ts`의 `startKeepAlive()`가 5초마다 `GET /api/health`를 폴링하여 Render 서버 sleep 방지. `app/main.py`의 `HealthCheckFilter`가 `uvicorn.access` 로거에서 해당 요청 로그를 필터링.
 44. **뱃지판 공유/저장**: 공유코드(6자리) 또는 공개 목록(둘러보기)으로 다른 유저의 뱃지판 발견. "내 뱃지판에 추가"로 저장 (Supabase RPC `copy_badge_board` — SECURITY DEFINER로 RLS 우회). 저장된 보드는 `source_board_id`/`source_creator_id`로 원본 추적. 저장 보드는 둘러보기 목록에서 숨김.
 45. **뱃지판 배포**: 프리미엄 회원만 가능 (`tier !== 'premium'` 시 toast 안내). 모든 장소 방문 완료(100%) 필수. 배포 시 `is_public = true` + `share_code` 생성. 한 번 배포하면 수정 불가. `PublishModal.tsx`에서 확인.
 46. **뱃지판 수정 모드**: 미배포 원본 보드만 수정 가능 (편집 버튼 표시 조건: `isOriginalCreator && !is_public && !isSavedBoard`). 수정 모드에서 장소 삭제 + 장소 검색/추가 (디바운스 300ms, `searchPlaces()` API). `addPlaceToBoard()` 호출 시 `boardPlaces` 상태도 즉시 갱신.

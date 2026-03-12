@@ -58,7 +58,8 @@ K-daejeop/
 │   ├── package.json
 │   ├── public/                  # PWA 아이콘, manifest.json
 │   ├── src/
-│   │   ├── main.tsx             # React 진입점
+│   │   ├── main.tsx             # React 진입점 (keep-alive 포함)
+│   │   ├── keepAlive.ts         # Render 서버 sleep 방지 폴링
 │   │   ├── App.tsx              # 인증 분기 (LoginScreen | AppLayout)
 │   │   ├── index.css            # Tailwind CSS v4 테마 + 커스텀 스타일
 │   │   ├── env.ts               # 환경 변수 래퍼
@@ -77,7 +78,7 @@ K-daejeop/
 │   │   ├── i18n/                # react-i18next + 4개 언어 JSON
 │   │   ├── utils/               # escapeHtml, distance, rankFoodFirst, imageUrl, buildReviewPin
 │   │   └── types/               # Kakao Maps TypeScript 선언
-│   └── tests/                   # Vitest + React Testing Library (184개)
+│   └── tests/                   # Vitest + React Testing Library (201개)
 │       ├── setup.ts
 │       ├── utils/
 │       ├── stores/
@@ -105,7 +106,7 @@ K-daejeop/
 │       ├── 005_badge_boards.sql
 │       ├── 006_badge_board_sharing.sql
 │       └── 007_fetch_creator_reviews_rpc.sql
-├── tests/                       # pytest 백엔드 테스트 (65개)
+├── tests/                       # pytest 백엔드 테스트 (69개)
 │   ├── conftest.py
 │   ├── test_app.py
 │   ├── test_auth.py
@@ -116,6 +117,7 @@ K-daejeop/
 │   ├── test_reviews_ui.py
 │   ├── test_myreviews_ui.py
 │   ├── test_i18n_ui.py
+│   ├── test_health_filter.py
 │   └── test_supabase_connection.py
 ├── scripts/
 │   └── serve.sh
@@ -235,10 +237,10 @@ cd frontend && npm run build          # → app/static/dist/ 출력
 ## 테스트
 
 ```bash
-# 백엔드 (pytest, 65개)
+# 백엔드 (pytest, 69개)
 uv run pytest tests/ -v --ignore=tests/test_supabase_connection.py
 
-# 프론트엔드 (Vitest, 184개)
+# 프론트엔드 (Vitest, 201개)
 cd frontend && npm test
 ```
 
