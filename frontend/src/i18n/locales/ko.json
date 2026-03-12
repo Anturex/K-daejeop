@@ -1,5 +1,5 @@
 {
-  "login.subtitle": "내 리뷰를 쌓으면,<br/>나와 취향이 비슷한 사람들의 맛집을 볼 수 있어요",
+  "login.subtitle": "내 리뷰를 쌓으면,<br/>나와 취향이 비슷한 사람들의 추천 장소를 볼 수 있어요",
   "login.feature.search": "음식점·카페·관광명소 실시간 검색",
   "login.feature.rating": "4단계 별점 리뷰 시스템",
   "login.feature.unlock": "리뷰 10개 작성 → 추천 장소 해금",
@@ -183,5 +183,29 @@
   "changelog.badgeIntro": "뱃지판이 추가되었습니다! 나만의 맛집 리스트를 만들고 방문 진행도를 관리하세요.",
   "changelog.badgePersonal": "뱃지판은 나 혼자만 만들어서 사용할 수 있어요. 가고 싶은 곳을 모아보세요.",
   "changelog.badgeShare": "공유코드를 통해 친구에게 내 뱃지판을 공유할 수 있어요.",
-  "changelog.badgePublish": "배포하기를 통해 모든 유저에게 공개할 수 있어요. 배포는 프리미엄 회원 전용이며 한 달에 한 번만 가능합니다."
+  "changelog.badgePublish": "배포하기를 통해 모든 유저에게 공개할 수 있어요. 배포는 프리미엄 회원 전용이며 한 달에 한 번만 가능합니다.",
+
+  "landing.aboutTitle": "K-daejeop이란?",
+  "landing.aboutDesc": "K-daejeop은 한국의 음식점, 카페, 관광명소를 기록하는 나만의 장소 기록장입니다. 4단계 별점과 사진으로 솔직한 리뷰를 남기고, 리뷰를 10개 이상 쌓으면 나와 취향이 비슷한 사람들의 추천 장소를 발견할 수 있어요.",
+  "landing.howTitle": "이렇게 사용해요",
+  "landing.step1": "검색창에 음식점·카페·관광명소 이름을 입력하세요",
+  "landing.step2": "4단계 별점(✕·⭐·⭐⭐·⭐⭐⭐)으로 평가하고, 사진과 함께 리뷰를 남기세요",
+  "landing.step3": "내 장소 탭에서 지금까지 기록한 장소를 한눈에 확인하세요",
+  "landing.step4": "리뷰 10개를 달성하면 다른 사용자의 추천 장소가 해금됩니다",
+  "landing.featuresTitle": "주요 기능",
+  "landing.feat.rating": "4단계 별점 — 재방문 안 함부터 꼭 가야 할 곳까지, 직관적인 평가 시스템",
+  "landing.feat.verified": "실제 방문 인증 — GPS 기반으로 실제로 방문한 장소인지 자동 확인",
+  "landing.feat.cluster": "클러스터 지도 — 내가 기록한 장소를 지도 위에서 한눈에 확인",
+  "landing.feat.badge": "뱃지판 — 나만의 장소 리스트를 만들고 방문 진행도를 관리",
+  "landing.faqTitle": "자주 묻는 질문",
+  "landing.faq.q1": "무료로 사용할 수 있나요?",
+  "landing.faq.a1": "네, 기본 기능은 모두 무료입니다. Google 계정만 있으면 바로 시작할 수 있어요.",
+  "landing.faq.q2": "어떤 장소를 기록할 수 있나요?",
+  "landing.faq.a2": "한국 내 음식점, 카페, 관광명소 등 카카오맵에 등록된 모든 장소를 검색하고 리뷰할 수 있습니다.",
+  "landing.faq.q3": "추천 장소는 어떻게 받나요?",
+  "landing.faq.a3": "리뷰를 10개 이상 작성하면 나와 취향이 비슷한 다른 사용자의 추천 장소가 자동으로 해금됩니다.",
+  "landing.faq.q4": "사진은 꼭 첨부해야 하나요?",
+  "landing.faq.a4": "네, 리뷰당 사진 한 장은 필수입니다. 나중에 기억하기 좋고, 다른 사용자에게도 도움이 됩니다.",
+  "landing.faq.q5": "뱃지판이 뭔가요?",
+  "landing.faq.a5": "가고 싶은 장소를 모아 나만의 리스트를 만드는 기능입니다. 방문할 때마다 진행도가 올라가고, 모두 방문하면 뱃지를 획득할 수 있어요."
 }

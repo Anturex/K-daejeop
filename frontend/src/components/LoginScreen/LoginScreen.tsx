@@ -12,81 +12,150 @@ export function LoginScreen() {
   )
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-bg">
+    <div className="fixed inset-0 z-[10000] overflow-y-auto bg-bg">
       {/* Background gradient */}
-      <div className="absolute inset-0">
+      <div className="pointer-events-none fixed inset-0">
         <div className="absolute inset-0 bg-gradient-to-b from-accent/10 via-transparent to-accent/5" />
       </div>
 
-      <div className="relative z-10 mx-4 w-full max-w-sm rounded-2xl bg-surface p-8 shadow-xl">
-        {/* Top bar: spacer + language */}
-        <div className="mb-4 flex items-center justify-end">
-          <LanguageSelector />
-        </div>
+      <div className="relative z-10 flex min-h-full flex-col items-center px-4 py-10">
+        {/* Login card */}
+        <div className="w-full max-w-sm rounded-2xl bg-surface p-8 shadow-xl">
+          {/* Top bar: spacer + language */}
+          <div className="mb-4 flex items-center justify-end">
+            <LanguageSelector />
+          </div>
 
-        {/* Header */}
-        <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 h-16 w-16 overflow-hidden rounded-full bg-[#C4A265] shadow-md">
-            <img
-              src="/icon-256.png"
-              alt="K-daejeop"
-              className="h-full w-full scale-[1.12] object-cover"
+          {/* Header */}
+          <div className="mb-6 text-center">
+            <div className="mx-auto mb-3 h-16 w-16 overflow-hidden rounded-full bg-[#C4A265] shadow-md">
+              <img
+                src="/icon-256.png"
+                alt="K-daejeop"
+                className="h-full w-full scale-[1.12] object-cover"
+              />
+            </div>
+            <h1 className="font-serif text-2xl font-bold text-dark">
+              K-daejeop
+            </h1>
+            <p
+              className="mt-2 text-sm text-text-muted"
+              dangerouslySetInnerHTML={{ __html: t('login.subtitle') }}
             />
           </div>
-          <h1 className="font-serif text-2xl font-bold text-dark">
-            K-daejeop
-          </h1>
-          <p
-            className="mt-2 text-sm text-text-muted"
-            dangerouslySetInnerHTML={{ __html: t('login.subtitle') }}
-          />
-        </div>
 
-        {/* Features */}
-        <div className="mb-6 space-y-3">
-          <Feature icon="search" text={t('login.feature.search')} />
-          <Feature icon="star" text={t('login.feature.rating')} />
-          <Feature icon="users" text={t('login.feature.unlock')} />
-        </div>
-
-        {/* Google Login button */}
-        <button
-          onClick={handleGoogleLogin}
-          disabled={isLoggingIn}
-          className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
-        >
-          <GoogleIcon />
-          {isLoggingIn ? '...' : t('login.google')}
-        </button>
-
-        {/* Footer */}
-        <p className="mt-4 text-center text-xs text-text-muted">
-          <Trans
-            i18nKey="login.footer"
-            components={{
-              a: (
-                // eslint-disable-next-line jsx-a11y/anchor-has-content
-                <a
-                  href="#"
-                  className="underline hover:text-accent"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    const target = e.currentTarget.getAttribute('href')
-                    if (target === '#terms') setLegalModal('terms')
-                    else if (target === '#privacy') setLegalModal('privacy')
-                  }}
-                />
-              ),
-            }}
-          />
-        </p>
-
-        {/* Loading spinner */}
-        {isLoggingIn && (
-          <div className="mt-4 flex justify-center">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+          {/* Features */}
+          <div className="mb-6 space-y-3">
+            <Feature icon="search" text={t('login.feature.search')} />
+            <Feature icon="star" text={t('login.feature.rating')} />
+            <Feature icon="users" text={t('login.feature.unlock')} />
           </div>
-        )}
+
+          {/* Google Login button */}
+          <button
+            onClick={handleGoogleLogin}
+            disabled={isLoggingIn}
+            className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 active:bg-gray-100 disabled:opacity-60"
+          >
+            <GoogleIcon />
+            {isLoggingIn ? '...' : t('login.google')}
+          </button>
+
+          {/* Footer */}
+          <p className="mt-4 text-center text-xs text-text-muted">
+            <Trans
+              i18nKey="login.footer"
+              components={{
+                a: (
+                  // eslint-disable-next-line jsx-a11y/anchor-has-content
+                  <a
+                    href="#"
+                    className="underline hover:text-accent"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      const target = e.currentTarget.getAttribute('href')
+                      if (target === '#terms') setLegalModal('terms')
+                      else if (target === '#privacy') setLegalModal('privacy')
+                    }}
+                  />
+                ),
+              }}
+            />
+          </p>
+
+          {/* Loading spinner */}
+          {isLoggingIn && (
+            <div className="mt-4 flex justify-center">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+            </div>
+          )}
+        </div>
+
+        {/* Service intro sections */}
+        <div className="mt-8 w-full max-w-sm space-y-6">
+          {/* About */}
+          <section className="rounded-2xl bg-surface p-6 shadow-sm">
+            <h2 className="mb-3 font-serif text-lg font-bold text-dark">
+              {t('landing.aboutTitle')}
+            </h2>
+            <p className="text-sm leading-relaxed text-text-primary">
+              {t('landing.aboutDesc')}
+            </p>
+          </section>
+
+          {/* How to use */}
+          <section className="rounded-2xl bg-surface p-6 shadow-sm">
+            <h2 className="mb-3 font-serif text-lg font-bold text-dark">
+              {t('landing.howTitle')}
+            </h2>
+            <ol className="space-y-2 text-sm leading-relaxed text-text-primary">
+              {[1, 2, 3, 4].map((n) => (
+                <li key={n} className="flex gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/15 text-xs font-bold text-accent">
+                    {n}
+                  </span>
+                  <span>{t(`landing.step${n}`)}</span>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          {/* Features */}
+          <section className="rounded-2xl bg-surface p-6 shadow-sm">
+            <h2 className="mb-3 font-serif text-lg font-bold text-dark">
+              {t('landing.featuresTitle')}
+            </h2>
+            <ul className="space-y-2 text-sm leading-relaxed text-text-primary">
+              {(['rating', 'verified', 'cluster', 'badge'] as const).map(
+                (key) => (
+                  <li key={key} className="flex gap-2">
+                    <span className="shrink-0 text-accent">•</span>
+                    <span>{t(`landing.feat.${key}`)}</span>
+                  </li>
+                ),
+              )}
+            </ul>
+          </section>
+
+          {/* FAQ */}
+          <section className="rounded-2xl bg-surface p-6 shadow-sm">
+            <h2 className="mb-3 font-serif text-lg font-bold text-dark">
+              {t('landing.faqTitle')}
+            </h2>
+            <dl className="space-y-3 text-sm leading-relaxed text-text-primary">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <div key={n}>
+                  <dt className="font-semibold text-dark">
+                    {t(`landing.faq.q${n}`)}
+                  </dt>
+                  <dd className="mt-0.5 text-text-muted">
+                    {t(`landing.faq.a${n}`)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        </div>
       </div>
 
       {legalModal && (

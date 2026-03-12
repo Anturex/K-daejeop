@@ -1,5 +1,5 @@
 {
-  "login.subtitle": "Write reviews and discover<br/>hidden gems from people who share your taste",
+  "login.subtitle": "Write reviews and discover<br/>recommended places from people who share your taste",
   "login.feature.search": "Search restaurants, cafes & attractions",
   "login.feature.rating": "4-tier star rating system",
   "login.feature.unlock": "Write 10 reviews → unlock recommendations",
@@ -183,5 +183,29 @@
   "changelog.badgeIntro": "Badge Boards are here! Create your own restaurant lists and track your visit progress.",
   "changelog.badgePersonal": "Badge boards are personal — build your own list of places you want to visit.",
   "changelog.badgeShare": "Share your badge board with friends using a share code.",
-  "changelog.badgePublish": "Publish your board to make it visible to everyone. Publishing is premium-only and limited to once per month."
+  "changelog.badgePublish": "Publish your board to make it visible to everyone. Publishing is premium-only and limited to once per month.",
+
+  "landing.aboutTitle": "What is K-daejeop?",
+  "landing.aboutDesc": "K-daejeop is your personal place journal for restaurants, cafes, and attractions in Korea. Leave honest reviews with a 4-tier rating and photos, and after 10 reviews, discover recommended places from people with similar taste.",
+  "landing.howTitle": "How it works",
+  "landing.step1": "Search for a restaurant, cafe, or attraction in the search bar",
+  "landing.step2": "Rate it with a 4-tier system (✕·⭐·⭐⭐·⭐⭐⭐) and leave a review with a photo",
+  "landing.step3": "View all your recorded places in the My Places tab",
+  "landing.step4": "Reach 10 reviews to unlock recommendations from other users",
+  "landing.featuresTitle": "Key Features",
+  "landing.feat.rating": "4-tier ratings — From 'never again' to 'must-visit', an intuitive rating system",
+  "landing.feat.verified": "Verified visits — GPS-based automatic verification of your actual visits",
+  "landing.feat.cluster": "Cluster map — See all your recorded places at a glance on the map",
+  "landing.feat.badge": "Badge boards — Create your own place lists and track visit progress",
+  "landing.faqTitle": "FAQ",
+  "landing.faq.q1": "Is it free to use?",
+  "landing.faq.a1": "Yes, all basic features are free. Just sign in with your Google account to get started.",
+  "landing.faq.q2": "What kind of places can I review?",
+  "landing.faq.a2": "You can search and review any place registered on Kakao Map in Korea — restaurants, cafes, attractions, and more.",
+  "landing.faq.q3": "How do I get recommendations?",
+  "landing.faq.a3": "Write 10 or more reviews and recommendations from users with similar taste will be automatically unlocked.",
+  "landing.faq.q4": "Is a photo required?",
+  "landing.faq.a4": "Yes, one photo per review is required. It helps you remember later and is useful for other users too.",
+  "landing.faq.q5": "What are badge boards?",
+  "landing.faq.a5": "A feature to create your own list of places you want to visit. Your progress goes up with each visit, and you earn a badge when you complete them all."
 }
