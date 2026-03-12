@@ -2,8 +2,8 @@ name: Keep Alive
 
 on:
   schedule:
-    # Every 3 minutes
-    - cron: '*/3 * * * *'
+    # Every 14 minutes
+    - cron: '*/14 * * * *'
   workflow_dispatch:
 
 jobs:
