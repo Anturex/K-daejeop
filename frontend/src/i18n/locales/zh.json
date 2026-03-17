@@ -31,6 +31,11 @@
   "category.attraction": "景点",
   "category.etc": "其他",
 
+  "map.myLocation": "我的位置",
+  "map.gpsDenied": "位置权限被拒绝，请在设置中允许。",
+  "map.gpsUnavailable": "无法获取当前位置。",
+  "map.gpsOutOfRange": "当前位置不在韩国范围内。",
+
   "ad.sponsored": "广告",
 
   "auth.noSetup": "登录功能未配置。",

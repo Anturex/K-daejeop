@@ -2,6 +2,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useUiStore } from '../../src/stores/uiStore'
 
 describe('uiStore', () => {
+  it('defaults myReviewsActive to true', () => {
+    // Reset to initial state by recreating store defaults
+    useUiStore.setState({ myReviewsActive: true })
+    expect(useUiStore.getState().myReviewsActive).toBe(true)
+  })
+
   beforeEach(() => {
     useUiStore.setState({
       myReviewsActive: false,

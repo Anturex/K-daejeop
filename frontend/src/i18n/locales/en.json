@@ -31,6 +31,11 @@
   "category.attraction": "Attraction",
   "category.etc": "Other",
 
+  "map.myLocation": "My location",
+  "map.gpsDenied": "Location access denied. Please allow it in your settings.",
+  "map.gpsUnavailable": "Unable to get your current location.",
+  "map.gpsOutOfRange": "Your location is outside of Korea.",
+
   "ad.sponsored": "Sponsored",
 
   "auth.noSetup": "Sign-in is not configured.",

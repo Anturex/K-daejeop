@@ -30,10 +30,11 @@ export function useGeolocation() {
     }
 
     requestedRef.current = true
-    setState((s) => ({ ...s, loading: true, error: null }))
+    setState((s) => ({ ...s, loading: true, error: null, lat: null, lng: null }))
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        requestedRef.current = false
         setState({
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
@@ -42,6 +43,7 @@ export function useGeolocation() {
         })
       },
       (err) => {
+        requestedRef.current = false
         setState({
           lat: null,
           lng: null,

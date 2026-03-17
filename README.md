@@ -78,7 +78,7 @@ K-daejeop/
 │   │   ├── i18n/                # react-i18next + 4개 언어 JSON
 │   │   ├── utils/               # escapeHtml, distance, rankFoodFirst, imageUrl, buildReviewPin
 │   │   └── types/               # Kakao Maps TypeScript 선언
-│   └── tests/                   # Vitest + React Testing Library (201개)
+│   └── tests/                   # Vitest + React Testing Library (211개)
 │       ├── setup.ts
 │       ├── utils/
 │       ├── stores/
@@ -240,7 +240,7 @@ cd frontend && npm run build          # → app/static/dist/ 출력
 # 백엔드 (pytest, 69개)
 uv run pytest tests/ -v --ignore=tests/test_supabase_connection.py
 
-# 프론트엔드 (Vitest, 201개)
+# 프론트엔드 (Vitest, 211개)
 cd frontend && npm test
 ```
 

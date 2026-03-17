@@ -105,7 +105,23 @@ describe('useGeolocation', () => {
     expect(result.current.error).toBe('not-supported')
   })
 
-  it('only requests once even if called multiple times', () => {
+  it('guards against concurrent requests but allows sequential calls', () => {
+    // First call: async (does not resolve immediately)
+    mockGetCurrentPosition.mockImplementationOnce(() => {
+      // pending — does not call success/error
+    })
+
+    const { result } = renderHook(() => useGeolocation())
+
+    act(() => {
+      result.current.requestLocation()
+      result.current.requestLocation() // ignored while first is pending
+    })
+
+    expect(mockGetCurrentPosition).toHaveBeenCalledTimes(1)
+  })
+
+  it('allows re-request after success', () => {
     mockGetCurrentPosition.mockImplementation(
       (success: PositionCallback) => {
         success({
@@ -118,10 +134,12 @@ describe('useGeolocation', () => {
 
     act(() => {
       result.current.requestLocation()
-      result.current.requestLocation()
+    })
+
+    act(() => {
       result.current.requestLocation()
     })
 
-    expect(mockGetCurrentPosition).toHaveBeenCalledTimes(1)
+    expect(mockGetCurrentPosition).toHaveBeenCalledTimes(2)
   })
 })

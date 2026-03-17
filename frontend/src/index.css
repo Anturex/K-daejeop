@@ -482,3 +482,13 @@ body {
   color: #fff;
   border-color: var(--color-accent);
 }
+
+/* ===== 현위치 파란 점 (Kakao CustomOverlay) ===== */
+.my-location-dot {
+  width: 16px;
+  height: 16px;
+  background: #4285F4;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(66, 133, 244, 0.25), 0 2px 6px rgba(0, 0, 0, 0.2);
+}

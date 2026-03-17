@@ -31,6 +31,11 @@
   "category.attraction": "관광명소",
   "category.etc": "기타",
 
+  "map.myLocation": "현위치",
+  "map.gpsDenied": "위치 권한이 거부되었습니다. 설정에서 허용해 주세요.",
+  "map.gpsUnavailable": "현재 위치를 가져올 수 없습니다.",
+  "map.gpsOutOfRange": "현재 위치가 한국 영역 밖입니다.",
+
   "ad.sponsored": "광고",
 
   "auth.noSetup": "로그인 기능이 설정되지 않았습니다.",

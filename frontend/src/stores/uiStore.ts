@@ -31,7 +31,7 @@ let toastCounter = 0
 let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 export const useUiStore = create<UiState>((set) => ({
-  myReviewsActive: false,
+  myReviewsActive: true,
   setMyReviewsActive: (active) =>
     set({ myReviewsActive: active, ...(active ? { badgePanelActive: false } : {}) }),
 
