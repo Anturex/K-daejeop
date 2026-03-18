@@ -15,46 +15,87 @@
     <meta name="apple-mobile-web-app-title" content="K-daejeop" />
     <link rel="apple-touch-icon" href="/icon-pwa-192.png" />
     <link rel="icon" type="image/png" href="/icon-256.png" />
+
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6570449864880886"
+     crossorigin="anonymous"></script>
   </head>
   <body>
     <div id="root">
       <!-- Static content for SEO / AdSense crawlers — replaced by React on mount -->
-      <div style="max-width:400px;margin:0 auto;padding:40px 16px;font-family:'Noto Sans KR',sans-serif;color:#333;">
-        <h1 style="font-size:1.5rem;font-weight:bold;text-align:center;">K-daejeop</h1>
-        <p style="text-align:center;color:#666;margin-top:8px;">나만의 장소 기록장. 음식점, 카페, 관광명소에 별점과 사진을 남기고, 취향이 비슷한 사람들의 추천 장소를 발견하세요.</p>
+      <div style="max-width:480px;margin:0 auto;padding:40px 16px;font-family:'Noto Sans KR',sans-serif;color:#333;line-height:1.7;">
 
-        <h2 style="font-size:1.125rem;font-weight:bold;margin-top:32px;">K-daejeop이란?</h2>
-        <p style="margin-top:8px;line-height:1.6;">K-daejeop은 한국의 음식점, 카페, 관광명소를 기록하는 나만의 장소 기록장입니다. 4단계 별점과 사진으로 솔직한 리뷰를 남기고, 리뷰를 10개 이상 쌓으면 나와 취향이 비슷한 사람들의 추천 장소를 발견할 수 있어요.</p>
+        <header style="text-align:center;margin-bottom:32px;">
+          <h1 style="font-size:1.75rem;font-weight:bold;">K-daejeop</h1>
+          <p style="color:#666;margin-top:8px;font-size:0.95rem;">나만의 장소 기록장. 음식점, 카페, 관광명소에 별점과 사진을 남기고, 취향이 비슷한 사람들의 추천 장소를 발견하세요.</p>
+        </header>
 
-        <h2 style="font-size:1.125rem;font-weight:bold;margin-top:32px;">이렇게 사용해요</h2>
-        <ol style="margin-top:8px;padding-left:20px;line-height:1.6;">
-          <li>검색창에 음식점·카페·관광명소 이름을 입력하세요</li>
-          <li>4단계 별점(✕·⭐·⭐⭐·⭐⭐⭐)으로 평가하고, 사진과 함께 리뷰를 남기세요</li>
-          <li>내 장소 탭에서 지금까지 기록한 장소를 한눈에 확인하세요</li>
-          <li>리뷰 10개를 달성하면 다른 사용자의 추천 장소가 해금됩니다</li>
-        </ol>
+        <article>
+          <h2 style="font-size:1.2rem;font-weight:bold;margin-top:32px;">K-daejeop이란?</h2>
+          <p style="margin-top:8px;">K-daejeop은 한국의 음식점, 카페, 관광명소를 기록하는 나만의 장소 기록장입니다. 4단계 별점과 사진으로 솔직한 리뷰를 남기고, 리뷰를 10개 이상 쌓으면 나와 취향이 비슷한 사람들의 추천 장소를 발견할 수 있어요. 카카오맵 기반으로 한국 전역의 음식점, 카페, 관광명소를 실시간으로 검색하고, 방문한 장소마다 나만의 기록을 쌓아 나갈 수 있습니다.</p>
 
-        <h2 style="font-size:1.125rem;font-weight:bold;margin-top:32px;">주요 기능</h2>
-        <ul style="margin-top:8px;padding-left:20px;line-height:1.6;">
-          <li>4단계 별점 — 재방문 안 함부터 꼭 가야 할 곳까지, 직관적인 평가 시스템</li>
-          <li>실제 방문 인증 — GPS 기반으로 실제로 방문한 장소인지 자동 확인</li>
-          <li>클러스터 지도 — 내가 기록한 장소를 지도 위에서 한눈에 확인</li>
-          <li>뱃지판 — 나만의 장소 리스트를 만들고 방문 진행도를 관리</li>
-        </ul>
+          <h2 style="font-size:1.2rem;font-weight:bold;margin-top:32px;">이렇게 사용해요</h2>
+          <ol style="margin-top:8px;padding-left:20px;">
+            <li style="margin-bottom:8px;"><strong>장소 검색</strong> — 검색창에 음식점·카페·관광명소 이름을 입력하면 실시간으로 추천 결과가 나타납니다. 카카오맵에 등록된 한국 전역의 장소를 검색할 수 있어요.</li>
+            <li style="margin-bottom:8px;"><strong>리뷰 작성</strong> — 4단계 별점(✕·⭐·⭐⭐·⭐⭐⭐)으로 평가하고, 사진과 함께 리뷰를 남기세요. 사진 한 장은 필수이며, 간단한 메모를 적으면 나중에 기억하기 좋아요.</li>
+            <li style="margin-bottom:8px;"><strong>내 장소 확인</strong> — 내 장소 탭에서 지금까지 기록한 장소를 지도 위에서 한눈에 확인할 수 있습니다. 클러스터 지도로 한눈에 모아보기도 가능해요.</li>
+            <li style="margin-bottom:8px;"><strong>추천 장소 해금</strong> — 리뷰 10개를 달성하면 나와 취향이 비슷한 다른 사용자의 추천 장소가 해금됩니다.</li>
+          </ol>
 
-        <h2 style="font-size:1.125rem;font-weight:bold;margin-top:32px;">자주 묻는 질문</h2>
-        <dl style="margin-top:8px;line-height:1.6;">
-          <dt style="font-weight:600;">무료로 사용할 수 있나요?</dt>
-          <dd style="color:#666;margin:4px 0 12px;">네, 기본 기능은 모두 무료입니다. Google 계정만 있으면 바로 시작할 수 있어요.</dd>
-          <dt style="font-weight:600;">어떤 장소를 기록할 수 있나요?</dt>
-          <dd style="color:#666;margin:4px 0 12px;">한국 내 음식점, 카페, 관광명소 등 카카오맵에 등록된 모든 장소를 검색하고 리뷰할 수 있습니다.</dd>
-          <dt style="font-weight:600;">추천 장소는 어떻게 받나요?</dt>
-          <dd style="color:#666;margin:4px 0 12px;">리뷰를 10개 이상 작성하면 나와 취향이 비슷한 다른 사용자의 추천 장소가 자동으로 해금됩니다.</dd>
-          <dt style="font-weight:600;">사진은 꼭 첨부해야 하나요?</dt>
-          <dd style="color:#666;margin:4px 0 12px;">네, 리뷰당 사진 한 장은 필수입니다. 나중에 기억하기 좋고, 다른 사용자에게도 도움이 됩니다.</dd>
-          <dt style="font-weight:600;">뱃지판이 뭔가요?</dt>
-          <dd style="color:#666;margin:4px 0 12px;">가고 싶은 장소를 모아 나만의 리스트를 만드는 기능입니다. 방문할 때마다 진행도가 올라가고, 모두 방문하면 뱃지를 획득할 수 있어요.</dd>
-        </dl>
+          <h2 style="font-size:1.2rem;font-weight:bold;margin-top:32px;">4단계 별점 시스템</h2>
+          <p style="margin-top:8px;">K-daejeop은 일반적인 5점 만점이 아닌, 직관적인 4단계 별점 시스템을 사용합니다.</p>
+          <ul style="margin-top:8px;padding-left:20px;">
+            <li style="margin-bottom:6px;"><strong>✕ 재방문 안 함</strong> — 다시는 재방문 하지 않을 곳</li>
+            <li style="margin-bottom:6px;"><strong>⭐ 가볍게 갈 곳</strong> — 동네에서 가볍게 방문할만 한 곳</li>
+            <li style="margin-bottom:6px;"><strong>⭐⭐ 추천할 곳</strong> — 누군가 오면 추천해줄 수 있는 곳</li>
+            <li style="margin-bottom:6px;"><strong>⭐⭐⭐ 꼭 가야 할 곳</strong> — 반드시 가야 한다고 말할 수 있는 곳</li>
+          </ul>
+          <p style="margin-top:8px;">5점 만점 시스템에서는 대부분 4~5점에 몰리기 쉽지만, K-daejeop의 4단계 시스템은 각 단계가 명확한 의미를 가져 더 솔직하고 유용한 평가가 가능합니다.</p>
+
+          <h2 style="font-size:1.2rem;font-weight:bold;margin-top:32px;">주요 기능</h2>
+          <ul style="margin-top:8px;padding-left:20px;">
+            <li style="margin-bottom:8px;"><strong>4단계 별점</strong> — 재방문 안 함부터 꼭 가야 할 곳까지, 직관적인 평가 시스템. 일반적인 5점 척도보다 더 의미 있는 구분이 가능합니다.</li>
+            <li style="margin-bottom:8px;"><strong>실제 방문 인증</strong> — GPS 기반으로 실제로 방문한 장소인지 자동 확인합니다. 방문 인증이 되면 리뷰에 초록색 인증 뱃지가 표시되어 신뢰도가 높아집니다.</li>
+            <li style="margin-bottom:8px;"><strong>클러스터 지도</strong> — 내가 기록한 장소를 지도 위에서 한눈에 확인할 수 있습니다. 가까운 장소끼리 자동으로 묶여 사진 그리드로 표시됩니다.</li>
+            <li style="margin-bottom:8px;"><strong>뱃지판</strong> — 가고 싶은 장소를 모아 나만의 리스트를 만들고 방문 진행도를 관리할 수 있습니다. 모든 장소를 방문하면 뱃지를 획득하고, 친구에게 공유코드로 공유할 수도 있어요.</li>
+            <li style="margin-bottom:8px;"><strong>카카오맵 연동</strong> — 카카오맵에 등록된 한국 전역의 음식점, 카페, 관광명소를 실시간으로 검색할 수 있습니다.</li>
+            <li style="margin-bottom:8px;"><strong>다국어 지원</strong> — 한국어, 영어, 일본어, 중국어 4개 언어를 지원합니다.</li>
+          </ul>
+
+          <h2 style="font-size:1.2rem;font-weight:bold;margin-top:32px;">뱃지판이란?</h2>
+          <p style="margin-top:8px;">뱃지판은 가고 싶은 장소를 모아 나만의 리스트를 만드는 기능입니다. 예를 들어 "서울 3대 떡볶이", "제주도 카페 투어", "부산 해운대 맛집" 같은 테마별 장소 리스트를 만들 수 있어요. 방문할 때마다 진행도가 올라가고, 모든 장소를 방문하면 뱃지를 획득할 수 있습니다. 완성된 뱃지판은 공유코드를 통해 친구에게 공유하거나, 전체 공개하여 다른 사용자와 나눌 수도 있어요.</p>
+
+          <h2 style="font-size:1.2rem;font-weight:bold;margin-top:32px;">자주 묻는 질문</h2>
+          <dl style="margin-top:8px;">
+            <dt style="font-weight:600;">무료로 사용할 수 있나요?</dt>
+            <dd style="color:#666;margin:4px 0 16px;">네, 기본 기능은 모두 무료입니다. Google 계정만 있으면 바로 시작할 수 있어요. 장소 검색, 리뷰 작성, 내 장소 확인, 추천 장소 해금까지 모두 무료로 이용 가능합니다.</dd>
+
+            <dt style="font-weight:600;">어떤 장소를 기록할 수 있나요?</dt>
+            <dd style="color:#666;margin:4px 0 16px;">한국 내 음식점, 카페, 관광명소 등 카카오맵에 등록된 모든 장소를 검색하고 리뷰할 수 있습니다. 음식점과 카페가 우선적으로 검색되며, 관광명소나 기타 장소도 기록할 수 있어요.</dd>
+
+            <dt style="font-weight:600;">추천 장소는 어떻게 받나요?</dt>
+            <dd style="color:#666;margin:4px 0 16px;">리뷰를 10개 이상 작성하면 나와 취향이 비슷한 다른 사용자의 추천 장소가 자동으로 해금됩니다. 내가 높은 별점을 준 장소와 비슷한 취향의 사용자가 추천한 장소를 발견할 수 있어요.</dd>
+
+            <dt style="font-weight:600;">사진은 꼭 첨부해야 하나요?</dt>
+            <dd style="color:#666;margin:4px 0 16px;">네, 리뷰당 사진 한 장은 필수입니다. 나중에 기억하기 좋고, 다른 사용자에게도 도움이 됩니다. JPG, PNG, HEIC 형식을 지원하며, 최대 10MB까지 업로드할 수 있어요. 업로드 시 자동으로 압축되어 빠르게 로딩됩니다.</dd>
+
+            <dt style="font-weight:600;">뱃지판이 뭔가요?</dt>
+            <dd style="color:#666;margin:4px 0 16px;">가고 싶은 장소를 모아 나만의 리스트를 만드는 기능입니다. 방문할 때마다 진행도가 올라가고, 모두 방문하면 뱃지를 획득할 수 있어요. 공유코드로 친구에게 공유하거나, 배포하여 전체 공개할 수도 있습니다.</dd>
+
+            <dt style="font-weight:600;">실제 방문 인증은 어떻게 하나요?</dt>
+            <dd style="color:#666;margin:4px 0 16px;">리뷰를 작성할 때 브라우저의 GPS를 통해 현재 위치를 확인합니다. 해당 장소와 200m 이내에 있으면 자동으로 실제 방문 인증이 완료됩니다. GPS를 허용하지 않아도 리뷰 작성은 가능하지만, 인증 뱃지는 받을 수 없습니다.</dd>
+
+            <dt style="font-weight:600;">다른 사람의 리뷰를 볼 수 있나요?</dt>
+            <dd style="color:#666;margin:4px 0 16px;">현재는 리뷰 10개를 달성한 후 추천 장소를 통해 다른 사용자의 기록을 확인할 수 있습니다. K-daejeop은 나만의 기록을 먼저 쌓고, 그 기록을 바탕으로 취향이 비슷한 사람들의 추천을 받는 구조입니다.</dd>
+
+            <dt style="font-weight:600;">어떤 기기에서 사용할 수 있나요?</dt>
+            <dd style="color:#666;margin:4px 0 16px;">K-daejeop은 모바일 웹 기반 서비스로, 스마트폰 브라우저에서 바로 사용할 수 있습니다. 홈 화면에 추가하면 앱처럼 사용할 수도 있어요. PC 브라우저에서도 이용 가능합니다.</dd>
+          </dl>
+        </article>
+
+        <footer style="margin-top:40px;text-align:center;color:#999;font-size:0.8rem;">
+          <p>&copy; 2025 K-daejeop. 한국의 맛집, 카페, 관광명소를 기록하는 나만의 장소 기록장.</p>
+        </footer>
       </div>
     </div>
     <noscript><p style="text-align:center;padding:40px;">K-daejeop을 사용하려면 JavaScript를 활성화하세요.</p></noscript>
