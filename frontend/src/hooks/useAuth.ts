@@ -33,6 +33,7 @@ export function useAuth() {
     // iOS Safari bfcache
     const handlePageShow = (e: PageTransitionEvent) => {
       if (!e.persisted) return
+      if (useAuthStore.getState().isGuest) return
       sb.auth.getSession().then(({ data: { session } }) => {
         if (session) {
           setSession(session)
@@ -49,7 +50,7 @@ export function useAuth() {
     let timeoutId: ReturnType<typeof setTimeout> | undefined
     if (isOAuthRelated) {
       timeoutId = setTimeout(() => {
-        if (!authResolved.current) {
+        if (!authResolved.current && !useAuthStore.getState().isGuest) {
           authResolved.current = true
           logout()
           setLoading(false)
@@ -74,6 +75,7 @@ export function useAuth() {
       ) {
         // Waiting for PKCE code exchange
       } else if (event === 'INITIAL_SESSION' || event === 'SIGNED_OUT') {
+        if (useAuthStore.getState().isGuest) return
         authResolved.current = true
         logout()
         setLoading(false)
@@ -84,6 +86,7 @@ export function useAuth() {
     // Fallback getSession
     sb.auth.getSession().then(({ data: { session } }) => {
       if (authResolved.current) return
+      if (useAuthStore.getState().isGuest) return
       authResolved.current = true
       if (session?.user) {
         setSession(session)
