@@ -10,12 +10,14 @@ interface AuthState {
   isAuthenticated: boolean
   isLoading: boolean
   tutorialSeen: boolean
+  isGuest: boolean
 
   setSession: (session: Session | null) => void
   setUser: (user: User | null) => void
   setTier: (tier: UserTier) => void
   setTutorialSeen: (seen: boolean) => void
   setLoading: (loading: boolean) => void
+  loginAsGuest: () => void
   logout: () => void
 }
 
@@ -26,6 +28,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   isLoading: true,
   tutorialSeen: false,
+  isGuest: false,
 
   setSession: (session) =>
     set({
@@ -39,12 +42,31 @@ export const useAuthStore = create<AuthState>((set) => ({
   setTutorialSeen: (seen) => set({ tutorialSeen: seen }),
   setLoading: (loading) => set({ isLoading: loading }),
 
+  loginAsGuest: () =>
+    set({
+      user: {
+        id: 'guest-demo-user',
+        email: 'guest@k-daejeop.demo',
+        app_metadata: {},
+        user_metadata: { full_name: 'Guest' },
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+      } as User,
+      session: null,
+      tier: 'free',
+      isAuthenticated: true,
+      isLoading: false,
+      isGuest: true,
+      tutorialSeen: true,
+    }),
+
   logout: () =>
     set({
       user: null,
       session: null,
       tier: 'free',
       isAuthenticated: false,
+      isGuest: false,
       tutorialSeen: false,
     }),
 }))

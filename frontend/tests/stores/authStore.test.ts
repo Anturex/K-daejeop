@@ -10,6 +10,7 @@ describe('authStore', () => {
       isAuthenticated: false,
       isLoading: true,
       tutorialSeen: false,
+      isGuest: false,
     })
   })
 
@@ -68,5 +69,24 @@ describe('authStore', () => {
   it('setLoading updates loading state', () => {
     useAuthStore.getState().setLoading(false)
     expect(useAuthStore.getState().isLoading).toBe(false)
+  })
+
+  it('loginAsGuest sets guest auth state', () => {
+    useAuthStore.getState().loginAsGuest()
+    const state = useAuthStore.getState()
+    expect(state.isAuthenticated).toBe(true)
+    expect(state.isGuest).toBe(true)
+    expect(state.user?.id).toBe('guest-demo-user')
+    expect(state.session).toBeNull()
+    expect(state.tutorialSeen).toBe(true)
+  })
+
+  it('logout clears guest state', () => {
+    useAuthStore.getState().loginAsGuest()
+    useAuthStore.getState().logout()
+    const state = useAuthStore.getState()
+    expect(state.isAuthenticated).toBe(false)
+    expect(state.isGuest).toBe(false)
+    expect(state.user).toBeNull()
   })
 })

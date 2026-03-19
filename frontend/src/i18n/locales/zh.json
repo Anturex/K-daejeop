@@ -4,6 +4,7 @@
   "login.feature.rating": "四星评分系统",
   "login.feature.unlock": "写10条评价 → 解锁推荐",
   "login.google": "使用Google账号登录",
+  "login.guest": "免登录浏览",
   "login.footer": "登录即表示您同意<a href=\"#terms\">服务条款</a>和<a href=\"#privacy\">隐私政策</a>。",
 
   "tutorial.step1.title": "欢迎来到K-daejeop！👋",

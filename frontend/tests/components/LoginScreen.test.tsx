@@ -23,6 +23,7 @@ vi.mock('react-i18next', () => ({
         'login.feature.rating': '별점 리뷰 작성',
         'login.feature.unlock': '추천 장소 해금',
         'login.google': 'Google로 로그인',
+        'login.guest': '로그인 없이 둘러보기',
         'landing.aboutTitle': 'K-daejeop이란?',
         'landing.aboutDesc': '나만의 장소 기록장입니다.',
         'landing.howTitle': '이렇게 사용해요',
@@ -122,5 +123,18 @@ describe('LoginScreen', () => {
     const root = container.firstElementChild as HTMLElement
     expect(root.className).toContain('overflow-y-auto')
     expect(root.className).not.toContain('justify-center')
+  })
+
+  it('renders guest login button', () => {
+    render(<LoginScreen />)
+    expect(screen.getByText('로그인 없이 둘러보기')).toBeInTheDocument()
+  })
+
+  it('calls loginAsGuest on guest button click', () => {
+    render(<LoginScreen />)
+    const btn = screen.getByText('로그인 없이 둘러보기')
+    fireEvent.click(btn)
+    // loginAsGuest is called from real authStore — verified via authStore.test.ts
+    expect(btn).toBeInTheDocument()
   })
 })

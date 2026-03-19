@@ -4,6 +4,7 @@
   "login.feature.rating": "4段階の星評価システム",
   "login.feature.unlock": "レビュー10件投稿 → おすすめ解放",
   "login.google": "Googleアカウントで始める",
+  "login.guest": "ログインせずに見てみる",
   "login.footer": "ログインすると<a href=\"#terms\">利用規約</a>および<a href=\"#privacy\">プライバシーポリシー</a>に同意したことになります。",
 
   "tutorial.step1.title": "K-daejeopへようこそ！👋",

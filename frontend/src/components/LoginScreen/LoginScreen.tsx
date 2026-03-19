@@ -1,12 +1,14 @@
 import { useTranslation, Trans } from 'react-i18next'
 import { useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
+import { useAuthStore } from '../../stores/authStore'
 import { LegalModal } from './LegalModal'
 import { LanguageSelector } from '../LanguageSelector'
 
 export function LoginScreen() {
   const { t } = useTranslation()
   const { handleGoogleLogin, isLoggingIn } = useAuth()
+  const loginAsGuest = useAuthStore((s) => s.loginAsGuest)
   const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(
     null,
   )
@@ -59,6 +61,14 @@ export function LoginScreen() {
           >
             <GoogleIcon />
             {isLoggingIn ? '...' : t('login.google')}
+          </button>
+
+          {/* Guest demo button */}
+          <button
+            onClick={loginAsGuest}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-transparent px-4 py-2.5 text-xs text-text-muted transition-colors hover:bg-gray-50 active:bg-gray-100"
+          >
+            {t('login.guest')}
           </button>
 
           {/* Footer */}

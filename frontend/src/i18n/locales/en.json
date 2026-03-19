@@ -4,6 +4,7 @@
   "login.feature.rating": "4-tier star rating system",
   "login.feature.unlock": "Write 10 reviews → unlock recommendations",
   "login.google": "Continue with Google",
+  "login.guest": "Browse without signing in",
   "login.footer": "By signing in, you agree to the <a href=\"#terms\">Terms of Service</a> and <a href=\"#privacy\">Privacy Policy</a>.",
 
   "tutorial.step1.title": "Welcome to K-daejeop! 👋",
