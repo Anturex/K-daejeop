@@ -492,3 +492,278 @@ body {
   border-radius: 50%;
   box-shadow: 0 0 0 4px rgba(66, 133, 244, 0.25), 0 2px 6px rgba(0, 0, 0, 0.2);
 }
+
+/* ===== 코스메틱: 별 색상 ===== */
+.rv-pin--star-rose .rv-pin__rating { color: #E8967D; }
+.rv-pin--star-jade .rv-pin__rating { color: #4CAF50; }
+.rv-pin--star-amethyst .rv-pin__rating { color: #9C6ADE; }
+.rv-pin--star-cherry .rv-pin__rating { color: #F48FB1; }
+.rv-pin--star-obsidian .rv-pin__rating {
+  color: #2D2D2D;
+  text-shadow: 0 0 3px rgba(255, 215, 0, 0.6);
+}
+.rv-pin--star-aurora .rv-pin__rating {
+  background: linear-gradient(90deg, #F9A825, #E8967D, #9C6ADE, #4CAF50, #F48FB1, #F9A825);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: aurora-shift 3s linear infinite;
+}
+@keyframes aurora-shift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* ===== 코스메틱: 핀 프레임 ===== */
+.rv-pin--frame-wood .rv-pin__photo-wrap {
+  border: 2px solid #B5651D;
+}
+.rv-pin--frame-hanji .rv-pin__photo-wrap {
+  border: 2px dashed #D4943A;
+  background: #F5F0E8;
+}
+.rv-pin--frame-dancheong .rv-pin__photo-wrap {
+  border: 2.5px solid transparent;
+  background-image: linear-gradient(white, white), linear-gradient(135deg, #C23B22, #1E5B94, #2E8B57, #DAA520);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+.rv-pin--frame-gold .rv-pin__photo-wrap {
+  border: 2px solid #DAA520;
+  box-shadow: 0 0 8px rgba(218, 165, 32, 0.4);
+}
+.rv-pin--frame-lacquer .rv-pin__photo-wrap {
+  border: 2.5px solid #5C1A0A;
+  background: linear-gradient(145deg, #3E0C00, #6B1B08, #3E0C00);
+  background-clip: padding-box;
+}
+.rv-pin--frame-lacquer .rv-pin__name { border-bottom-color: #8B3A2A; }
+.rv-pin--frame-lacquer .rv-pin__name > span { color: #F5E6D3; }
+.rv-pin--frame-dragon .rv-pin__photo-wrap {
+  border: 2.5px solid transparent;
+  background-image: linear-gradient(white, white), linear-gradient(270deg, #F9A825, #E8967D, #9C6ADE, #4CAF50, #F48FB1, #F9A825);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  background-size: 100% 100%, 300% 100%;
+  animation: dragon-border 4s linear infinite;
+}
+@keyframes dragon-border {
+  0% { background-position: 0 0, 0% 50%; }
+  100% { background-position: 0 0, 300% 50%; }
+}
+
+/* ===== 코스메틱: 핀 이펙트 ===== */
+
+/* 김 모락모락 */
+.rv-pin--fx-steam::before {
+  content: '';
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 18px;
+  background: radial-gradient(ellipse, rgba(255,255,255,0.7) 0%, transparent 70%);
+  animation: steam-rise 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+@keyframes steam-rise {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(4px) scaleY(0.5); }
+  50%  { opacity: 0.8; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-10px) scaleY(1.2); }
+}
+
+/* 반짝임 */
+.rv-pin--fx-sparkle::before,
+.rv-pin--fx-sparkle::after {
+  content: '✦';
+  position: absolute;
+  font-size: 8px;
+  color: #F9A825;
+  pointer-events: none;
+  animation: sparkle-blink 1.5s ease-in-out infinite;
+}
+.rv-pin--fx-sparkle::before { top: -4px; right: -6px; animation-delay: 0s; }
+.rv-pin--fx-sparkle::after { top: 20px; left: -6px; animation-delay: 0.7s; }
+@keyframes sparkle-blink {
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50%      { opacity: 1; transform: scale(1.2); }
+}
+
+/* 후광 */
+.rv-pin--fx-halo {
+  filter: drop-shadow(0 3px 10px rgba(60, 40, 20, 0.22));
+  animation: halo-pulse 2.5s ease-in-out infinite;
+}
+@keyframes halo-pulse {
+  0%, 100% { filter: drop-shadow(0 3px 10px rgba(60, 40, 20, 0.22)); }
+  50%      { filter: drop-shadow(0 0 16px rgba(218, 165, 32, 0.45)); }
+}
+
+/* 벚꽃 흩날림 */
+.rv-pin--fx-sakura::before,
+.rv-pin--fx-sakura::after {
+  content: '🌸';
+  position: absolute;
+  font-size: 9px;
+  pointer-events: none;
+  animation: sakura-fall 3s ease-in-out infinite;
+}
+.rv-pin--fx-sakura::before { top: -6px; left: -4px; animation-delay: 0s; }
+.rv-pin--fx-sakura::after { top: 10px; right: -8px; animation-delay: 1.5s; font-size: 7px; }
+@keyframes sakura-fall {
+  0%   { opacity: 0; transform: translateY(-6px) rotate(0deg); }
+  30%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(20px) rotate(120deg); }
+}
+
+/* 불꽃 오라 */
+.rv-pin--fx-flame {
+  animation: flame-flicker 0.8s ease-in-out infinite alternate;
+}
+@keyframes flame-flicker {
+  0%   { filter: drop-shadow(0 0 6px rgba(255, 100, 0, 0.5)) drop-shadow(0 0 12px rgba(255, 50, 0, 0.2)); }
+  100% { filter: drop-shadow(0 0 10px rgba(255, 140, 0, 0.6)) drop-shadow(0 0 20px rgba(255, 80, 0, 0.3)); }
+}
+
+/* ===== 코스메틱: 핀 꼬리 ===== */
+.rv-pin__tail--ocher {
+  border-top-color: var(--color-accent);
+}
+.rv-pin__tail--heart {
+  border: none;
+  width: 14px;
+  height: 14px;
+  background: #E8967D;
+  transform: rotate(45deg);
+  border-radius: 0 0 2px 0;
+  margin-top: -2px;
+}
+.rv-pin__tail--heart::before,
+.rv-pin__tail--heart::after {
+  content: '';
+  position: absolute;
+  background: #E8967D;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+}
+.rv-pin__tail--heart::before { top: -7px; left: 0; }
+.rv-pin__tail--heart::after { top: 0; left: -7px; }
+
+.rv-pin__tail--star {
+  border: none;
+  width: 16px;
+  height: 16px;
+  background: #DAA520;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  margin-top: -2px;
+}
+.rv-pin__tail--chopsticks {
+  border: none;
+  width: 14px;
+  height: 18px;
+  margin-top: -2px;
+  position: relative;
+}
+.rv-pin__tail--chopsticks::before,
+.rv-pin__tail--chopsticks::after {
+  content: '';
+  position: absolute;
+  width: 2.5px;
+  height: 18px;
+  background: var(--color-accent);
+  border-radius: 1px;
+  top: 0;
+}
+.rv-pin__tail--chopsticks::before { left: 3px; transform: rotate(-4deg); }
+.rv-pin__tail--chopsticks::after { right: 3px; transform: rotate(4deg); }
+
+.rv-pin__tail--crown {
+  border: none;
+  width: 20px;
+  height: 14px;
+  background: #DAA520;
+  clip-path: polygon(0% 100%, 10% 30%, 30% 70%, 50% 0%, 70% 70%, 90% 30%, 100% 100%);
+  margin-top: -2px;
+}
+
+/* ===== 코스메틱: 리뷰 스탬프 ===== */
+.rv-pin--stamp-taste .rv-pin__photo::after,
+.rv-pin--stamp-fivestar .rv-pin__photo::after,
+.rv-pin--stamp-gourmet .rv-pin__photo::after,
+.rv-pin--stamp-vip .rv-pin__photo::after,
+.rv-pin--stamp-royal .rv-pin__photo::after {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  font-size: 14px;
+  pointer-events: none;
+  opacity: 0.85;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+}
+/* img는 ::after 안 됨 → photo-wrap에 적용 */
+.rv-pin--stamp-taste .rv-pin__photo-wrap::after,
+.rv-pin--stamp-fivestar .rv-pin__photo-wrap::after,
+.rv-pin--stamp-gourmet .rv-pin__photo-wrap::after,
+.rv-pin--stamp-vip .rv-pin__photo-wrap::after,
+.rv-pin--stamp-royal .rv-pin__photo-wrap::after {
+  position: absolute;
+  bottom: 22px;
+  right: 4px;
+  pointer-events: none;
+  opacity: 0.8;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+  z-index: 2;
+}
+.rv-pin--stamp-taste .rv-pin__photo-wrap::after {
+  content: '味';
+  font-size: 16px;
+  font-weight: 900;
+  font-family: serif;
+  color: #C23B22;
+  border: 2px solid #C23B22;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  background: rgba(255,255,255,0.3);
+}
+.rv-pin--stamp-fivestar .rv-pin__photo-wrap::after {
+  content: '⭐';
+  font-size: 14px;
+}
+.rv-pin--stamp-gourmet .rv-pin__photo-wrap::after {
+  content: '美';
+  font-size: 14px;
+  font-weight: 900;
+  font-family: serif;
+  color: #DAA520;
+  border: 1.5px solid #DAA520;
+  border-radius: 3px;
+  padding: 1px 3px;
+  background: rgba(255,255,255,0.3);
+}
+.rv-pin--stamp-vip .rv-pin__photo-wrap::after {
+  content: 'VIP';
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #DAA520;
+  border: 2px solid #DAA520;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26,26,26,0.7);
+}
+.rv-pin--stamp-royal .rv-pin__photo-wrap::after {
+  content: '🌺';
+  font-size: 16px;
+}

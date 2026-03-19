@@ -12,6 +12,7 @@ import {
 import { escapeAttr } from '../../utils/escapeHtml'
 import { getThumbUrl } from '../../utils/imageUrl'
 import { buildReviewPin } from '../../utils/buildReviewPin'
+import { useCosmeticStore } from '../../stores/cosmeticStore'
 
 /* ===== Screen pixel helper for flying animation ===== */
 function getScreenPx(
@@ -67,7 +68,8 @@ function buildCluster(cluster: Cluster): HTMLDivElement {
 }
 
 function buildPin(cluster: Cluster): HTMLDivElement {
-  return buildReviewPin(cluster.reviews[0])
+  const cosmeticClasses = useCosmeticStore.getState().getPinClasses()
+  return buildReviewPin(cluster.reviews[0], cosmeticClasses)
 }
 
 /* ===== Props ===== */

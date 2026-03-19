@@ -5,8 +5,9 @@ import { getThumbUrl } from './imageUrl'
 /**
  * Build a review pin HTML element for Kakao Maps CustomOverlay.
  * Extracted from ClusterMap.tsx to allow reuse in BadgeBoardDetail.
+ * @param cosmeticClasses – extra CSS classes from cosmeticStore.getPinClasses()
  */
-export function buildReviewPin(review: Review): HTMLDivElement {
+export function buildReviewPin(review: Review, cosmeticClasses = ''): HTMLDivElement {
   const stars =
     review.rating === 0
       ? '\u2715'
@@ -16,8 +17,9 @@ export function buildReviewPin(review: Review): HTMLDivElement {
     ? '<div class="rv-pin__verified"></div>'
     : ''
 
+  const baseClass = 'rv-pin' + (name.length <= 5 ? ' rv-pin--short-name' : '')
   const el = document.createElement('div')
-  el.className = 'rv-pin' + (name.length <= 5 ? ' rv-pin--short-name' : '')
+  el.className = cosmeticClasses ? `${baseClass} ${cosmeticClasses}` : baseClass
   el.innerHTML = `
     <div class="rv-pin__photo-wrap">
       <div class="rv-pin__name"><span>${escapeHtml(name)}</span></div>

@@ -3,6 +3,7 @@ import { useMapStore } from '../stores/mapStore'
 import { useReviewStore, type Review } from '../stores/reviewStore'
 import { useBadgeStore } from '../stores/badgeStore'
 import { buildReviewPin, buildUnreviewedPin } from '../utils/buildReviewPin'
+import { useCosmeticStore } from '../stores/cosmeticStore'
 import { escapeHtml, escapeAttr } from '../utils/escapeHtml'
 import type { PlaceResult } from '../services/api'
 import { useTranslation } from 'react-i18next'
@@ -64,7 +65,7 @@ export function useBoardPins() {
       if (place.reviewed && cachedReviews) {
         matchedReviews = cachedReviews.filter((r) => r.place_id === place.place_id)
         if (matchedReviews.length > 0) {
-          pinEl = buildReviewPin(matchedReviews[0])
+          pinEl = buildReviewPin(matchedReviews[0], useCosmeticStore.getState().getPinClasses())
         } else {
           pinEl = buildUnreviewedPin(place.place_name, t('badge.unvisited'))
         }
