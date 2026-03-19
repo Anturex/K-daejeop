@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useReviewStore, mapRawReview } from '../stores/reviewStore'
 import { getSupabase } from '../services/supabase'
 import { useAuthStore } from '../stores/authStore'
+import { demoReviews } from '../data/demoReviews'
 
 export function useReviewedPlaces() {
   const { cachedReviews, isCacheValid, setCachedReviews } = useReviewStore()
@@ -9,6 +10,8 @@ export function useReviewedPlaces() {
 
   const getMyReviews = useCallback(
     async (forceRefresh = false) => {
+      if (useAuthStore.getState().isGuest) return demoReviews
+
       if (!forceRefresh && isCacheValid() && cachedReviews) {
         return cachedReviews
       }

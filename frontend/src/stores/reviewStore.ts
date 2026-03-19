@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import type { PlaceResult } from '../services/api'
+import { useAuthStore } from './authStore'
+import { useUiStore } from './uiStore'
 
 export interface Review {
   id: string
@@ -59,7 +61,13 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   // Modal
   modalOpen: false,
   modalPlace: null,
-  openModal: (place) => set({ modalOpen: true, modalPlace: place }),
+  openModal: (place) => {
+    if (useAuthStore.getState().isGuest) {
+      useUiStore.getState().showToast('Google 로그인 후 리뷰를 남길 수 있습니다')
+      return
+    }
+    set({ modalOpen: true, modalPlace: place })
+  },
   closeModal: () => set({ modalOpen: false, modalPlace: null }),
 
   // Detail
