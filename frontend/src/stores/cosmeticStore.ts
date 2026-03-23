@@ -202,6 +202,7 @@ export const useCosmeticStore = create<CosmeticState>((set, get) => ({
   },
 
   getEquippedItem: (category) => {
+    if (category === 'special') return null
     const id = get().equipped[category]
     if (!id) return null
     return COSMETIC_ITEMS.find((i) => i.id === id) ?? null
@@ -210,7 +211,7 @@ export const useCosmeticStore = create<CosmeticState>((set, get) => ({
   getPinClasses: () => {
     const { equipped, reviewCount } = get()
     const classes: string[] = []
-    for (const cat of ['star_color', 'pin_frame', 'pin_effect', 'pin_tail', 'stamp'] as CosmeticCategory[]) {
+    for (const cat of ['star_color', 'pin_frame', 'pin_effect', 'pin_tail', 'stamp'] as const) {
       const id = equipped[cat]
       if (!id) continue
       const item = COSMETIC_ITEMS.find((i) => i.id === id)

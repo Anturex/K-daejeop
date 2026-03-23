@@ -464,10 +464,15 @@ export function ClusterMap({
             }
           }
           // Show full pin at higher zIndex
-          const { overlay: fullOverlay, element: fullEl } = createOverlay(c, currentMap, openDetail)
+          const { element: fullEl } = createOverlay(c, currentMap, openDetail)
           fullEl.style.opacity = '1'
           fullEl.style.transform = 'scale(1)'
-          fullOverlay.setZIndex(5)
+          const fullOverlay = new kakao.maps.CustomOverlay({
+            position: new kakao.maps.LatLng(c.lat, c.lng),
+            content: fullEl,
+            zIndex: 5,
+            yAnchor: 1.0,
+          })
           fullOverlay.setMap(currentMap)
           expandedOverlayRef.current = { overlay: fullOverlay, cluster: c }
         })
