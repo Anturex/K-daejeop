@@ -4,6 +4,7 @@ import { useBadgeStore, computeProgress } from '../../stores/badgeStore'
 import type { BadgeBoardPlace } from '../../stores/badgeStore'
 import { useMapStore } from '../../stores/mapStore'
 import { useAuthStore } from '../../stores/authStore'
+import { getPublishLimit, useCosmeticStore } from '../../stores/cosmeticStore'
 import { useUiStore } from '../../stores/uiStore'
 import { useReviewStore } from '../../stores/reviewStore'
 import { getSupabase } from '../../services/supabase'
@@ -35,6 +36,7 @@ export function BadgeBoardDetail() {
   const user = useAuthStore((s) => s.user)
   const tier = useAuthStore((s) => s.tier)
   const showToast = useUiStore((s) => s.showToast)
+  const cosmeticReviewCount = useCosmeticStore((s) => s.reviewCount)
   const myBadges = useBadgeStore((s) => s.myBadges)
   const cachedReviews = useReviewStore((s) => s.cachedReviews)
   const openDetail = useReviewStore((s) => s.openDetail)
@@ -161,7 +163,7 @@ export function BadgeBoardDetail() {
     const recentPublishes = boards.filter(
       (b) => b.published_at && new Date(b.published_at) > ago30d && !b.source_board_id,
     )
-    if (recentPublishes.length >= 1) {
+    if (recentPublishes.length >= getPublishLimit(cosmeticReviewCount, tier)) {
       showToast(t('badge.publishMonthlyLimit'), 3000)
       return
     }

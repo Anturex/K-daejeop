@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
-const CHANGELOG_VERSION = '2026-03-10b'
+const CHANGELOG_VERSION = '2026-03-23'
 const STORAGE_KEY = 'k_changelog_seen'
 
 interface ChangelogEntry {
@@ -10,10 +10,9 @@ interface ChangelogEntry {
 }
 
 const ENTRIES: ChangelogEntry[] = [
-  { emoji: '🏆', key: 'changelog.badgeIntro' },
-  { emoji: '📝', key: 'changelog.badgePersonal' },
-  { emoji: '🔗', key: 'changelog.badgeShare' },
-  { emoji: '🌍', key: 'changelog.badgePublish' },
+  { emoji: '🎨', key: 'changelog.cosmeticSystem' },
+  { emoji: '🎁', key: 'changelog.hiddenItems' },
+  { emoji: '🔍', key: 'changelog.searchMiniPin' },
 ]
 
 export function ChangelogModal() {

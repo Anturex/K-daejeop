@@ -184,12 +184,11 @@
   "badge.hideBoard": "Not interested",
   "badge.hiddenToast": "This board will no longer appear",
 
-  "changelog.title": "New: Badge Boards",
+  "changelog.title": "What's New",
   "changelog.close": "Got it",
-  "changelog.badgeIntro": "Badge Boards are here! Create your own restaurant lists and track your visit progress.",
-  "changelog.badgePersonal": "Badge boards are personal — build your own list of places you want to visit.",
-  "changelog.badgeShare": "Share your badge board with friends using a share code.",
-  "changelog.badgePublish": "Publish your board to make it visible to everyone. Publishing is premium-only and limited to once per month.",
+  "changelog.cosmeticSystem": "Cosmetic system is here! Collect reviews to unlock star colors, frames, effects, tails, and stamps for your pins.",
+  "changelog.hiddenItems": "4 premium-exclusive hidden items added. Collect reviews to unlock special rewards!",
+  "changelog.searchMiniPin": "Review pins now shrink to mini dots when searching, so results don't overlap.",
 
   "landing.aboutTitle": "What is K-daejeop?",
   "landing.aboutDesc": "K-daejeop is your personal place journal for restaurants, cafes, and attractions in Korea. Leave honest reviews with a 4-tier rating and photos, and after 10 reviews, discover recommended places from people with similar taste.",
@@ -270,5 +269,17 @@
   "cosmetic.stamp.fiveStar": "Five Stars",
   "cosmetic.stamp.gourmet": "Gourmet",
   "cosmetic.stamp.vip": "VIP Seal",
-  "cosmetic.stamp.royal": "Royal Flower"
+  "cosmetic.stamp.royal": "Royal Flower",
+  "cosmetic.cat.special": "Special",
+  "cosmetic.special.premiumOnly": "Special items are exclusive to premium members",
+  "cosmetic.special.active": "Active",
+  "cosmetic.special.goldProfile": "Golden Profile",
+  "cosmetic.special.goldProfileDesc": "Your avatar gets a shimmering gold border",
+  "cosmetic.special.bigPin": "Giant Pin",
+  "cosmetic.special.bigPinDesc": "Your review pins appear 1.3x larger on the map",
+  "cosmetic.special.doublePhoto": "Double Photo",
+  "cosmetic.special.doublePhotoDesc": "Attach up to 2 photos per review",
+  "cosmetic.special.doublePublish": "Extended Publishing",
+  "cosmetic.special.doublePublishDesc": "Publish badge boards up to 2 times per month",
+  "cosmetic.hiddenUnlocked": "🎁 A hidden item has been unlocked!"
 }

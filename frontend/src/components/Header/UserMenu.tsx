@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../stores/authStore'
 import { useUiStore } from '../../stores/uiStore'
-import { useCosmeticStore, getMilestone } from '../../stores/cosmeticStore'
+import { useCosmeticStore, getMilestone, isSpecialUnlocked } from '../../stores/cosmeticStore'
 import { useAuth } from '../../hooks/useAuth'
 import { LanguageSelector } from '../LanguageSelector'
 
@@ -22,6 +22,8 @@ export function UserMenu() {
   const email = user?.email || ''
 
   const milestone = getMilestone(reviewCount)
+  const tier = useAuthStore((s) => s.tier)
+  const hasGoldProfile = isSpecialUnlocked('special_gold_profile', reviewCount, tier)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -38,7 +40,7 @@ export function UserMenu() {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border-2 border-border transition-colors hover:border-accent"
+        className={`flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border-2 transition-colors hover:border-accent ${hasGoldProfile ? 'avatar-gold-ring' : 'border-border'}`}
       >
         {avatar ? (
           <img

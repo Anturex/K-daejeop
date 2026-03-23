@@ -6,9 +6,11 @@ import {
   getNextMilestone,
   getItemsByCategory,
   isUnlocked,
+  isSpecialUnlocked,
   type CosmeticCategory,
   type CosmeticItem,
 } from '../../stores/cosmeticStore'
+import { useAuthStore } from '../../stores/authStore'
 
 const CATEGORIES: { key: CosmeticCategory; icon: string; labelKey: string }[] = [
   { key: 'star_color', icon: '⭐', labelKey: 'cosmetic.cat.star' },
@@ -16,12 +18,16 @@ const CATEGORIES: { key: CosmeticCategory; icon: string; labelKey: string }[] = 
   { key: 'pin_effect', icon: '✨', labelKey: 'cosmetic.cat.effect' },
   { key: 'pin_tail', icon: '📍', labelKey: 'cosmetic.cat.tail' },
   { key: 'stamp', icon: '🔖', labelKey: 'cosmetic.cat.stamp' },
+  { key: 'special', icon: '🎁', labelKey: 'cosmetic.cat.special' },
 ]
+
+const IS_DEV = new URLSearchParams(window.location.search).has('dev')
 
 export function CosmeticPanel() {
   const { t } = useTranslation()
-  const { equipped, reviewCount, panelOpen, setPanelOpen, equip } =
+  const { equipped, reviewCount, panelOpen, setPanelOpen, equip, setReviewCount } =
     useCosmeticStore()
+  const tier = useAuthStore((s) => s.tier)
   const [activeTab, setActiveTab] = useState<CosmeticCategory>('star_color')
 
   if (!panelOpen) return null
@@ -29,7 +35,7 @@ export function CosmeticPanel() {
   const milestone = getMilestone(reviewCount)
   const next = getNextMilestone(reviewCount)
   const items = getItemsByCategory(activeTab)
-  const equippedId = equipped[activeTab]
+  const equippedId = activeTab !== 'special' ? equipped[activeTab] : null
 
   const progressPercent = next
     ? Math.min(100, (reviewCount / next.required) * 100)
@@ -83,6 +89,54 @@ export function CosmeticPanel() {
                 </div>
               </div>
             )}
+
+            {/* DEV: review count slider (localStorage k_dev=1) */}
+            {IS_DEV && (
+              <div className="mt-3 border-t border-border pt-2">
+                <div className="flex items-center justify-between text-[10px] font-bold text-amber-600">
+                  <span>🛠 DEV: 리뷰 수 조절</span>
+                  <span>{reviewCount}</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={1200}
+                  step={10}
+                  value={reviewCount}
+                  onChange={(e) => setReviewCount(Number(e.target.value))}
+                  className="mt-1 w-full accent-amber-600"
+                />
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {[0, 10, 30, 75, 150, 200, 300, 400, 500, 600, 1000].map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setReviewCount(v)}
+                      className={`rounded px-1.5 py-0.5 text-[9px] font-bold transition-colors ${
+                        reviewCount >= v
+                          ? 'bg-amber-600 text-white'
+                          : 'bg-border text-text-muted'
+                      }`}
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    equip('star_color', null)
+                    equip('pin_frame', null)
+                    equip('pin_effect', null)
+                    equip('pin_tail', null)
+                    equip('stamp', null)
+                  }}
+                  className="mt-2 w-full rounded-lg bg-border px-2 py-1 text-[10px] font-bold text-text-muted"
+                >
+                  기본 템 초기화
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Category tabs */}
@@ -104,58 +158,101 @@ export function CosmeticPanel() {
             ))}
           </div>
 
-          {/* Item grid */}
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {items.map((item) => {
-              const unlocked = isUnlocked(item, reviewCount)
-              const isEquipped = equippedId === item.id || (!equippedId && item.required === 0)
-              const isDefault = item.required === 0
+          {/* Item grid (normal categories) */}
+          {activeTab !== 'special' && (
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {items.map((item) => {
+                const unlocked = isUnlocked(item, reviewCount)
+                const isEquipped = equippedId === item.id || (!equippedId && item.required === 0)
+                const isDefault = item.required === 0
 
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  disabled={!unlocked}
-                  onClick={() => {
-                    if (!unlocked) return
-                    if (isDefault) {
-                      equip(activeTab, null)
-                    } else if (isEquipped) {
-                      equip(activeTab, null)
-                    } else {
-                      equip(activeTab, item.id)
-                    }
-                  }}
-                  className={`relative flex flex-col items-center gap-1 rounded-xl border-2 p-2.5 text-center transition-all ${
-                    isEquipped
-                      ? 'border-accent bg-accent/10'
-                      : unlocked
-                        ? 'border-border bg-surface hover:border-accent/40'
-                        : 'border-border/50 bg-bg/50 opacity-50'
-                  }`}
-                >
-                  {/* Color/style preview */}
-                  <ItemPreview item={item} />
-
-                  <span className="text-[10px] font-medium leading-tight text-text-primary">
-                    {t(item.nameKey)}
-                  </span>
-
-                  {!unlocked && (
-                    <span className="text-[9px] text-text-muted">
-                      🔒 {item.required}{t('cosmetic.reviewsNeeded')}
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    disabled={!unlocked}
+                    onClick={() => {
+                      if (!unlocked) return
+                      if (isDefault) {
+                        equip(activeTab, null)
+                      } else if (isEquipped) {
+                        equip(activeTab, null)
+                      } else {
+                        equip(activeTab, item.id)
+                      }
+                    }}
+                    className={`relative flex flex-col items-center gap-1 rounded-xl border-2 p-2.5 text-center transition-all ${
+                      isEquipped
+                        ? 'border-accent bg-accent/10'
+                        : unlocked
+                          ? 'border-border bg-surface hover:border-accent/40'
+                          : 'border-border/50 bg-bg/50 opacity-50'
+                    }`}
+                  >
+                    <ItemPreview item={item} />
+                    <span className="text-[10px] font-medium leading-tight text-text-primary">
+                      {t(item.nameKey)}
                     </span>
-                  )}
+                    {!unlocked && (
+                      <span className="text-[9px] text-text-muted">
+                        🔒 {item.required}{t('cosmetic.reviewsNeeded')}
+                      </span>
+                    )}
+                    {isEquipped && (
+                      <div className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[8px] text-white">
+                        ✓
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
 
-                  {isEquipped && (
-                    <div className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[8px] text-white">
-                      ✓
+          {/* Special (hidden) items — list card layout */}
+          {activeTab === 'special' && (
+            <div className="flex flex-col gap-2">
+              {tier !== 'premium' && (
+                <div className="rounded-lg bg-amber-50 p-3 text-xs text-amber-700">
+                  🔒 {t('cosmetic.special.premiumOnly')}
+                </div>
+              )}
+              {items.map((item) => {
+                const unlocked = isSpecialUnlocked(item.id, reviewCount, tier)
+                return (
+                  <div
+                    key={item.id}
+                    className={`flex items-center gap-3 rounded-xl border-2 p-3 transition-all ${
+                      unlocked
+                        ? 'border-accent/50 bg-accent/5'
+                        : 'border-border/50 bg-bg/50'
+                    }`}
+                  >
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl ${
+                      unlocked ? 'bg-accent/15' : 'bg-border/50 animate-pulse'
+                    }`}>
+                      {unlocked ? '🎁' : '❓'}
                     </div>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-text-primary">
+                        {unlocked ? t(item.nameKey) : '???'}
+                      </div>
+                      <div className="text-xs text-text-muted">
+                        {unlocked && item.descKey
+                          ? t(item.descKey)
+                          : `${item.required}${t('cosmetic.reviewsNeeded')}`}
+                      </div>
+                    </div>
+                    {unlocked && (
+                      <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-white">
+                        {t('cosmetic.special.active')}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

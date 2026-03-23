@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { getSupabase } from '../services/supabase'
 import type { PlaceResult } from '../services/api'
 import { mapRawReview, type Review } from './reviewStore'
+import { getPublishLimit, useCosmeticStore } from './cosmeticStore'
+import { useAuthStore } from './authStore'
 
 /* ===== Types ===== */
 
@@ -464,7 +466,9 @@ export const useBadgeStore = create<BadgeState>((set, get) => ({
     const recentPublishes = boards.filter(
       (b) => b.published_at && new Date(b.published_at) > ago30d && !b.source_board_id,
     )
-    if (recentPublishes.length >= 1) return 'monthly_limit'
+    const rc = useCosmeticStore.getState().reviewCount
+    const tr = useAuthStore.getState().tier
+    if (recentPublishes.length >= getPublishLimit(rc, tr)) return 'monthly_limit'
 
     const sb = getSupabase()
     const publishedAt = now.toISOString()

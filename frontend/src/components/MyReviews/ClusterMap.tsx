@@ -11,7 +11,7 @@ import {
 } from './useCluster'
 import { escapeAttr } from '../../utils/escapeHtml'
 import { getThumbUrl } from '../../utils/imageUrl'
-import { buildReviewPin } from '../../utils/buildReviewPin'
+import { buildReviewPin, buildMiniPin, buildMiniCluster } from '../../utils/buildReviewPin'
 import { useCosmeticStore } from '../../stores/cosmeticStore'
 
 /* ===== Screen pixel helper for flying animation ===== */
@@ -87,6 +87,7 @@ export function ClusterMap({
   isActive,
 }: ClusterMapProps) {
   const map = useMapStore((s) => s.map)
+  const searchActive = useMapStore((s) => s.searchActive)
   const { openDetail } = useReviewStore()
 
   const {
@@ -102,12 +103,14 @@ export function ClusterMap({
   const activeRatingRef = useRef(activeRating)
   const isActiveRef = useRef(isActive)
   const mapRef = useRef(map)
+  const searchActiveRef = useRef(searchActive)
 
   allReviewsRef.current = allReviews
   activeCategoryRef.current = activeCategory
   activeRatingRef.current = activeRating
   isActiveRef.current = isActive
   mapRef.current = map
+  searchActiveRef.current = searchActive
 
   /* ===== Animation helpers ===== */
   const animateOut = useCallback(
@@ -211,16 +214,20 @@ export function ClusterMap({
         element.style.transition = 'none'
         element.style.transform = `translate(${startDx}px, ${startDy}px) scale(0.35)`
         element.style.opacity = '0'
-        overlay.setMap(currentMap)
 
-        // Double rAF to ensure 'transition: none' takes effect first
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() => {
-            element.style.transition = `transform ${ANIM_MS}ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity ${Math.round(ANIM_MS * 0.65)}ms ease`
-            element.style.transform = 'translate(0, 0) scale(1)'
-            element.style.opacity = '1'
-          }),
-        )
+        // Skip adding to map if search is active (mini pins are showing)
+        if (!searchActiveRef.current) {
+          overlay.setMap(currentMap)
+
+          // Double rAF to ensure 'transition: none' takes effect first
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+              element.style.transition = `transform ${ANIM_MS}ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity ${Math.round(ANIM_MS * 0.65)}ms ease`
+              element.style.transform = 'translate(0, 0) scale(1)'
+              element.style.opacity = '1'
+            }),
+          )
+        }
       }
     },
     [animateOut, findNewForOld, openDetail],
@@ -245,20 +252,24 @@ export function ClusterMap({
           c.element = element
           element.style.opacity = '0'
           element.style.transform = 'scale(0.4)'
-          overlay.setMap(currentMap)
 
-          setTimeout(
-            () =>
-              requestAnimationFrame(() =>
-                requestAnimationFrame(() => {
-                  element.style.transition =
-                    'opacity 280ms ease, transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1)'
-                  element.style.opacity = '1'
-                  element.style.transform = 'scale(1)'
-                }),
-              ),
-            Math.min(i * 25, 200),
-          )
+          // Skip adding to map if search is active (mini pins are showing)
+          if (!searchActiveRef.current) {
+            overlay.setMap(currentMap)
+
+            setTimeout(
+              () =>
+                requestAnimationFrame(() =>
+                  requestAnimationFrame(() => {
+                    element.style.transition =
+                      'opacity 280ms ease, transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1)'
+                    element.style.opacity = '1'
+                    element.style.transform = 'scale(1)'
+                  }),
+                ),
+              Math.min(i * 25, 200),
+            )
+          }
         })
       }
 
@@ -407,6 +418,94 @@ export function ClusterMap({
       recomputeAndRender()
     }
   }, [isActive, map, activeCategory, activeRating, allReviews, recomputeAndRender])
+
+  /* ===== Search active: collapse full pins → mini dots ===== */
+  const miniOverlaysRef = useRef<kakao.maps.CustomOverlay[]>([])
+  const expandedOverlayRef = useRef<{ overlay: kakao.maps.CustomOverlay; cluster: Cluster } | null>(null)
+
+  useEffect(() => {
+    const currentMap = mapRef.current
+    if (!currentMap || !isActive) return
+
+    const clusters = getActiveClusters()
+    if (!clusters.length) return
+
+    if (searchActive) {
+      // Hide full pins, create mini pins
+      for (const c of clusters) {
+        c.overlay?.setMap(null)
+      }
+
+      for (const c of clusters) {
+        const uniquePlaces = new Set(
+          c.reviews.map((r) => r.place_id || `${r.lat},${r.lng}`),
+        ).size
+        const isSingle = uniquePlaces === 1
+        const el = isSingle ? buildMiniPin(c.reviews[0]) : buildMiniCluster(uniquePlaces)
+
+        const miniOverlay = new kakao.maps.CustomOverlay({
+          position: new kakao.maps.LatLng(c.lat, c.lng),
+          content: el,
+          zIndex: 2,
+          yAnchor: 0.5,
+        })
+        miniOverlay.setMap(currentMap)
+        miniOverlaysRef.current.push(miniOverlay)
+
+        // Click mini pin → toggle full pin
+        el.addEventListener('click', (e) => {
+          e.stopPropagation()
+          // Close previously expanded
+          if (expandedOverlayRef.current) {
+            expandedOverlayRef.current.overlay.setMap(null)
+            if (expandedOverlayRef.current.cluster === c) {
+              expandedOverlayRef.current = null
+              return
+            }
+          }
+          // Show full pin at higher zIndex
+          const { overlay: fullOverlay, element: fullEl } = createOverlay(c, currentMap, openDetail)
+          fullEl.style.opacity = '1'
+          fullEl.style.transform = 'scale(1)'
+          fullOverlay.setZIndex(5)
+          fullOverlay.setMap(currentMap)
+          expandedOverlayRef.current = { overlay: fullOverlay, cluster: c }
+        })
+      }
+    } else {
+      // Remove mini pins
+      for (const mo of miniOverlaysRef.current) {
+        mo.setMap(null)
+      }
+      miniOverlaysRef.current = []
+
+      // Close expanded overlay
+      if (expandedOverlayRef.current) {
+        expandedOverlayRef.current.overlay.setMap(null)
+        expandedOverlayRef.current = null
+      }
+
+      // Restore full pins
+      for (const c of clusters) {
+        if (c.overlay) {
+          c.overlay.setMap(currentMap)
+        }
+      }
+    }
+
+    return () => {
+      // Cleanup mini overlays on unmount
+      for (const mo of miniOverlaysRef.current) {
+        mo.setMap(null)
+      }
+      miniOverlaysRef.current = []
+      if (expandedOverlayRef.current) {
+        expandedOverlayRef.current.overlay.setMap(null)
+        expandedOverlayRef.current = null
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchActive, isActive])
 
   // This component manages overlays imperatively; it renders nothing to React DOM
   return null

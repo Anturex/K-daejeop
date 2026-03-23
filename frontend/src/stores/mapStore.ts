@@ -6,6 +6,7 @@ interface MapState {
   searchResults: PlaceResult[]
   markers: kakao.maps.Marker[]
   infoWindows: kakao.maps.InfoWindow[]
+  searchActive: boolean
 
   setMap: (map: kakao.maps.Map | null) => void
   setSearchResults: (results: PlaceResult[]) => void
@@ -19,16 +20,17 @@ export const useMapStore = create<MapState>((set, get) => ({
   searchResults: [],
   markers: [],
   infoWindows: [],
+  searchActive: false,
 
   setMap: (map) => set({ map }),
   setSearchResults: (results) => set({ searchResults: results }),
-  setMarkers: (markers) => set({ markers }),
+  setMarkers: (markers) => set({ markers, searchActive: markers.length > 0 }),
   addInfoWindow: (iw) => set((s) => ({ infoWindows: [...s.infoWindows, iw] })),
 
   clearMarkers: () => {
     const { markers, infoWindows } = get()
     markers.forEach((m) => m.setMap(null))
     infoWindows.forEach((iw) => iw.close())
-    set({ markers: [], searchResults: [], infoWindows: [] })
+    set({ markers: [], searchResults: [], infoWindows: [], searchActive: false })
   },
 }))

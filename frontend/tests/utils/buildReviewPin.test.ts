@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildReviewPin, buildUnreviewedPin } from '../../src/utils/buildReviewPin'
+import { buildReviewPin, buildUnreviewedPin, buildMiniPin, buildMiniCluster } from '../../src/utils/buildReviewPin'
 import type { Review } from '../../src/stores/reviewStore'
 
 function makeReview(overrides: Partial<Review> = {}): Review {
@@ -105,5 +105,32 @@ describe('buildUnreviewedPin', () => {
     const el = buildUnreviewedPin('<script>alert(1)</script>', '미방문')
     expect(el.innerHTML).not.toContain('<script>')
     expect(el.innerHTML).toContain('&lt;script&gt;')
+  })
+})
+
+describe('buildMiniPin', () => {
+  it('returns a div with rv-pin-mini class', () => {
+    const el = buildMiniPin(makeReview())
+    expect(el.tagName).toBe('DIV')
+    expect(el.className).toBe('rv-pin-mini')
+  })
+
+  it('contains an img with thumbnail src', () => {
+    const el = buildMiniPin(makeReview({ photo_url: 'https://example.com/photo.jpg' }))
+    const img = el.querySelector('img')
+    expect(img).not.toBeNull()
+  })
+})
+
+describe('buildMiniCluster', () => {
+  it('returns a div with rv-pin-mini and rv-pin-mini--cluster classes', () => {
+    const el = buildMiniCluster(5)
+    expect(el.className).toContain('rv-pin-mini')
+    expect(el.className).toContain('rv-pin-mini--cluster')
+  })
+
+  it('shows the count number', () => {
+    const el = buildMiniCluster(7)
+    expect(el.innerHTML).toContain('7')
   })
 })

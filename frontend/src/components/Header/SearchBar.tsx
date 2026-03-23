@@ -83,7 +83,7 @@ export function SearchBar() {
         map.setLevel(level)
 
         // Create markers
-        const infoWindow = new kakao.maps.InfoWindow({ zIndex: 3 })
+        const infoWindow = new kakao.maps.InfoWindow({ zIndex: 4 })
         addInfoWindow(infoWindow)
         const newMarkers: kakao.maps.Marker[] = []
 
@@ -203,7 +203,7 @@ export function SearchBar() {
         const marker = new kakao.maps.Marker({ position: pos, map })
         setMarkers([marker])
 
-        const infoWindow = new kakao.maps.InfoWindow({ zIndex: 3 })
+        const infoWindow = new kakao.maps.InfoWindow({ zIndex: 4 })
         addInfoWindow(infoWindow)
         const content = buildInfoContent(place, '', t)
 

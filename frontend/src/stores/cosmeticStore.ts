@@ -37,6 +37,7 @@ export type CosmeticCategory =
   | 'pin_effect'
   | 'pin_tail'
   | 'stamp'
+  | 'special'
 
 export interface CosmeticItem {
   id: string
@@ -44,6 +45,8 @@ export interface CosmeticItem {
   nameKey: string // i18n key
   required: number // review count to unlock
   cssClass: string // CSS class applied to pin
+  hidden?: boolean // hidden items show ??? until unlocked
+  descKey?: string // i18n key for description (special items)
 }
 
 export const COSMETIC_ITEMS: CosmeticItem[] = [
@@ -88,6 +91,12 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
   { id: 'stamp_gourmet', category: 'stamp', nameKey: 'cosmetic.stamp.gourmet', required: 150, cssClass: 'rv-pin--stamp-gourmet' },
   { id: 'stamp_vip', category: 'stamp', nameKey: 'cosmetic.stamp.vip', required: 300, cssClass: 'rv-pin--stamp-vip' },
   { id: 'stamp_royal', category: 'stamp', nameKey: 'cosmetic.stamp.royal', required: 500, cssClass: 'rv-pin--stamp-royal' },
+
+  // ── Special (Hidden) ──
+  { id: 'special_gold_profile', category: 'special', nameKey: 'cosmetic.special.goldProfile', required: 200, cssClass: '', hidden: true, descKey: 'cosmetic.special.goldProfileDesc' },
+  { id: 'special_big_pin', category: 'special', nameKey: 'cosmetic.special.bigPin', required: 400, cssClass: 'rv-pin--big', hidden: true, descKey: 'cosmetic.special.bigPinDesc' },
+  { id: 'special_double_photo', category: 'special', nameKey: 'cosmetic.special.doublePhoto', required: 600, cssClass: '', hidden: true, descKey: 'cosmetic.special.doublePhotoDesc' },
+  { id: 'special_double_publish', category: 'special', nameKey: 'cosmetic.special.doublePublish', required: 1000, cssClass: '', hidden: true, descKey: 'cosmetic.special.doublePublishDesc' },
 ]
 
 export function getItemsByCategory(category: CosmeticCategory): CosmeticItem[] {
@@ -96,6 +105,30 @@ export function getItemsByCategory(category: CosmeticCategory): CosmeticItem[] {
 
 export function isUnlocked(item: CosmeticItem, reviewCount: number): boolean {
   return reviewCount >= item.required
+}
+
+// ─── Special (hidden) item helpers ───────────────────────────
+// Special items require premium tier + review count threshold
+export function isSpecialUnlocked(itemId: string, reviewCount: number, tier?: string): boolean {
+  if (tier !== undefined && tier !== 'premium') return false
+  const item = COSMETIC_ITEMS.find((i) => i.id === itemId)
+  if (!item || item.category !== 'special') return false
+  return reviewCount >= item.required
+}
+
+export function getPublishLimit(reviewCount: number, tier?: string): number {
+  return isSpecialUnlocked('special_double_publish', reviewCount, tier) ? 2 : 1
+}
+
+export function getPhotoLimit(reviewCount: number, tier?: string): number {
+  return isSpecialUnlocked('special_double_photo', reviewCount, tier) ? 2 : 1
+}
+
+export function getNewlyUnlockedHidden(prevCount: number, newCount: number, tier?: string): CosmeticItem[] {
+  if (tier !== undefined && tier !== 'premium') return []
+  return COSMETIC_ITEMS.filter(
+    (i) => i.hidden && prevCount < i.required && newCount >= i.required,
+  )
 }
 
 // ─── Equipped state (persisted in Supabase) ───────────────────
@@ -175,13 +208,18 @@ export const useCosmeticStore = create<CosmeticState>((set, get) => ({
   },
 
   getPinClasses: () => {
-    const { equipped } = get()
+    const { equipped, reviewCount } = get()
     const classes: string[] = []
     for (const cat of ['star_color', 'pin_frame', 'pin_effect', 'pin_tail', 'stamp'] as CosmeticCategory[]) {
       const id = equipped[cat]
       if (!id) continue
       const item = COSMETIC_ITEMS.find((i) => i.id === id)
       if (item?.cssClass) classes.push(item.cssClass)
+    }
+    // Special: big pin auto-applied when unlocked (premium only)
+    const tier = useAuthStore.getState().tier
+    if (isSpecialUnlocked('special_big_pin', reviewCount, tier)) {
+      classes.push('rv-pin--big')
     }
     return classes.join(' ')
   },

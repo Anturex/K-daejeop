@@ -245,6 +245,10 @@ tests/                            # pytest 백엔드 테스트 (65개)
 - RPC 함수: `copy_badge_board` (SECURITY DEFINER, 보드 복사), `fetch_creator_reviews` (배포자 리뷰 조회)
 - Storage `review-photos`: 유저별 폴더, 공개 읽기
 
+56. **변경사항 공지 (ChangelogModal)**: 기능 배포 시 반드시 `ChangelogModal.tsx`의 `CHANGELOG_VERSION`을 새 날짜로 업데이트하고, `ENTRIES` 배열에 변경사항 항목 교체. i18n 4개 언어(`changelog.*` 키)도 함께 업데이트. 버전이 바뀌면 모든 유저에게 공지 모달이 1회 표시됨.
+57. **검색 시 리뷰 핀 축소**: `mapStore.searchActive` 상태로 검색 활성 여부 추적. 검색 중이면 ClusterMap이 풀 핀을 숨기고 미니 원형 도트(`.rv-pin-mini`)로 대체. 미니 핀 클릭 시 풀 핀 토글. `searchActiveRef`로 줌/필터 변경 시 레이스 컨디션 방지. `buildMiniPin()`/`buildMiniCluster()` in `buildReviewPin.ts`.
+58. **꼬리 CSS 이모지 기반**: 꼬리 코스메틱이 CSS clip-path 대신 이모지(❤️⭐🥢👑) 기반. `buildReviewPin.ts`에서 `rv-pin__tail--*` 클래스를 루트가 아닌 tail 요소에 분리 적용.
+
 ## 향후 확장 예정
 - 리뷰 10개 달성 시 다른 사용자 추천 맛집 노출 기능
 - 즐겨찾기, 검색 기록 기능

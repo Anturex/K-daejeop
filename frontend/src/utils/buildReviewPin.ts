@@ -17,9 +17,15 @@ export function buildReviewPin(review: Review, cosmeticClasses = ''): HTMLDivEle
     ? '<div class="rv-pin__verified"></div>'
     : ''
 
+  // Separate tail classes (rv-pin__tail--*) from root classes
+  const classes = cosmeticClasses ? cosmeticClasses.split(' ') : []
+  const tailClasses = classes.filter((c) => c.startsWith('rv-pin__tail--'))
+  const rootClasses = classes.filter((c) => !c.startsWith('rv-pin__tail--'))
+
   const baseClass = 'rv-pin' + (name.length <= 5 ? ' rv-pin--short-name' : '')
   const el = document.createElement('div')
-  el.className = cosmeticClasses ? `${baseClass} ${cosmeticClasses}` : baseClass
+  el.className = rootClasses.length ? `${baseClass} ${rootClasses.join(' ')}` : baseClass
+  const tailClass = tailClasses.length ? `rv-pin__tail ${tailClasses.join(' ')}` : 'rv-pin__tail'
   el.innerHTML = `
     <div class="rv-pin__photo-wrap">
       <div class="rv-pin__name"><span>${escapeHtml(name)}</span></div>
@@ -27,8 +33,30 @@ export function buildReviewPin(review: Review, cosmeticClasses = ''): HTMLDivEle
       <div class="rv-pin__rating">${stars}</div>
       ${verifiedHtml}
     </div>
-    <div class="rv-pin__tail"></div>
+    <div class="${tailClass}"></div>
   `
+  return el
+}
+
+/**
+ * Build a mini pin (small circle dot) for collapsed review display during search.
+ * Shows thumbnail photo in a small circle with white border.
+ */
+export function buildMiniPin(review: Review): HTMLDivElement {
+  const el = document.createElement('div')
+  el.className = 'rv-pin-mini'
+  el.innerHTML = `<img src="${escapeAttr(getThumbUrl(review.photo_url))}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${escapeAttr(review.photo_url)}'" />`
+  return el
+}
+
+/**
+ * Build a mini cluster dot for collapsed cluster display during search.
+ * Shows count number in a small circle.
+ */
+export function buildMiniCluster(count: number): HTMLDivElement {
+  const el = document.createElement('div')
+  el.className = 'rv-pin-mini rv-pin-mini--cluster'
+  el.innerHTML = `<span>${count}</span>`
   return el
 }
 

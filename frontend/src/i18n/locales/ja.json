@@ -184,12 +184,11 @@
   "badge.hideBoard": "興味なし",
   "badge.hiddenToast": "このボードは表示されなくなります",
 
-  "changelog.title": "新機能：バッジボード",
+  "changelog.title": "アップデート情報",
   "changelog.close": "OK",
-  "changelog.badgeIntro": "バッジボードが追加されました！自分だけのグルメリストを作り、訪問進捗を管理しましょう。",
-  "changelog.badgePersonal": "バッジボードは自分専用です。行きたいお店をまとめてみましょう。",
-  "changelog.badgeShare": "共有コードで友達にバッジボードを共有できます。",
-  "changelog.badgePublish": "公開機能で全ユーザーに見せることができます。公開はプレミアム会員限定で、月1回のみ可能です。",
+  "changelog.cosmeticSystem": "コスメティックシステムが追加されました！レビューを集めて星の色、フレーム、エフェクト、テール、スタンプをカスタマイズしましょう。",
+  "changelog.hiddenItems": "プレミアム限定の隠しアイテム4種が追加されました。レビューを集めて特別な特典を解禁しましょう！",
+  "changelog.searchMiniPin": "検索時にレビューピンがミニドットに縮小され、検索結果と重なりません。",
 
   "landing.aboutTitle": "K-daejeopとは？",
   "landing.aboutDesc": "K-daejeopは韓国の飲食店・カフェ・観光地を記録する自分だけの場所ジャーナルです。4段階の星評価と写真で正直なレビューを残し、10件以上レビューすると好みの似たユーザーのおすすめスポットが見られます。",
@@ -270,5 +269,17 @@
   "cosmetic.stamp.fiveStar": "五つ星",
   "cosmetic.stamp.gourmet": "美食家認定",
   "cosmetic.stamp.vip": "VIPシール",
-  "cosmetic.stamp.royal": "御花"
+  "cosmetic.stamp.royal": "御花",
+  "cosmetic.cat.special": "特別",
+  "cosmetic.special.premiumOnly": "プレミアム会員限定の特別アイテムです",
+  "cosmetic.special.active": "有効",
+  "cosmetic.special.goldProfile": "黄金プロフィール",
+  "cosmetic.special.goldProfileDesc": "アバターに金色の縁取りが輝きます",
+  "cosmetic.special.bigPin": "巨大ピン",
+  "cosmetic.special.bigPinDesc": "レビューピンが1.3倍大きく表示されます",
+  "cosmetic.special.doublePhoto": "写真2枚",
+  "cosmetic.special.doublePhotoDesc": "レビュー作成時に写真を2枚まで添付できます",
+  "cosmetic.special.doublePublish": "配布権拡張",
+  "cosmetic.special.doublePublishDesc": "バッジボードを月2回まで配布できます",
+  "cosmetic.hiddenUnlocked": "🎁 隠しアイテムが解禁されました！"
 }

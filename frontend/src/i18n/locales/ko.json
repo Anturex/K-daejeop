@@ -184,12 +184,11 @@
   "badge.hideBoard": "추천받지 않음",
   "badge.hiddenToast": "이 뱃지판이 더 이상 표시되지 않습니다",
 
-  "changelog.title": "새로운 기능: 뱃지판",
+  "changelog.title": "업데이트 소식",
   "changelog.close": "확인",
-  "changelog.badgeIntro": "뱃지판이 추가되었습니다! 나만의 맛집 리스트를 만들고 방문 진행도를 관리하세요.",
-  "changelog.badgePersonal": "뱃지판은 나 혼자만 만들어서 사용할 수 있어요. 가고 싶은 곳을 모아보세요.",
-  "changelog.badgeShare": "공유코드를 통해 친구에게 내 뱃지판을 공유할 수 있어요.",
-  "changelog.badgePublish": "배포하기를 통해 모든 유저에게 공개할 수 있어요. 배포는 프리미엄 회원 전용이며 한 달에 한 번만 가능합니다.",
+  "changelog.cosmeticSystem": "코스메틱 시스템이 추가되었습니다! 리뷰를 쌓아 별 색상, 프레임, 이펙트, 꼬리, 스탬프를 꾸며보세요.",
+  "changelog.hiddenItems": "프리미엄 전용 히든 아이템 4종이 추가되었습니다. 리뷰 수를 모아 특별한 혜택을 해금하세요!",
+  "changelog.searchMiniPin": "검색 시 내 리뷰 핀이 미니 원형으로 축소되어 검색 결과와 겹치지 않습니다.",
 
   "landing.aboutTitle": "K-daejeop이란?",
   "landing.aboutDesc": "K-daejeop은 한국의 음식점, 카페, 관광명소를 기록하는 나만의 장소 기록장입니다. 4단계 별점과 사진으로 솔직한 리뷰를 남기고, 리뷰를 10개 이상 쌓으면 나와 취향이 비슷한 사람들의 추천 장소를 발견할 수 있어요.",
@@ -270,5 +269,17 @@
   "cosmetic.stamp.fiveStar": "별 다섯개",
   "cosmetic.stamp.gourmet": "미식가 인증",
   "cosmetic.stamp.vip": "VIP 씰",
-  "cosmetic.stamp.royal": "어사화"
+  "cosmetic.stamp.royal": "어사화",
+  "cosmetic.cat.special": "특별",
+  "cosmetic.special.premiumOnly": "프리미엄 회원만 해금할 수 있는 특별 아이템입니다",
+  "cosmetic.special.active": "활성",
+  "cosmetic.special.goldProfile": "황금 프로필",
+  "cosmetic.special.goldProfileDesc": "프로필 아바타에 금색 테두리가 빛납니다",
+  "cosmetic.special.bigPin": "거대 핀",
+  "cosmetic.special.bigPinDesc": "내 리뷰 핀이 1.3배 크게 표시됩니다",
+  "cosmetic.special.doublePhoto": "사진 2장",
+  "cosmetic.special.doublePhotoDesc": "리뷰 작성 시 사진을 2장까지 첨부할 수 있습니다",
+  "cosmetic.special.doublePublish": "배포권 확장",
+  "cosmetic.special.doublePublishDesc": "뱃지판 배포를 월 2회까지 할 수 있습니다",
+  "cosmetic.hiddenUnlocked": "🎁 히든 아이템이 해금되었습니다!"
 }

@@ -3,7 +3,7 @@ import { useAuthStore } from '../stores/authStore'
 import { useReviewStore } from '../stores/reviewStore'
 import { useUiStore } from '../stores/uiStore'
 import { useBadgeStore } from '../stores/badgeStore'
-import { useCosmeticStore, getMilestone } from '../stores/cosmeticStore'
+import { useCosmeticStore, getMilestone, getNewlyUnlockedHidden } from '../stores/cosmeticStore'
 import { useBoardPins } from '../hooks/useBoardPins'
 import { Header } from './Header/Header'
 import { KakaoMap } from './Map/KakaoMap'
@@ -74,6 +74,13 @@ export function AppLayout() {
               `🎉 ${t(newMilestone.titleKey)} ${t('cosmetic.milestoneReached')}`,
               5000,
             )
+          }
+
+          // Check for hidden item unlocks
+          const currentTier = useAuthStore.getState().tier
+          const newHidden = getNewlyUnlockedHidden(prevCount, count, currentTier)
+          if (newHidden.length > 0) {
+            setTimeout(() => showToast(t('cosmetic.hiddenUnlocked'), 5000), 2000)
           }
         })
     }

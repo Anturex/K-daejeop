@@ -184,12 +184,11 @@
   "badge.hideBoard": "不感兴趣",
   "badge.hiddenToast": "此徽章板将不再显示",
 
-  "changelog.title": "新功能：徽章板",
+  "changelog.title": "更新公告",
   "changelog.close": "知道了",
-  "changelog.badgeIntro": "徽章板来了！创建你自己的美食清单，追踪访问进度。",
-  "changelog.badgePersonal": "徽章板是个人专属的，收集你想去的地方吧。",
-  "changelog.badgeShare": "通过分享码可以与朋友分享你的徽章板。",
-  "changelog.badgePublish": "通过发布功能可以向所有用户公开。发布仅限高级会员，每月限一次。",
+  "changelog.cosmeticSystem": "装饰系统上线！收集评价解锁星星颜色、边框、特效、尾巴和印章，装扮你的图钉。",
+  "changelog.hiddenItems": "新增4种高级会员专属隐藏道具。收集评价解锁特别奖励！",
+  "changelog.searchMiniPin": "搜索时评价图钉会缩小为迷你圆点，不再遮挡搜索结果。",
 
   "landing.aboutTitle": "K-daejeop是什么？",
   "landing.aboutDesc": "K-daejeop是记录韩国餐厅、咖啡厅、景点的个人地点日记。用四星评分和照片留下真实评价，写满10条后可以发现口味相似的人推荐的好地方。",
@@ -270,5 +269,17 @@
   "cosmetic.stamp.fiveStar": "五星",
   "cosmetic.stamp.gourmet": "美食家认证",
   "cosmetic.stamp.vip": "VIP印章",
-  "cosmetic.stamp.royal": "御花"
+  "cosmetic.stamp.royal": "御花",
+  "cosmetic.cat.special": "特别",
+  "cosmetic.special.premiumOnly": "仅限高级会员解锁的特别道具",
+  "cosmetic.special.active": "已激活",
+  "cosmetic.special.goldProfile": "黄金头像",
+  "cosmetic.special.goldProfileDesc": "头像会显示金色闪亮边框",
+  "cosmetic.special.bigPin": "巨大图钉",
+  "cosmetic.special.bigPinDesc": "我的评价图钉放大1.3倍显示",
+  "cosmetic.special.doublePhoto": "双照片",
+  "cosmetic.special.doublePhotoDesc": "每条评价可以上传2张照片",
+  "cosmetic.special.doublePublish": "发布权扩展",
+  "cosmetic.special.doublePublishDesc": "徽章板每月可发布2次",
+  "cosmetic.hiddenUnlocked": "🎁 隐藏道具已解锁！"
 }
