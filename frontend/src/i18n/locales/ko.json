@@ -21,6 +21,13 @@
   "tutorial.btn.prev": "이전",
   "tutorial.btn.skip": "건너뛰기",
   "tutorial.btn.start": "시작하기 🚀",
+  "tutorial.loginHint": "Google 로그인하고 리뷰 저장하기",
+
+  "header.login": "로그인",
+
+  "loginPrompt.title": "로그인하고 시작해보세요",
+  "loginPrompt.desc": "리뷰 작성, 장소 저장, 뱃지 획득을\nGoogle 계정으로 바로 시작할 수 있어요",
+  "loginPrompt.later": "나중에",
 
   "menu.tutorial": "튜토리얼 다시 보기",
   "menu.logout": "로그아웃",

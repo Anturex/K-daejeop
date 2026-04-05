@@ -3,6 +3,7 @@ import { useAuthStore } from '../../src/stores/authStore'
 
 describe('authStore', () => {
   beforeEach(() => {
+    localStorage.clear()
     useAuthStore.setState({
       user: null,
       session: null,
@@ -11,6 +12,8 @@ describe('authStore', () => {
       isLoading: true,
       tutorialSeen: false,
       isGuest: false,
+      showLoginModal: false,
+      showLoginPrompt: false,
     })
   })
 
@@ -78,7 +81,45 @@ describe('authStore', () => {
     expect(state.isGuest).toBe(true)
     expect(state.user?.id).toBe('guest-demo-user')
     expect(state.session).toBeNull()
-    expect(state.tutorialSeen).toBe(true)
+    expect(state.tutorialSeen).toBe(false)
+  })
+
+  it('loginAsGuest reads tutorialSeen from localStorage', () => {
+    localStorage.setItem('k_tutorial_seen_guest', '1')
+    useAuthStore.getState().loginAsGuest()
+    expect(useAuthStore.getState().tutorialSeen).toBe(true)
+  })
+
+  it('setSession clears isGuest flag', () => {
+    useAuthStore.getState().loginAsGuest()
+    expect(useAuthStore.getState().isGuest).toBe(true)
+    const mockSession = {
+      access_token: 'test',
+      refresh_token: 'test',
+      user: { id: 'u1', email: 'test@test.com' },
+    } as never
+    useAuthStore.getState().setSession(mockSession)
+    expect(useAuthStore.getState().isGuest).toBe(false)
+  })
+
+  it('setShowLoginModal toggles modal state', () => {
+    useAuthStore.getState().setShowLoginModal(true)
+    expect(useAuthStore.getState().showLoginModal).toBe(true)
+    useAuthStore.getState().setShowLoginModal(false)
+    expect(useAuthStore.getState().showLoginModal).toBe(false)
+  })
+
+  it('setShowLoginPrompt toggles prompt state', () => {
+    useAuthStore.getState().setShowLoginPrompt(true)
+    expect(useAuthStore.getState().showLoginPrompt).toBe(true)
+  })
+
+  it('logout clears login modal and prompt', () => {
+    useAuthStore.setState({ showLoginModal: true, showLoginPrompt: true })
+    useAuthStore.getState().logout()
+    const state = useAuthStore.getState()
+    expect(state.showLoginModal).toBe(false)
+    expect(state.showLoginPrompt).toBe(false)
   })
 
   it('logout clears guest state', () => {

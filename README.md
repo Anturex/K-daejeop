@@ -60,12 +60,13 @@ K-daejeop/
 │   ├── src/
 │   │   ├── main.tsx             # React 진입점 (keep-alive 포함)
 │   │   ├── keepAlive.ts         # Render 서버 sleep 방지 폴링
-│   │   ├── App.tsx              # 인증 분기 (LoginScreen | AppLayout)
+│   │   ├── App.tsx              # 항상 AppLayout (자동 게스트 모드)
 │   │   ├── index.css            # Tailwind CSS v4 테마 + 커스텀 스타일
 │   │   ├── env.ts               # 환경 변수 래퍼
 │   │   ├── stores/              # Zustand 스토어 (auth, map, review, ui, badge)
 │   │   ├── components/          # React 컴포넌트
-│   │   │   ├── LoginScreen/     # 로그인 화면 + 이용약관 모달
+│   │   │   ├── LoginScreen/     # 이용약관 모달 (LegalModal)
+│   │   │   ├── LoginModal.tsx   # 모달형 로그인 + LoginPromptModal
 │   │   │   ├── Header/          # 헤더, 검색바, 유저 메뉴
 │   │   │   ├── Map/             # 카카오맵 (ref 기반)
 │   │   │   ├── Reviews/         # 리뷰 모달, 별점, 사진, 날짜

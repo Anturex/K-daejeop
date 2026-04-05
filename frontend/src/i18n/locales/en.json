@@ -21,6 +21,13 @@
   "tutorial.btn.prev": "Back",
   "tutorial.btn.skip": "Skip",
   "tutorial.btn.start": "Let's go! 🚀",
+  "tutorial.loginHint": "Sign in with Google to save reviews",
+
+  "header.login": "Sign in",
+
+  "loginPrompt.title": "Sign in to get started",
+  "loginPrompt.desc": "Write reviews, save places, and earn badges\nwith your Google account",
+  "loginPrompt.later": "Maybe later",
 
   "menu.tutorial": "View tutorial again",
   "menu.logout": "Sign out",

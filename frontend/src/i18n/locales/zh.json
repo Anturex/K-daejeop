@@ -21,6 +21,13 @@
   "tutorial.btn.prev": "上一步",
   "tutorial.btn.skip": "跳过",
   "tutorial.btn.start": "开始吧！🚀",
+  "tutorial.loginHint": "Google登录后保存评价",
+
+  "header.login": "登录",
+
+  "loginPrompt.title": "登录后开始使用",
+  "loginPrompt.desc": "写评价、保存地点、获取徽章\n使用Google账号即可开始",
+  "loginPrompt.later": "以后再说",
 
   "menu.tutorial": "重新查看教程",
   "menu.logout": "退出登录",

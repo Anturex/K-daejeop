@@ -21,6 +21,13 @@
   "tutorial.btn.prev": "前へ",
   "tutorial.btn.skip": "スキップ",
   "tutorial.btn.start": "始めよう！🚀",
+  "tutorial.loginHint": "Googleログインでレビューを保存",
+
+  "header.login": "ログイン",
+
+  "loginPrompt.title": "ログインして始めましょう",
+  "loginPrompt.desc": "レビュー投稿、スポット保存、バッジ獲得を\nGoogleアカウントですぐに始められます",
+  "loginPrompt.later": "あとで",
 
   "menu.tutorial": "チュートリアルを再表示",
   "menu.logout": "ログアウト",

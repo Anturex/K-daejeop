@@ -1,29 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { LoginScreen } from '../../src/components/LoginScreen/LoginScreen'
+import { render, screen } from '@testing-library/react'
+import { LandingContent } from '../../src/components/LandingContent'
 
-const mockHandleGoogleLogin = vi.fn()
-
-// Mock useAuth hook
-vi.mock('../../src/hooks/useAuth', () => ({
-  useAuth: () => ({
-    handleGoogleLogin: mockHandleGoogleLogin,
-    isLoggingIn: false,
-    logout: vi.fn(),
-  }),
-}))
-
-// Mock i18n
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => {
       const map: Record<string, string> = {
-        'login.subtitle': '나만의 맛집 지도',
-        'login.feature.search': '음식점·카페·관광명소 검색',
-        'login.feature.rating': '별점 리뷰 작성',
-        'login.feature.unlock': '추천 장소 해금',
-        'login.google': 'Google로 로그인',
-        'login.guest': '로그인 없이 둘러보기',
         'landing.aboutTitle': 'K-daejeop이란?',
         'landing.aboutDesc': '나만의 장소 기록장입니다.',
         'landing.howTitle': '이렇게 사용해요',
@@ -50,91 +32,36 @@ vi.mock('react-i18next', () => ({
       }
       return map[key] ?? key
     },
-    i18n: { language: 'ko', changeLanguage: vi.fn() },
   }),
-  Trans: ({ i18nKey }: { i18nKey: string }) => <span>{i18nKey}</span>,
 }))
 
-// Mock LanguageSelector
-vi.mock('../../src/components/LanguageSelector', () => ({
-  LanguageSelector: () => <div data-testid="lang-selector" />,
-}))
-
-describe('LoginScreen', () => {
-  it('renders the app title', () => {
-    render(<LoginScreen />)
-    expect(screen.getByText('K-daejeop')).toBeInTheDocument()
-  })
-
-  it('renders Google login button', () => {
-    render(<LoginScreen />)
-    expect(screen.getByText('Google로 로그인')).toBeInTheDocument()
-  })
-
-  it('renders service features', () => {
-    render(<LoginScreen />)
-    expect(screen.getByText('음식점·카페·관광명소 검색')).toBeInTheDocument()
-    expect(screen.getByText('별점 리뷰 작성')).toBeInTheDocument()
-    expect(screen.getByText('추천 장소 해금')).toBeInTheDocument()
-  })
-
-  it('calls handleGoogleLogin on button click', () => {
-    render(<LoginScreen />)
-    fireEvent.click(screen.getByText('Google로 로그인'))
-    expect(mockHandleGoogleLogin).toHaveBeenCalled()
-  })
-
-  it('renders language selector', () => {
-    render(<LoginScreen />)
-    expect(screen.getByTestId('lang-selector')).toBeInTheDocument()
-  })
-
-  it('renders landing about section', () => {
-    render(<LoginScreen />)
+describe('LandingContent (SEO landing sections)', () => {
+  it('renders about section', () => {
+    render(<LandingContent />)
     expect(screen.getByText('K-daejeop이란?')).toBeInTheDocument()
     expect(screen.getByText('나만의 장소 기록장입니다.')).toBeInTheDocument()
   })
 
-  it('renders landing how-to steps', () => {
-    render(<LoginScreen />)
+  it('renders how-to steps', () => {
+    render(<LandingContent />)
     expect(screen.getByText('이렇게 사용해요')).toBeInTheDocument()
     expect(screen.getByText('검색창에 이름을 입력하세요')).toBeInTheDocument()
     expect(screen.getByText('리뷰 10개를 달성하세요')).toBeInTheDocument()
   })
 
-  it('renders landing features section', () => {
-    render(<LoginScreen />)
+  it('renders features section', () => {
+    render(<LandingContent />)
     expect(screen.getByText('주요 기능')).toBeInTheDocument()
     expect(screen.getByText('4단계 별점')).toBeInTheDocument()
     expect(screen.getByText('뱃지판')).toBeInTheDocument()
   })
 
-  it('renders landing FAQ section', () => {
-    render(<LoginScreen />)
+  it('renders FAQ section', () => {
+    render(<LandingContent />)
     expect(screen.getByText('자주 묻는 질문')).toBeInTheDocument()
     expect(screen.getByText('무료로 사용할 수 있나요?')).toBeInTheDocument()
     expect(
       screen.getByText('네, 기본 기능은 모두 무료입니다.'),
     ).toBeInTheDocument()
-  })
-
-  it('page is scrollable (not flex-center locked)', () => {
-    const { container } = render(<LoginScreen />)
-    const root = container.firstElementChild as HTMLElement
-    expect(root.className).toContain('overflow-y-auto')
-    expect(root.className).not.toContain('justify-center')
-  })
-
-  it('renders guest login button', () => {
-    render(<LoginScreen />)
-    expect(screen.getByText('로그인 없이 둘러보기')).toBeInTheDocument()
-  })
-
-  it('calls loginAsGuest on guest button click', () => {
-    render(<LoginScreen />)
-    const btn = screen.getByText('로그인 없이 둘러보기')
-    fireEvent.click(btn)
-    // loginAsGuest is called from real authStore — verified via authStore.test.ts
-    expect(btn).toBeInTheDocument()
   })
 })

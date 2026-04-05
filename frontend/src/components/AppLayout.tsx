@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useAuthStore } from '../stores/authStore'
 import { useReviewStore } from '../stores/reviewStore'
 import { useUiStore } from '../stores/uiStore'
@@ -14,6 +14,9 @@ import { BadgePanel } from './Badges/BadgePanel'
 import { AddToBoardModal } from './Badges/AddToBoardModal'
 import { CosmeticPanel } from './Cosmetics/CosmeticPanel'
 import { TutorialOverlay } from './Tutorial/TutorialOverlay'
+import { LoginModal } from './LoginModal'
+import { LoginPromptModal } from './LoginPromptModal'
+import { LandingContent } from './LandingContent'
 import { AdBanner } from './Ads/AdBanner'
 import { ChangelogModal } from './ChangelogModal'
 import { Toast } from './Toast'
@@ -22,6 +25,10 @@ import { getSupabase } from '../services/supabase'
 
 export function AppLayout() {
   const tier = useAuthStore((s) => s.tier)
+  const isGuest = useAuthStore((s) => s.isGuest)
+  const tutorialSeen = useAuthStore((s) => s.tutorialSeen)
+  const showLoginModal = useAuthStore((s) => s.showLoginModal)
+  const showLoginPrompt = useAuthStore((s) => s.showLoginPrompt)
   const modalOpen = useReviewStore((s) => s.modalOpen)
   const detailOpen = useReviewStore((s) => s.detailOpen)
   const myReviewsActive = useUiStore((s) => s.myReviewsActive)
@@ -32,9 +39,27 @@ export function AppLayout() {
   const cosmeticPanelOpen = useCosmeticStore((s) => s.panelOpen)
   const { t } = useTranslation()
   const showToast = useUiStore((s) => s.showToast)
+  const { setShowTutorial } = useUiStore()
 
   // Manage board pins on map (decoupled from BadgePanel lifecycle)
   useBoardPins()
+
+  // Show tutorial for first-time guest visitors
+  useEffect(() => {
+    if (isGuest && !tutorialSeen) {
+      setShowTutorial(true)
+    }
+  }, [isGuest, tutorialSeen, setShowTutorial])
+
+  // Guest → authenticated transition: invalidate caches
+  const prevIsGuest = useRef(isGuest)
+  useEffect(() => {
+    if (prevIsGuest.current && !isGuest) {
+      useReviewStore.getState().invalidateCache?.()
+      useCosmeticStore.getState().loadEquipped()
+    }
+    prevIsGuest.current = isGuest
+  }, [isGuest])
 
   // Load cosmetic data + initial review count on mount
   useEffect(() => {
@@ -101,26 +126,37 @@ export function AppLayout() {
   }, [myReviewsActive, boardPinsActive])
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-bg max-sm:overflow-hidden">
-      <Header />
+    <>
+      <div className="fixed inset-0 flex flex-col bg-bg max-sm:overflow-hidden">
+        <Header />
 
-      <div className="relative z-0 flex-1">
-        <KakaoMap />
+        <div className="relative z-0 flex-1">
+          <KakaoMap />
 
-        {myReviewsActive && <MyReviewsPanel />}
-        {(badgePanelActive || boardPinsActive) && <BadgePanel />}
+          {myReviewsActive && <MyReviewsPanel />}
+          {(badgePanelActive || boardPinsActive) && <BadgePanel />}
 
-        {tier === 'free' && <AdBanner position="banner" />}
+          {tier === 'free' && <AdBanner position="banner" />}
+        </div>
+
+        {modalOpen && <ReviewModal />}
+        {detailOpen && <ReviewDetail />}
+        {showTutorial && <TutorialOverlay />}
+        {addToBoardPlace && <AddToBoardModal />}
+        {cosmeticPanelOpen && <CosmeticPanel />}
+        {showLoginModal && <LoginModal />}
+        {showLoginPrompt && <LoginPromptModal />}
+
+        <ChangelogModal />
+        <Toast />
       </div>
 
-      {modalOpen && <ReviewModal />}
-      {detailOpen && <ReviewDetail />}
-      {showTutorial && <TutorialOverlay />}
-      {addToBoardPlace && <AddToBoardModal />}
-      {cosmeticPanelOpen && <CosmeticPanel />}
-
-      <ChangelogModal />
-      <Toast />
-    </div>
+      {/* SEO landing content — below the fold, scrollable for crawlers */}
+      {isGuest && (
+        <div className="relative" style={{ marginTop: '100vh' }}>
+          <LandingContent />
+        </div>
+      )}
+    </>
   )
 }

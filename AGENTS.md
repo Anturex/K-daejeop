@@ -34,11 +34,15 @@
 - 카카오 JS 키(`VITE_KAKAO_JS_KEY`)는 지도 렌더링용으로 브라우저에 노출됨 (정상).
 - Supabase `anon key`는 공개(public)키로 브라우저에서 사용. `JWT_SECRET`은 서버에서만 사용.
 
-### 인증 흐름 (React)
-1. `useAuth` 훅: Supabase JS SDK → `signInWithOAuth({ provider: 'google' })` → Google 동의 → 세션 획득
-2. `onAuthStateChange` → Zustand `authStore` 업데이트 → React 조건부 렌더링으로 LoginScreen ↔ AppLayout 전환
-3. bfcache/OAuth 복원력: `sessionStorage` OAUTH_PENDING_KEY + `pageshow` 이벤트 리스너
-4. 백엔드 보호 API: `Authorization: Bearer <access_token>` → PyJWT HS256 검증
+### 인증 흐름 (React) — 콘텐츠 퍼스트
+1. **첫 방문 = 자동 게스트 모드**: 세션 없으면 `loginAsGuest()` 자동 호출 → 즉시 AppLayout 렌더 (로그인 화면 없음)
+2. `useAuth` 훅: Supabase JS SDK → `signInWithOAuth({ provider: 'google' })` → Google 동의 → 세션 획득
+3. `onAuthStateChange` → `authStore.setSession()` → `isGuest: false`로 전환 → 게스트→인증 매끄러운 전환
+4. bfcache/OAuth 복원력: `sessionStorage` OAUTH_PENDING_KEY + `pageshow` 이벤트 리스너
+5. 게스트 제한: 리뷰 작성 시도 시 `LoginPromptModal` 표시 (로그인 유도)
+6. 헤더에 "로그인" pill 버튼 (게스트) / UserMenu (인증 유저) 조건부 표시
+7. 로그아웃 → 게스트 모드 복귀 (로그인 화면으로 돌아가지 않음)
+8. 백엔드 보호 API: `Authorization: Bearer <access_token>` → PyJWT HS256 검증
 
 ### 리뷰 시스템 (Supabase 직접 접근)
 - 리뷰 CRUD는 프론트엔드에서 Supabase JS SDK로 직접 수행 (RLS가 보안 담당)
@@ -64,7 +68,7 @@ frontend/                         # React SPA
 ├── public/                       # manifest.json, PWA 아이콘
 ├── src/
 │   ├── main.tsx                  # React 진입점
-│   ├── App.tsx                   # isAuthenticated ? AppLayout : LoginScreen
+│   ├── App.tsx                   # 항상 AppLayout (자동 게스트 모드, 로그인 화면 없음)
 │   ├── index.css                 # Tailwind CSS v4 @theme + 커스텀 CSS
 │   ├── env.ts                    # import.meta.env 타입 래퍼
 │   ├── stores/                   # Zustand 스토어
@@ -74,7 +78,10 @@ frontend/                         # React SPA
 │   │   ├── badgeStore.ts         # 뱃지판 목록, 상세, 생성, 공유코드
 │   │   └── uiStore.ts            # myReviewsActive, badgePanelActive, tutorial, toast
 │   ├── components/
-│   │   ├── LoginScreen/          # LoginScreen.tsx, LegalModal.tsx
+│   │   ├── LoginScreen/          # LegalModal.tsx (이용약관 모달, LoginScreen은 미사용)
+│   │   ├── LoginModal.tsx        # 모달형 로그인 (헤더 버튼/튜토리얼에서 열림)
+│   │   ├── LoginPromptModal.tsx  # 로그인 유도 모달 (게스트가 리뷰 작성 시도 시)
+│   │   ├── LandingContent.tsx    # SEO용 랜딩 소개 섹션 (게스트 시 하단 표시)
 │   │   ├── Header/               # Header.tsx, SearchBar.tsx, UserMenu.tsx
 │   │   ├── Map/                  # KakaoMap.tsx (ref 기반)
 │   │   ├── Reviews/              # ReviewModal, RatingSelector, PhotoUploader, DatePicker, ReviewDetail
@@ -126,7 +133,7 @@ tests/                            # pytest 백엔드 테스트 (65개)
 
 | 스토어 | 역할 |
 |--------|------|
-| `authStore` | user, session, tier ('free'/'premium'), isAuthenticated, isLoading, tutorialSeen |
+| `authStore` | user, session, tier ('free'/'premium'), isAuthenticated, isLoading, tutorialSeen, isGuest, showLoginModal, showLoginPrompt |
 | `mapStore` | 카카오맵 인스턴스, 검색 결과, 마커 배열, clearMarkers() |
 | `reviewStore` | 리뷰 모달 상태, 리뷰 상세 바텀시트 상태, 5분 TTL 캐시 |
 | `uiStore` | myReviewsActive, badgePanelActive, showTutorial, toast, userMenuOpen |
@@ -186,11 +193,11 @@ tests/                            # pytest 백엔드 테스트 (65개)
 
 1. **pydantic 버전**: 1.x 사용 중. `BaseSettings`는 `pydantic` 패키지에서 직접 import.
 2. **Supabase JWT**: HS256 알고리즘, audience="authenticated".
-3. **지도 init 타이밍**: React 조건부 렌더링으로 보장. `isAuthenticated`가 true일 때만 `KakaoMap` 마운트.
+3. **지도 init 타이밍**: 자동 게스트 모드로 항상 AppLayout 렌더 → `KakaoMap` 즉시 마운트. `isLoading` 중에만 스플래시.
 4. **Vite 빌드**: `frontend/` 에서 `npm run build` → `app/static/dist/`로 출력. FastAPI가 정적 서빙.
 5. **개발 서버**: Vite dev (포트 3000) + FastAPI (포트 5173) 병렬 실행. Vite에서 `/api` → FastAPI 프록시.
 6. **한글 IME**: `SearchBar.tsx`에서 `keyCode === 229` 체크 + `input` 이벤트 기반 자동완성.
-7. **테스트 기준**: 백엔드 65개 (pytest) + 프론트엔드 193개 (Vitest). 기능 추가 시 해당 위치에 테스트도 추가.
+7. **테스트 기준**: 백엔드 65개 (pytest) + 프론트엔드 268개 (Vitest). 기능 추가 시 해당 위치에 테스트도 추가.
 8. **Supabase 직접 접근**: 리뷰 CRUD와 사진 업로드는 프론트엔드에서 Supabase JS SDK로 직접 수행. RLS가 보안 담당.
 9. **myreviews 클러스터링**: `useCluster.ts` 훅의 `computeClusters()` — 지리 격자 기반(`GRID_DEG` 배열). `ClusterMap.tsx`가 명령형으로 CustomOverlay 관리.
 10. **플라잉 애니메이션**: `ClusterMap.tsx`에서 ref 기반 명령형 처리. `requestAnimationFrame` 두 번 감싸기.
@@ -248,6 +255,7 @@ tests/                            # pytest 백엔드 테스트 (65개)
 56. **변경사항 공지 (ChangelogModal)**: 기능 배포 시 반드시 `ChangelogModal.tsx`의 `CHANGELOG_VERSION`을 새 날짜로 업데이트하고, `ENTRIES` 배열에 변경사항 항목 교체. i18n 4개 언어(`changelog.*` 키)도 함께 업데이트. 버전이 바뀌면 모든 유저에게 공지 모달이 1회 표시됨.
 57. **검색 시 리뷰 핀 축소**: `mapStore.searchActive` 상태로 검색 활성 여부 추적. 검색 중이면 ClusterMap이 풀 핀을 숨기고 미니 원형 도트(`.rv-pin-mini`)로 대체. 미니 핀 클릭 시 풀 핀 토글. `searchActiveRef`로 줌/필터 변경 시 레이스 컨디션 방지. `buildMiniPin()`/`buildMiniCluster()` in `buildReviewPin.ts`.
 58. **꼬리 CSS 이모지 기반**: 꼬리 코스메틱이 CSS clip-path 대신 이모지(❤️⭐🥢👑) 기반. `buildReviewPin.ts`에서 `rv-pin__tail--*` 클래스를 루트가 아닌 tail 요소에 분리 적용.
+59. **콘텐츠 퍼스트 (로그인 화면 제거)**: 첫 방문자에게 로그인 화면 대신 자동 게스트 모드로 즉시 지도+데모 리뷰 표시. `LoginScreen.tsx`는 미사용 → `LoginModal.tsx`(모달형 로그인)으로 대체. `LoginPromptModal.tsx`는 게스트가 리뷰 작성 시도 시 로그인 유도. `LandingContent.tsx`는 SEO용 소개 섹션(게스트 시 하단 표시). 게스트 튜토리얼은 localStorage `k_tutorial_seen_guest`로 1회 표시 관리.
 
 ## 향후 확장 예정
 - 리뷰 10개 달성 시 다른 사용자 추천 맛집 노출 기능

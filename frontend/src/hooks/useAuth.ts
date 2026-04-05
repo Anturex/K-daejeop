@@ -13,6 +13,7 @@ export function useAuth() {
     setTutorialSeen,
     setLoading,
     logout,
+    loginAsGuest,
   } = useAuthStore()
   const { setShowTutorial } = useUiStore()
   const [isLoggingIn, setIsLoggingIn] = useState(false)
@@ -20,7 +21,6 @@ export function useAuth() {
 
   useEffect(() => {
     const sb = getSupabase()
-    setLoading(true)
 
     const isOAuthCallback = new URLSearchParams(window.location.search).has(
       'code',
@@ -29,6 +29,13 @@ export function useAuth() {
       sessionStorage.getItem(OAUTH_PENDING_KEY) === '1'
     sessionStorage.removeItem(OAUTH_PENDING_KEY)
     const isOAuthRelated = isOAuthCallback || hadOAuthPending
+
+    // Start as guest immediately — upgrade to real session if found
+    if (!isOAuthRelated && !useAuthStore.getState().isAuthenticated) {
+      loginAsGuest()
+    } else if (isOAuthRelated) {
+      setLoading(true)
+    }
 
     // iOS Safari bfcache
     const handlePageShow = (e: PageTransitionEvent) => {
@@ -39,26 +46,24 @@ export function useAuth() {
           setSession(session)
           checkTutorialAndTier(session.user.id)
         } else {
-          logout()
+          loginAsGuest()
         }
-        setLoading(false)
       })
     }
     window.addEventListener('pageshow', handlePageShow)
 
-    // Timeout for OAuth-related states
-    let timeoutId: ReturnType<typeof setTimeout> | undefined
+    // OAuth fallback timeout
+    let fallbackId: ReturnType<typeof setTimeout> | undefined
     if (isOAuthRelated) {
-      timeoutId = setTimeout(() => {
+      fallbackId = setTimeout(() => {
         if (!authResolved.current && !useAuthStore.getState().isGuest) {
           authResolved.current = true
-          logout()
-          setLoading(false)
+          loginAsGuest()
         }
       }, 10000)
     }
 
-    // Auth state change listener
+    // Auth state change listener — upgrades guest to real session
     const {
       data: { subscription },
     } = sb.auth.onAuthStateChange((event, session) => {
@@ -74,33 +79,31 @@ export function useAuth() {
         !authResolved.current
       ) {
         // Waiting for PKCE code exchange
-      } else if (event === 'INITIAL_SESSION' || event === 'SIGNED_OUT') {
+      } else if (event === 'SIGNED_OUT') {
         if (useAuthStore.getState().isGuest) return
         authResolved.current = true
-        logout()
-        setLoading(false)
+        loginAsGuest()
         setIsLoggingIn(false)
       }
     })
 
-    // Fallback getSession
+    // Fallback getSession — try to upgrade guest to real session
     sb.auth.getSession().then(({ data: { session } }) => {
       if (authResolved.current) return
-      if (useAuthStore.getState().isGuest) return
-      authResolved.current = true
       if (session?.user) {
+        authResolved.current = true
         setSession(session)
         checkTutorialAndTier(session.user.id)
-      } else if (!isOAuthRelated) {
-        logout()
+        setLoading(false)
       }
-      setLoading(false)
+    }).catch(() => {
+      // Supabase unreachable — already in guest mode, nothing to do
     })
 
     return () => {
       subscription.unsubscribe()
       window.removeEventListener('pageshow', handlePageShow)
-      if (timeoutId) clearTimeout(timeoutId)
+      if (fallbackId) clearTimeout(fallbackId)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -154,11 +157,16 @@ export function useAuth() {
 
   const handleLogout = useCallback(async () => {
     const sb = getSupabase()
-    logout()
     await sb.auth.signOut()
-  }, [logout])
+    loginAsGuest()
+  }, [loginAsGuest])
 
   const markTutorialSeen = useCallback(async () => {
+    if (useAuthStore.getState().isGuest) {
+      localStorage.setItem('k_tutorial_seen_guest', '1')
+      setTutorialSeen(true)
+      return
+    }
     const sb = getSupabase()
     try {
       const {
