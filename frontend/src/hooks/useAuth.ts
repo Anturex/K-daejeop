@@ -12,7 +12,6 @@ export function useAuth() {
     setTier,
     setTutorialSeen,
     setLoading,
-    logout,
     loginAsGuest,
   } = useAuthStore()
   const { setShowTutorial } = useUiStore()

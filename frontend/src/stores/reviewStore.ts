@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import type { PlaceResult } from '../services/api'
 import { useAuthStore } from './authStore'
-import { useUiStore } from './uiStore'
 
 export interface Review {
   id: string
