@@ -1,9 +1,11 @@
 # K-daejeop — AI Context Guide
 
 ## 프로젝트 개요
-카카오맵 API + Supabase를 활용한 한국 지도 기반 **폐쇄형 맛집 리뷰 서비스**.
+카카오맵 API + Supabase를 활용한 한국 지도 기반 **장소 리뷰 서비스**.
 **React 19 + TypeScript + Vite 7** 프론트엔드 + **FastAPI** 백엔드 구조.
-사용자가 음식점을 검색하고 별점(0~3)·사진·리뷰를 남기면, 10개 이상 쌓은 뒤 다른 사용자의 추천 맛집을 볼 수 있음.
+첫 방문 시 로그인 없이 게스트 모드로 즉시 지도와 데모 리뷰를 볼 수 있음.
+사용자가 음식점·카페·관광명소를 검색하고 별점(0~3)·사진·리뷰를 남기면, 10개 이상 쌓은 뒤 다른 사용자의 추천 장소를 볼 수 있음.
+리뷰 마일스톤(10/30/75/150/300/500)에 따라 핀 꾸미기 코스메틱 아이템 해금.
 
 ## 기술 스택 & 버전
 
@@ -71,22 +73,28 @@ frontend/                         # React SPA
 │   ├── App.tsx                   # 항상 AppLayout (자동 게스트 모드, 로그인 화면 없음)
 │   ├── index.css                 # Tailwind CSS v4 @theme + 커스텀 CSS
 │   ├── env.ts                    # import.meta.env 타입 래퍼
-│   ├── stores/                   # Zustand 스토어
-│   │   ├── authStore.ts          # user, session, tier, isAuthenticated
-│   │   ├── mapStore.ts           # map 인스턴스, searchResults, markers
+│   ├── stores/                   # Zustand 스토어 (6개)
+│   │   ├── authStore.ts          # user, session, tier, isAuthenticated, isGuest, showLoginModal/Prompt
+│   │   ├── mapStore.ts           # map 인스턴스, searchResults, markers, searchActive
 │   │   ├── reviewStore.ts        # 리뷰 모달/상세 상태, 캐시 (5분 TTL)
 │   │   ├── badgeStore.ts         # 뱃지판 목록, 상세, 생성, 공유코드
-│   │   └── uiStore.ts            # myReviewsActive, badgePanelActive, tutorial, toast
+│   │   ├── cosmeticStore.ts      # 코스메틱 마일스톤, 40+아이템, 장착 시스템
+│   │   └── uiStore.ts            # myReviewsActive, badgePanelActive, tutorial, toast, userMenuOpen
 │   ├── components/
-│   │   ├── LoginScreen/          # LegalModal.tsx (이용약관 모달, LoginScreen은 미사용)
+│   │   ├── AppLayout.tsx         # 메인 레이아웃 (게스트/인증 공통, 코스메틱 로드, 보드핀 관리)
 │   │   ├── LoginModal.tsx        # 모달형 로그인 (헤더 버튼/튜토리얼에서 열림)
 │   │   ├── LoginPromptModal.tsx  # 로그인 유도 모달 (게스트가 리뷰 작성 시도 시)
 │   │   ├── LandingContent.tsx    # SEO용 랜딩 소개 섹션 (게스트 시 하단 표시)
+│   │   ├── ChangelogModal.tsx    # 업데이트 공지 모달 (버전별 1회 표시)
+│   │   ├── Toast.tsx             # 토스트 알림 컴포넌트
+│   │   ├── LanguageSelector.tsx  # 언어 선택 드롭다운
+│   │   ├── LoginScreen/          # LegalModal.tsx (이용약관 모달), LoginScreen.tsx (게스트 버튼 포함)
 │   │   ├── Header/               # Header.tsx, SearchBar.tsx, UserMenu.tsx
 │   │   ├── Map/                  # KakaoMap.tsx (ref 기반)
 │   │   ├── Reviews/              # ReviewModal, RatingSelector, PhotoUploader, DatePicker, ReviewDetail
 │   │   ├── MyReviews/            # MyReviewsPanel, ClusterMap, CategoryFilter, RatingFilter, useCluster
 │   │   ├── Badges/               # BadgePanel, BadgeBoardCard, BadgeBoardCreate, BadgeBoardDetail, AddToBoardModal, PublishModal
+│   │   ├── Cosmetics/            # CosmeticPanel.tsx (꾸미기 패널, 마일스톤 티어, 장착)
 │   │   ├── Tutorial/             # TutorialOverlay.tsx
 │   │   └── Ads/                  # AdBanner.tsx
 │   ├── hooks/
@@ -107,9 +115,15 @@ frontend/                         # React SPA
 │   │   ├── imageUrl.ts           # getThumbUrl() 썸네일 URL 변환
 │   │   ├── buildReviewPin.ts     # 리뷰 핀 DOM 요소 생성 (ClusterMap용)
 │   │   └── rankFoodFirst.ts      # FD6/CE7 우선 정렬
+│   ├── data/
+│   │   └── demoReviews.ts        # 게스트용 데모 리뷰 11개 (서울/강원/부산, 실제 카카오 place_id)
 │   └── types/
 │       └── kakao.d.ts            # Kakao Maps TypeScript 선언
-└── tests/                        # Vitest 프론트 테스트 (184개)
+├── public/
+│   ├── demo/                     # 데모 리뷰 이미지 10장 (01_cafe_cake ~ 10_pizza)
+│   ├── manifest.json             # PWA 매니페스트
+│   └── ads.txt                   # Google AdSense 인증 파일
+└── tests/                        # Vitest 프론트 테스트 (31파일, 268개)
 
 app/                              # FastAPI 백엔드
 ├── main.py                       # create_app(), /assets 마운트, SPA 서빙
@@ -126,18 +140,22 @@ app/                              # FastAPI 백엔드
 └── static/
     └── dist/                     # Vite 빌드 결과 (git에서 제외)
 
-tests/                            # pytest 백엔드 테스트 (65개)
+tests/                            # pytest 백엔드 테스트 (69개)
+
+.github/workflows/
+└── keep-alive.yml                # 10분 간격 cron으로 /api/health 핑 (Render 서버 sleep 방지)
 ```
 
-## 상태 관리 (Zustand 스토어 5개)
+## 상태 관리 (Zustand 스토어 6개)
 
 | 스토어 | 역할 |
 |--------|------|
-| `authStore` | user, session, tier ('free'/'premium'), isAuthenticated, isLoading, tutorialSeen, isGuest, showLoginModal, showLoginPrompt |
-| `mapStore` | 카카오맵 인스턴스, 검색 결과, 마커 배열, clearMarkers() |
+| `authStore` | user, session, tier ('free'/'premium'), isAuthenticated, isLoading, tutorialSeen, isGuest, loginAsGuest(), showLoginModal, showLoginPrompt |
+| `mapStore` | 카카오맵 인스턴스, 검색 결과, 마커 배열, clearMarkers(), searchActive |
 | `reviewStore` | 리뷰 모달 상태, 리뷰 상세 바텀시트 상태, 5분 TTL 캐시 |
 | `uiStore` | myReviewsActive, badgePanelActive, showTutorial, toast, userMenuOpen |
 | `badgeStore` | 뱃지판 CRUD, 공유코드 검색, 배포/저장, 배포자 리뷰, 진행도 계산 |
+| `cosmeticStore` | 마일스톤 티어(10/30/75/150/300/500), 40+아이템, 6카테고리(star_color/pin_frame/pin_effect/pin_tail/stamp/special), 장착 시스템, 히든 아이템(프리미엄) |
 
 ## 모바일 우선 원칙 (Mobile-First — 항상 적용)
 
@@ -197,7 +215,7 @@ tests/                            # pytest 백엔드 테스트 (65개)
 4. **Vite 빌드**: `frontend/` 에서 `npm run build` → `app/static/dist/`로 출력. FastAPI가 정적 서빙.
 5. **개발 서버**: Vite dev (포트 3000) + FastAPI (포트 5173) 병렬 실행. Vite에서 `/api` → FastAPI 프록시.
 6. **한글 IME**: `SearchBar.tsx`에서 `keyCode === 229` 체크 + `input` 이벤트 기반 자동완성.
-7. **테스트 기준**: 백엔드 65개 (pytest) + 프론트엔드 268개 (Vitest). 기능 추가 시 해당 위치에 테스트도 추가.
+7. **테스트 기준**: 백엔드 69개 (pytest) + 프론트엔드 268개 (Vitest, 31파일). 기능 추가 시 해당 위치에 테스트도 추가.
 8. **Supabase 직접 접근**: 리뷰 CRUD와 사진 업로드는 프론트엔드에서 Supabase JS SDK로 직접 수행. RLS가 보안 담당.
 9. **myreviews 클러스터링**: `useCluster.ts` 훅의 `computeClusters()` — 지리 격자 기반(`GRID_DEG` 배열). `ClusterMap.tsx`가 명령형으로 CustomOverlay 관리.
 10. **플라잉 애니메이션**: `ClusterMap.tsx`에서 ref 기반 명령형 처리. `requestAnimationFrame` 두 번 감싸기.
@@ -249,6 +267,7 @@ tests/                            # pytest 백엔드 테스트 (65개)
 - `badge_boards`: 뱃지판 정의 (title, description, icon_emoji, is_public, share_code, creator_id, source_board_id, source_creator_id, published_at)
 - `badge_board_places`: 뱃지판 장소 목록 (board_id → place_id 매핑, place_name/address/category/x/y 캐시)
 - `user_badges`: 뱃지 획득 기록 (user_id + board_id, 완료 시 INSERT)
+- `user_cosmetics`: 장착된 코스메틱 (user_id + category → item_id 매핑)
 - RPC 함수: `copy_badge_board` (SECURITY DEFINER, 보드 복사), `fetch_creator_reviews` (배포자 리뷰 조회)
 - Storage `review-photos`: 유저별 폴더, 공개 읽기
 
@@ -256,6 +275,16 @@ tests/                            # pytest 백엔드 테스트 (65개)
 57. **검색 시 리뷰 핀 축소**: `mapStore.searchActive` 상태로 검색 활성 여부 추적. 검색 중이면 ClusterMap이 풀 핀을 숨기고 미니 원형 도트(`.rv-pin-mini`)로 대체. 미니 핀 클릭 시 풀 핀 토글. `searchActiveRef`로 줌/필터 변경 시 레이스 컨디션 방지. `buildMiniPin()`/`buildMiniCluster()` in `buildReviewPin.ts`.
 58. **꼬리 CSS 이모지 기반**: 꼬리 코스메틱이 CSS clip-path 대신 이모지(❤️⭐🥢👑) 기반. `buildReviewPin.ts`에서 `rv-pin__tail--*` 클래스를 루트가 아닌 tail 요소에 분리 적용.
 59. **콘텐츠 퍼스트 (로그인 화면 제거)**: 첫 방문자에게 로그인 화면 대신 자동 게스트 모드로 즉시 지도+데모 리뷰 표시. `LoginScreen.tsx`는 미사용 → `LoginModal.tsx`(모달형 로그인)으로 대체. `LoginPromptModal.tsx`는 게스트가 리뷰 작성 시도 시 로그인 유도. `LandingContent.tsx`는 SEO용 소개 섹션(게스트 시 하단 표시). 게스트 튜토리얼은 localStorage `k_tutorial_seen_guest`로 1회 표시 관리.
+
+60. **코스메틱 시스템**: `cosmeticStore.ts` — 리뷰 마일스톤(10/30/75/150/300/500)에 따라 꾸미기 아이템 해금. 6개 카테고리: `star_color`(별 색상 6종), `pin_frame`(핀 프레임 6종), `pin_effect`(이펙트 5종), `pin_tail`(꼬리 5종), `stamp`(스탬프 5종), `special`(히든 4종, 프리미엄 전용). `CosmeticPanel.tsx`에서 장착/해제. `buildReviewPin.ts`가 장착된 코스메틱을 핀 DOM에 CSS 클래스로 적용.
+61. **코스메틱 CSS**: `index.css`에 `.rv-pin--star-*`, `.rv-pin--frame-*`, `.rv-pin--fx-*`, `.rv-pin--tail-*`, `.rv-pin--stamp-*` 클래스 정의. 이모지 기반 꼬리(`rv-pin__tail--*`), 스팀/스파클/후광/벚꽃/불꽃 이펙트 애니메이션. Kakao CustomOverlay이므로 Tailwind 불가, 순수 CSS 필수.
+62. **데모 리뷰 데이터**: `data/demoReviews.ts` — 게스트용 11개 리뷰 (서울 성수/마포/강남, 강원, 부산). 실제 카카오 place_id + 좌표 사용. `public/demo/` 폴더의 이미지 10장 참조. `useReviewedPlaces`에서 `isGuest`이면 Supabase 대신 데모 데이터 반환.
+63. **게스트 모드**: `authStore.loginAsGuest()` — 세션 없이 `isAuthenticated: true, isGuest: true` 설정. 지도/검색/데모리뷰 클러스터링 모두 작동. 리뷰 작성 시도 시 `LoginPromptModal` 표시. 로그아웃 시 게스트 모드로 복귀 (로그인 화면 아님). `App.tsx`에서 `key={isGuest ? 'guest' : 'auth'}`로 모드 전환 시 풀 리마운트.
+64. **게스트 튜토리얼**: 게스트 첫 방문 시 튜토리얼 자동 표시. localStorage `k_tutorial_seen_guest`로 1회만. 튜토리얼 마지막 단계에서 Google 로그인 힌트 (`tutorial.loginHint` i18n 키).
+65. **Render Keep-Alive**: `keepAlive.ts` — 프론트에서 5초마다 `/api/health` 폴링 (브라우저 열려있을 때). `HealthCheckFilter`로 서버 로그에서 health check 요청 제외. `.github/workflows/keep-alive.yml` — 10분 간격 GitHub Actions cron으로 외부 핑 (브라우저 없어도 서버 유지).
+66. **AdSense**: `index.html` `<head>`에 AdSense 스크립트 + 정적 HTML에 `<ins class="adsbygoogle">` 광고 유닛 배치 (크롤러 인식용). `AdBanner.tsx`는 로그인 후 free 유저에게만 동적 광고 로드. `public/ads.txt` 인증 파일. publisher ID: `ca-pub-6570449864880886`.
+67. **정적 HTML (SEO/AdSense)**: `index.html`의 `<div id="root">` 안에 서비스 소개, 사용법, 별점 시스템, 주요 기능, FAQ 7문항 등 정적 콘텐츠 배치. React 마운트 시 자동 교체. 크롤러는 JS 미실행으로 정적 HTML을 읽고, 사용자는 React 화면을 봄.
+68. **i18n 키 프리픽스**: `login.*`, `tutorial.*`, `header.*`, `loginPrompt.*`, `menu.*`, `category.*`, `map.*`, `ad.*`, `auth.*`, `search.*`, `iw.*`, `myReviews.*`, `review.*`, `ratingFilter.*`, `date.*`, `badge.*`, `cosmetic.*`, `changelog.*`, `landing.*` — 총 280개+ 키, 4개 언어(ko/en/ja/zh).
 
 ## 향후 확장 예정
 - 리뷰 10개 달성 시 다른 사용자 추천 맛집 노출 기능
